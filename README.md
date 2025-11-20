@@ -57,3 +57,17 @@ launch.json:
     ]
 }
 ```
+
+
+Sequence of events:
+1. Maintenance puts controller into debug mode.
+2. Possibly additional maintenance?
+3. ??? Updates the in memory max buffer size to be big enough to hold code for payload making it inconsistent with the actual buffer size. ???. This causes the data after the loaded max buffer size to smash the stack.
+   1. This could be done as code bug where the value can be loaded without reallocating buffer
+   2. Bug where buffer is reallocated but there's a mistake
+   3. Could be done through GDB modifying value (this might be hard to leave clue for)
+4. N users use door normally.
+5. Malicious payload is loaded by unwitting user
+6. When the user X tries to checkout the spacesuit, it instead runs the payload causing the room to vent and
+
+

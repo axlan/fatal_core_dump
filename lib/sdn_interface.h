@@ -8,84 +8,129 @@
 
 #pragma pack(push, 1)
 
+typedef uint64_t sdn_timestamp_t;
 
-typedef uint64_t measurement_timestamp_t;
-
-enum SDNMsgType {
+typedef enum SDNMsgType SDNMsgType;
+enum SDNMsgType
+{
     SDN_MSG_TYPE_INVALID = 0,
     SDN_MSG_TYPE_HEARTBEAT = 1,
-    SDN_MSG_TYPE_MEASUREMENT = 2,
+    SDN_MSG_TYPE_SENSOR_PRESSURE = 2,
+    SDN_MSG_TYPE_SENSOR_INGRESS = 3,
+    SDN_MSG_TYPE_SENSOR_EGRESS = 4,
+    SDN_MSG_TYPE_SET_PRESSURE_ZONE = 6,
+    SDN_MSG_TYPE_SET_OPEN = 7,
+    SDN_MSG_TYPE_DEBUG_WRITE_MEM = 8,
+    SDN_MSG_TYPE_CLEAR_FAULTS = 9,
+    SDN_MSG_TYPE_LOG = 10,
 };
 
-enum SDNDeviceType {
+typedef enum SDNDeviceType SDNDeviceType;
+enum SDNDeviceType
+{
     SDN_DEVICE_TYPE_INVALID = 0,
     SDN_DEVICE_TYPE_SUIT = 1,
-    SDN_DEVICE_TYPE_DOOR = 2,
+    SDN_DEVICE_TYPE_PANEL = 2,
+    SDN_DEVICE_TYPE_REMOTE = 3,
+    SDN_DEVICE_TYPE_DOOR = 4,
+    SDN_DEVICE_TYPE_AIRLOCK_CTRL = 5,
 };
 
-struct SDNMsgHeader {
+typedef struct SDNMsgHeader SDNMsgHeader;
+struct SDNMsgHeader
+{
     uint16_t msg_type;
-    uint16_t msg_length;
+    uint16_t msg_length; // Full message size including this SDNMsgHeader.
     uint32_t device_id;
+    sdn_timestamp_t timestamp;
 };
 
-struct SDNDeviceInfo {
-    uint16_t device_type;
-    uint32_t device_id;
-};
+// All SDN Measurement structs start with the msg_header field and a measurement_id field.
 
-enum SDNMeasurementType {
-    SDN_MEASUREMENT_TYPE_INVALID = 0,
-    SDN_MEASUREMENT_TYPE_PRESSURE = 1,
-};
-
-struct SDNMeasurementHeader {
-    uint16_t measurement_type;
-    uint16_t measurement_id;
-    measurement_timestamp_t timestamp_ms;
-};
-
-enum SDNDeviceHealth {
-    SDN_HEALTH_INVALID = 0,
-    SDN_HEALTH_GOOD = 1,
-    SDN_HEALTH_FAULT = 2,
-};
-
-// All SDN Measurement structs start with the measurement_type field and a measurement_id field.
-
-const uint16_t SDN_MEASUREMENT_ID_DOOR_PRESSURE_SIDE_1 = 1;
-const uint16_t SDN_MEASUREMENT_ID_DOOR_PRESSURE_SIDE_2 = 2;
-
-struct SDNPressureData {
+typedef struct SDNPressureMessage SDNPressureMessage;
+struct SDNPressureMessage
+{
+    SDNMsgHeader msg_header;
+    uint32_t measurement_id;
     float pressure_pa;
 };
 
-struct SDNPressureMeasurement {
-    struct SDNMeasurementHeader measurement_header;
-    struct SDNPressureData data;
+typedef struct SDNHeartBeatMessage SDNHeartBeatMessage;
+struct SDNHeartBeatMessage
+{
+    SDNMsgHeader msg_header;
+    uint32_t health;
 };
 
-struct SDNPressureMessage {
-    struct SDNMsgHeader msg_header;
-    struct SDNMeasurementHeader measurement_header;
-    struct SDNPressureData data;
+typedef struct SDNIngressMessage SDNIngressMessage;
+struct SDNIngressMessage
+{
+    SDNMsgHeader msg_header;
+    uint32_t measurement_id;
 };
 
-struct SDNHeartBeatMessage {
-    struct SDNMsgHeader msg_header;
-    uint8_t health;
+typedef struct SDNEgressMessage SDNEgressMessage;
+struct SDNEgressMessage
+{
+    SDNMsgHeader msg_header;
+    uint32_t measurement_id;
 };
 
-size_t DiscoverLocalDevices(struct SDNDeviceInfo *out_devices, size_t max_devices);
+// Control messages
+typedef struct SDNSetPressureZoneMessage SDNSetPressureZoneMessage;
+struct SDNSetPressureZoneMessage
+{
+    SDNMsgHeader msg_header;
+    uint8_t zone_id; // Open pressure valve to specified zone.
+};
 
-bool BroadcastHeartbeat(uint32_t device_id, enum SDNDeviceHealth health);
+typedef struct SDNSetOpenMessage SDNSetOpenMessage;
+struct SDNSetOpenMessage
+{
+    SDNMsgHeader msg_header;
+    uint8_t open; // 0 = closed, non-zero = open
+};
 
-uint16_t DecodeMeasurementType(const uint8_t *msg_data, size_t msg_len);
+typedef struct SDNDebugWriteMemMessage SDNDebugWriteMemMessage;
+struct SDNDebugWriteMemMessage
+{
+    SDNMsgHeader msg_header;
+    uint64_t address; // address to write to
+    // variable length payload follows; use msg_header.msg_length to determine size
+    uint8_t data[];
+};
 
-bool DecodePressureMeasurement(const uint8_t *msg_data, size_t msg_len, struct SDNPressureMeasurement *out_measurement);
+typedef struct SDNClearFaultsMessage SDNClearFaultsMessage;
+struct SDNClearFaultsMessage
+{
+    SDNMsgHeader msg_header;
+    uint32_t fault_mask; // bitmask of faults to clear, application-defined
+};
 
-bool BroadcastHeartbeat(uint32_t device_id, enum SDNDeviceHealth health);
+typedef struct SDNLogMessage SDNLogMessage;
+struct SDNLogMessage
+{
+    SDNMsgHeader msg_header;
+    uint8_t severity; // 0 - CRITICAL, 1 - ERROR, 2 - WARNING. Higher values are less severe.
+    // variable length payload follows; use msg_header.msg_length to determine size
+    char message_str[];
+};
 
+
+const uint32_t SDN_MEASUREMENT_ID_DOOR_PRESSURE_SIDE_1 = 1;
+const uint32_t SDN_MEASUREMENT_ID_DOOR_PRESSURE_SIDE_2 = 2;
+
+
+bool RegisterDevice(uint32_t device_id, SDNDeviceType device_type);
+
+bool SubscribeToMessage(uint32_t device_id, SDNMsgType message_type);
+
+bool BroadcastHeartbeat(uint32_t fault_bits);
+
+sdn_timestamp_t GetCurrentTimestampMS(void);
+
+void SleepMS(sdn_timestamp_t ms);
+
+int ReadNextMessage(void *msg_buffer, size_t buffer_size_bytes);
 
 #pragma pack(pop)
-

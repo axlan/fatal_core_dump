@@ -6,8 +6,8 @@ MODE ?= release
 CFLAGS_BASE := -fPIC -Wall -Wextra
 
 ifeq ($(MODE),debug)
-# Debug mode: no optimizations, include debug symbols and enable ENABLE_LOG_DEBUG macro
-CFLAGS := $(CFLAGS_BASE) -O0 -g -DENABLE_LOG_DEBUG
+# Debug mode: no optimizations, include debug symbols
+CFLAGS := $(CFLAGS_BASE) -O0 -g
 else
 # Release mode: optimize
 CFLAGS := $(CFLAGS_BASE) -O2
@@ -18,15 +18,13 @@ LDFLAGS := -shared
 LIB_DIR := lib
 BIN_DIR := bin
 
-# Primary library built from lib/sdn_interface.c
-SDN_LIB_NAME := sdn_interface
-# Additional dynamic library for configuration loader
-CONFIG_LIB_NAME := config_loader
-# Place the built shared library into the bin directory so the executable and
-# library live side-by-side.
+# Libraries to build (each corresponds to lib/<name>.c and lib/<name>.h)
+LIB_NAMES := sdn_interface config_loader log
+
+# Place the built shared libraries into the bin directory so the executable and
+# libraries live side-by-side.
 LIB_OUT_DIR := $(BIN_DIR)
-SDN_LIB_SO := $(LIB_OUT_DIR)/lib$(SDN_LIB_NAME).so
-CONFIG_LIB_SO := $(LIB_OUT_DIR)/lib$(CONFIG_LIB_NAME).so
+LIB_SOS := $(patsubst %,$(LIB_OUT_DIR)/lib%.so,$(LIB_NAMES))
 MAIN_BIN := $(BIN_DIR)/airlock_ctrl
 
 .PHONY: all clean
@@ -39,21 +37,25 @@ debug:
 release:
 	$(MAKE) MODE=release all
 
-all: $(SDN_LIB_SO) $(CONFIG_LIB_SO) $(MAIN_BIN)
 
-$(SDN_LIB_SO): $(LIB_DIR)/sdn_interface.c $(LIB_DIR)/sdn_interface.h
+# all: build all shared libs and the main binary
+all: $(LIB_SOS) $(MAIN_BIN)
+
+# Generic rule: build a shared library from lib/<name>.c (and optional .h)
+$(LIB_OUT_DIR)/lib%.so: $(LIB_DIR)/%.c $(LIB_DIR)/%.h
 	@mkdir -p $(LIB_OUT_DIR)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(LIB_DIR)/sdn_interface.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(LIB_DIR)/$*.c
 
-$(CONFIG_LIB_SO): $(LIB_DIR)/config_loader.c $(LIB_DIR)/config_loader.h
+# If header is optional for a library (no .h), allow building from .c only
+$(LIB_OUT_DIR)/lib%.so: $(LIB_DIR)/%.c
 	@mkdir -p $(LIB_OUT_DIR)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(LIB_DIR)/config_loader.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(LIB_DIR)/$*.c
 
-$(MAIN_BIN): src/main.c $(SDN_LIB_SO) $(CONFIG_LIB_SO)
+$(MAIN_BIN): src/main.c $(LIB_SOS)
 	@mkdir -p $(BIN_DIR)
 	# Link against the library placed inside $(LIB_OUT_DIR) and set rpath
 	# so the loader will search the executable's directory at runtime.
-	$(CC) $(CFLAGS) -I$(LIB_DIR) -o $@ src/main.c -L$(LIB_OUT_DIR) -l$(SDN_LIB_NAME) -l$(CONFIG_LIB_NAME) -Wl,-rpath,'$$ORIGIN'
+	$(CC) $(CFLAGS) -I$(LIB_DIR) -o $@ src/main.c -L$(LIB_OUT_DIR) $(foreach L,$(LIB_NAMES),-l$(L)) -Wl,-rpath,'$$ORIGIN'
 
 clean:
 	rm -rf $(BIN_DIR)
