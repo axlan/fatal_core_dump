@@ -16,13 +16,13 @@ enum SDNMsgType
     SDN_MSG_TYPE_INVALID = 0,
     SDN_MSG_TYPE_HEARTBEAT = 1,
     SDN_MSG_TYPE_SENSOR_PRESSURE = 2,
-    SDN_MSG_TYPE_SENSOR_INGRESS = 3,
-    SDN_MSG_TYPE_SENSOR_EGRESS = 4,
-    SDN_MSG_TYPE_SET_PRESSURE_ZONE = 6,
-    SDN_MSG_TYPE_SET_OPEN = 7,
-    SDN_MSG_TYPE_DEBUG_WRITE_MEM = 8,
-    SDN_MSG_TYPE_CLEAR_FAULTS = 9,
-    SDN_MSG_TYPE_LOG = 10,
+    SDN_MSG_TYPE_SET_PRESSURE_ZONE = 3,
+    SDN_MSG_TYPE_SET_OPEN = 4,
+    SDN_MSG_TYPE_SET_AIRLOCK_OPEN = 4,
+    SDN_MSG_TYPE_SENSOR_OCCUPANCY = 5,
+    SDN_MSG_TYPE_DEBUG_WRITE_MEM = 6,
+    SDN_MSG_TYPE_CLEAR_FAULTS = 7,
+    SDN_MSG_TYPE_LOG = 8,
 };
 
 typedef enum SDNDeviceType SDNDeviceType;
@@ -55,25 +55,35 @@ struct SDNPressureMessage
     float pressure_pa;
 };
 
+typedef enum SDNSuiteStatus SDNSuiteStatus;
+enum SDNSuiteStatus
+{
+    SDN_SUIT_STATUS_INVALID = 0,
+    SDN_SUIT_STATUS_SEALED = 1,
+    SDN_SUIT_STATUS_UNSEALED = 2,
+};
+
+typedef struct SDNOccupancyInfo SDNOccupancyInfo;
+struct SDNOccupancyInfo
+{
+    uint32_t user_id;
+    uint8_t suit_status;
+};
+
+typedef struct SDNOccupancyMessage SDNOccupancyMessage;
+struct SDNOccupancyMessage
+{
+    SDNMsgHeader msg_header;
+    uint32_t measurement_id;
+    // variable length payload follows; use msg_header.msg_length to determine size
+    SDNOccupancyInfo occupants[];
+};
+
 typedef struct SDNHeartBeatMessage SDNHeartBeatMessage;
 struct SDNHeartBeatMessage
 {
     SDNMsgHeader msg_header;
     uint32_t health;
-};
-
-typedef struct SDNIngressMessage SDNIngressMessage;
-struct SDNIngressMessage
-{
-    SDNMsgHeader msg_header;
-    uint32_t measurement_id;
-};
-
-typedef struct SDNEgressMessage SDNEgressMessage;
-struct SDNEgressMessage
-{
-    SDNMsgHeader msg_header;
-    uint32_t measurement_id;
 };
 
 // Control messages
@@ -89,6 +99,21 @@ struct SDNSetOpenMessage
 {
     SDNMsgHeader msg_header;
     uint8_t open; // 0 = closed, non-zero = open
+};
+
+typedef enum SDNAirlockOpen SDNAirlockOpen;
+enum SDNAirlockOpen
+{
+    SDN_AIRLOCK_CLOSED = 0,
+    SDN_AIRLOCK_INTERIOR_OPEN = 1,
+    SDN_AIRLOCK_EXTERIOR_OPEN = 2,
+};
+
+typedef struct SDNSetAirlockOpenMessage SDNSetAirlockOpenMessage;
+struct SDNSetAirlockOpenMessage
+{
+    SDNMsgHeader msg_header;
+    uint8_t open; // See SDNAirlockOpen
 };
 
 typedef struct SDNDebugWriteMemMessage SDNDebugWriteMemMessage;
@@ -116,10 +141,8 @@ struct SDNLogMessage
     char message_str[];
 };
 
-
 const uint32_t SDN_MEASUREMENT_ID_DOOR_PRESSURE_SIDE_1 = 1;
 const uint32_t SDN_MEASUREMENT_ID_DOOR_PRESSURE_SIDE_2 = 2;
-
 
 bool RegisterDevice(uint32_t device_id, SDNDeviceType device_type);
 
@@ -129,8 +152,12 @@ bool BroadcastHeartbeat(uint32_t fault_bits);
 
 sdn_timestamp_t GetCurrentTimestampMS(void);
 
-void SleepMS(sdn_timestamp_t ms);
+void SleepMS(unsigned ms);
 
 int ReadNextMessage(void *msg_buffer, size_t buffer_size_bytes);
+
+bool ExecuteCmd(const SDNMsgHeader *header, uint32_t target_device_id);
+
+int GetResponse(void *msg_buffer, size_t buffer_size_bytes, uint32_t target_device_id, SDNMsgType request_type);
 
 #pragma pack(pop)
