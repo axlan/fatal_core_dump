@@ -1,4 +1,5 @@
 #include "config_loader.h"
+#include "log.h"
 #include <string.h>
 #include <stdint.h>
 
@@ -40,7 +41,7 @@ bool LoadConfigInt(int *out_value, const char *key)
         return true;
     }
 
-    if (strcmp(key, "occupancy_sensor") == 0)
+    if (strcmp(key, "occupancy_sensor_id") == 0)
     {
         *out_value = SDN_DEVICE_ID_OCCUPANCY_SENSOR;
         return true;
@@ -51,6 +52,8 @@ bool LoadConfigInt(int *out_value, const char *key)
         *out_value = MESSAGE_BUFFER_SIZE;
         return true;
     }
+
+    sdn_log(SDN_ERROR, "Unknown config %s", key);
 
     return false;
 }

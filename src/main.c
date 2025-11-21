@@ -118,14 +118,18 @@ int main()
     uint32_t fault_bits = 0;
 
     DoorStatus door_status[2];
-    memset(door_status, 0, sizeof(DoorStatus));
+    memset(door_status, 0, sizeof(door_status));
 
     sdn_timestamp_t start_time = GetCurrentTimestampMS();
-    door_status->heartbeat.msg_header.timestamp = start_time;
-    door_status->pressure[0].msg_header.timestamp = start_time;
-    door_status->pressure[1].msg_header.timestamp = start_time;
+    for (int i = 0; i < 2; i++) {
+        door_status[i].heartbeat.msg_header.timestamp = start_time;
+        door_status[i].pressure[0].msg_header.timestamp = start_time;
+        door_status[i].pressure[1].msg_header.timestamp = start_time;
+    }
+
     sdn_timestamp_t pressure_change_time = 0;
     AirlockState airlock_state = AIRLOCK_PRESSURIZING;
+    sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_PRESSURIZING");
 
     float *station_pressure = &door_status[INNER_DOOR_IDX].pressure[INNER_DOOR_STATION_SIDE_IDX].pressure_pa;
     *station_pressure = NAN;
@@ -268,7 +272,10 @@ int main()
 
             case SDN_MSG_TYPE_SET_AIRLOCK_OPEN:
             {
-                if ((size_t)ret >= sizeof(SDNSetAirlockOpenMessage))
+                if (fault_bits != 0){
+                    sdn_log(SDN_WARN, "Door commands ignored while fault active.");
+                }
+                else if ((size_t)ret >= sizeof(SDNSetAirlockOpenMessage))
                 {
                     SDNSetAirlockOpenMessage *cf = (SDNSetAirlockOpenMessage *)message_buffer;
                     SDNAirlockOpen airlock_req = cf->open;
@@ -282,10 +289,12 @@ int main()
                         if (airlock_state == AIRLOCK_INTERIOR_OPEN)
                         {
                             airlock_state = AIRLOCK_CLOSED_PRESSURIZED;
+                            sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_CLOSED_PRESSURIZED");
                         }
                         else if (airlock_state == AIRLOCK_EXTERIOR_OPEN)
                         {
                             airlock_state = AIRLOCK_CLOSED_DEPRESSURIZED;
+                            sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_CLOSED_DEPRESSURIZED");
                         }
                     }
                     else if (airlock_req == SDN_AIRLOCK_INTERIOR_OPEN)
@@ -302,9 +311,12 @@ int main()
                                 return 4;
                             }
                             airlock_state = AIRLOCK_INTERIOR_OPEN;
+                            sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_INTERIOR_OPEN");
                             break;
                         case AIRLOCK_EXTERIOR_OPEN:
-                            // close exterior first, then pressurize
+                        case AIRLOCK_CLOSED_DEPRESSURIZED:
+                        case AIRLOCK_DEPRESSURIZING:
+                            // close exterior first (if needed), then pressurize
                             if (!ControlDoor(device_id, outside_door_id, false))
                             {
                                 return 4;
@@ -314,15 +326,7 @@ int main()
                                 return 4;
                             }
                             airlock_state = AIRLOCK_PRESSURIZING;
-                            break;
-                        case AIRLOCK_CLOSED_DEPRESSURIZED:
-                        case AIRLOCK_DEPRESSURIZING:
-                            // need to pressurize before opening interior
-                            if (!ControlPressure(device_id, pressure_ctrl_id, true, &pressure_change_time))
-                            {
-                                return 4;
-                            }
-                            airlock_state = AIRLOCK_PRESSURIZING;
+                            sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_PRESSURIZING");
                             break;
                         case AIRLOCK_PRESSURIZING:
                             // already working towards pressurization
@@ -333,7 +337,7 @@ int main()
                     {
                         // NOTE: Pointers to original request message are invalid now since buffer has been reused.
                         int occupancy_resp = GetResponse(message_buffer, message_buffer_size, occupancy_sensor_id, SDN_MSG_TYPE_SENSOR_OCCUPANCY);
-                        if (ret <= 0)
+                        if (occupancy_resp < (int)sizeof(SDNOccupancyMessage))
                         {
                             return 5;
                         }
@@ -364,9 +368,12 @@ int main()
                                     return 4;
                                 }
                                 airlock_state = AIRLOCK_EXTERIOR_OPEN;
+                                sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_EXTERIOR_OPEN");
                                 break;
                             case AIRLOCK_INTERIOR_OPEN:
-                                // close interior first, then depressurize
+                            case AIRLOCK_CLOSED_PRESSURIZED:
+                            case AIRLOCK_PRESSURIZING:
+                                // close interior first (if needed), then depressurize
                                 if (!ControlDoor(device_id, inside_door_id, false))
                                 {
                                     return 4;
@@ -376,15 +383,7 @@ int main()
                                     return 4;
                                 }
                                 airlock_state = AIRLOCK_DEPRESSURIZING;
-                                break;
-                            case AIRLOCK_CLOSED_PRESSURIZED:
-                            case AIRLOCK_PRESSURIZING:
-                                // need to depressurize before opening exterior
-                                if (!ControlPressure(device_id, pressure_ctrl_id, false, &pressure_change_time))
-                                {
-                                    return 4;
-                                }
-                                airlock_state = AIRLOCK_DEPRESSURIZING;
+                                sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_DEPRESSURIZING");
                                 break;
                             case AIRLOCK_DEPRESSURIZING:
                                 // already working towards depressurization
@@ -453,8 +452,8 @@ int main()
                     if (now - door_status[i].pressure[j].msg_header.timestamp > DEVICE_WATCHDOG_TIMEOUT_MS)
                     {
                         door_fault = FAULT_DOOR_BIT;
+                        sdn_log(SDN_CRITICAL, "%s door pressure timeout", DOOR_NAMES[i]);
                     }
-                    sdn_log(SDN_CRITICAL, "%s door pressure timeout", DOOR_NAMES[i]);
                 }
             }
             fault_bits |= door_fault;
@@ -506,16 +505,16 @@ int main()
                     // Expect airlock to approach station pressure
                     if (fabsf(ap0 - sp) <= PRESSURE_ERROR_TOLERANCE && fabsf(ap1 - sp) <= PRESSURE_ERROR_TOLERANCE)
                     {
-                        sdn_log(SDN_INFO, "Airlock pressurized.");
                         airlock_state = AIRLOCK_CLOSED_PRESSURIZED;
+                        sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_CLOSED_PRESSURIZED");
                     }
                     break;
                 case AIRLOCK_DEPRESSURIZING:
                     // Expect airlock to approach exterior pressure
                     if (fabsf(ap0 - ep) <= PRESSURE_ERROR_TOLERANCE && fabsf(ap1 - ep) <= PRESSURE_ERROR_TOLERANCE)
                     {
-                        sdn_log(SDN_INFO, "Airlock depressurized.");
                         airlock_state = AIRLOCK_CLOSED_DEPRESSURIZED;
+                        sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_CLOSED_DEPRESSURIZED");
                     }
                     break;
                 default:

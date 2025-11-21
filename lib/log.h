@@ -6,5 +6,6 @@
 #define SDN_ERROR 1
 #define SDN_WARN 2
 #define SDN_INFO 3
+#define SDN_DEBUG 4
 
 void sdn_log(uint8_t severity, const char *fmt, ...);
