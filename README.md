@@ -58,6 +58,8 @@ launch.json:
 }
 ```
 
+`make && ./bin/airlock_ctrl | grep -v DEBUG`
+
 
 Sequence of events:
 1. Maintenance puts controller into debug mode.
