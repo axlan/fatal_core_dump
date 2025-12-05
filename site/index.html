@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fatal Core Dump</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #0a0e27;
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+
+        /* Title Bar */
+        .title-bar {
+            background: linear-gradient(135deg, #1a1f3a 0%, #16213e 100%);
+            border-bottom: 3px solid #ff6b6b;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .title-bar h1 {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-shadow: 0 0 20px rgba(255, 107, 107, 0.5), 0 0 40px rgba(255, 107, 107, 0.3);
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .tagline {
+            font-size: 1.3rem;
+            color: #a0a0ff;
+            font-style: italic;
+            letter-spacing: 1px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        /* Explanation Section */
+        .explanation {
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+            border: 2px solid #ff6b6b;
+            border-radius: 10px;
+            padding: 40px;
+            margin: 40px 0;
+            box-shadow: 0 8px 32px rgba(255, 107, 107, 0.1);
+        }
+
+        .explanation h2 {
+            font-size: 2rem;
+            color: #ff6b6b;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .explanation p {
+            font-size: 1.1rem;
+            color: #d0d0d0;
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+
+        .explanation ul {
+            margin: 12px 0 18px 20px;
+            padding: 0;
+        }
+
+        .explanation li {
+            margin-bottom: 8px;
+            list-style-type: disc;
+        }
+
+        .explanation a {
+            color: #ffd1d1;
+            text-decoration: underline;
+        }
+
+        /* Button Styles */
+        .button-container {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .get-started-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+            color: #fff;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 5px;
+            border: 2px solid #ff6b6b;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .get-started-btn:hover {
+            background: linear-gradient(135deg, #ff5252 0%, #ff3838 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.5);
+        }
+
+        .get-started-btn:active {
+            transform: translateY(-1px);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #808080;
+            border-top: 2px solid #ff6b6b;
+            margin-top: 60px;
+        }
+
+        footer p {
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .title-bar h1 {
+                font-size: 2.5rem;
+            }
+
+            .tagline {
+                font-size: 1rem;
+            }
+
+            .explanation {
+                padding: 25px;
+            }
+
+            .explanation h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Title Bar -->
+    <div class="title-bar">
+        <h1>Fatal Core Dump</h1>
+        <p class="tagline">Debugging to the truth</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Intro Section -->
+        <section class="explanation">
+            <h2>The year is 2216</h2>
+            <p>
+                The devastation wrought in the <a href="https://en.wikipedia.org/wiki/Year_2038_problem">year 2038</a>
+                is a distant memory, but the changes in liability laws for software defects remain.
+                When the astroid mining station Apate suffers an inexplicable airlock failure, it falls to the neutral
+                arbiter (you) to determine whether it was gross negligence, an act of god, or murder.
+            </p>
+            <p>
+                Fatal Core Dump is an interactive mystery where you must debug a real binary application to reconstruct
+                why it failed.
+            </p>
+        </section>
+        <!-- Explanation Section -->
+        <section class="explanation">
+            <p>
+                Solving this mystery requires a knowledge of:
+            <ul>
+                <li>GDB: The GNU Project Debugger</li>
+                <li>The C programming language</li>
+                <li>Binary reverse engineering</li>
+                <li>x86_64 assembly</li>
+                <li>Linux executable runtime behavior and memory structure</li>
+                <li>Core dump analysis</li>
+                <li>More programming esoterica that will reveal itself</li>
+            </ul>
+            </p>
+            <p>
+                Don't know all of these things? No problem!
+            </p>
+            <p>
+                This investigation is broken into steps. Each step can be solved without help, or by learning about the debugging skill involved.
+            </p>
+
+            <!-- Get Started Button -->
+            <div class="button-container">
+                <a href="#" class="get-started-btn">Get Started</a>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Fatal Core Dump | <a href="https://www.robopenguins.com/">https://www.robopenguins.com/</a></p>
+    </footer>
+</body>
+
+</html>
