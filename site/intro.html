@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simple Email Client</title>
+  <style>
+    :root{
+      --bg:#0f1724;
+      --panel:#0b1220;
+      --muted:#9aa4bf;
+      --accent:#4f46e5;
+      --card:#0e1630;
+      --unread:#ef4444;
+      color-scheme: dark;
+    }
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#061025);font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    .app{max-width:1100px;margin:28px auto;padding:18px;display:grid;grid-template-columns:320px 1fr;gap:18px;}
+    header{grid-column:1/-1;color:#e6eef9;display:flex;align-items:center;justify-content:space-between;padding:10px 4px}
+    header h1{font-size:1.1rem;margin:0;font-weight:600;letter-spacing:.6px}
+    .panel{background:linear-gradient(180deg,var(--panel),#071226);border-radius:10px;padding:12px;box-shadow:0 6px 30px rgba(2,6,23,.6);min-height:420px}
+    .inbox{display:flex;flex-direction:column;height:100%}
+    .controls{display:flex;gap:8px;margin-bottom:10px}
+    .controls input{flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.04);background:transparent;color:var(--muted)}
+    .controls button{padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:white;cursor:pointer}
+    .list{overflow:auto;border-radius:8px;padding:6px;margin-top:6px}
+    .msg-item{display:flex;gap:10px;padding:10px;border-radius:8px;align-items:flex-start;cursor:pointer}
+    .msg-item:hover{background:rgba(255,255,255,.02)}
+    .avatar{width:44px;height:44px;border-radius:8px;background:#0b1220;display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:700}
+    .meta{flex:1;min-width:0}
+    .meta .top{display:flex;justify-content:space-between;gap:8px}
+    .from{font-weight:600;color:#e6eef9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .subject{color:var(--muted);font-size:.95rem;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .time{color:var(--muted);font-size:.8rem;white-space:nowrap}
+    .dot{width:10px;height:10px;border-radius:50%}
+    .unread .dot{background:var(--unread)}
+    .read .dot{background:transparent;border:1px solid rgba(255,255,255,.04)}
+    .message-view{padding:18px;display:flex;flex-direction:column;gap:12px}
+    .message-view h2{margin:0;color:#e6eef9}
+    .message-meta{display:flex;gap:12px;align-items:center;color:var(--muted);font-size:.9rem}
+    .body{background:linear-gradient(180deg,var(--card),#071226);padding:16px;border-radius:8px;color:#dbe7ff;line-height:1.6;overflow:auto;flex:1}
+    .empty{color:var(--muted);text-align:center;margin-top:60px}
+    @media (max-width:880px){
+      .app{grid-template-columns:1fr; padding:12px}
+      header{flex-direction:column;align-items:flex-start;gap:8px}
+      .panel{min-height:unset}
+    }
+  </style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="Simple email client">
+    <header>
+      <h1>Simple Mail — Offline Demo</h1>
+      <div style="color:var(--muted);font-size:.9rem">No server, messages are hard-coded</div>
+      <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+      <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+      <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+      <link rel="manifest" href="/site.webmanifest">
+    </header>
+
+    <aside class="panel inbox" aria-label="Inbox">
+      <div class="controls">
+        <input id="search" type="search" placeholder="Search subject or sender" aria-label="Search messages">
+      </div>
+
+      <div id="list" class="list" role="list" aria-label="Message list">
+        <!-- messages rendered here -->
+      </div>
+    </aside>
+
+    <main class="panel message-view" id="viewer" aria-live="polite">
+      <div id="empty" class="empty">
+        <p style="font-weight:600;color:#e6eef9">No message selected</p>
+        <p style="margin-top:8px;color:var(--muted)">Select a message on the left to view its contents.</p>
+      </div>
+
+      <article id="message" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <h2 id="msg-subject"></h2>
+            <div class="message-meta"><span id="msg-from"></span><span id="msg-time"></span></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button id="mark-read" title="Toggle read">Mark</button>
+            <!-- <button id="delete" title="Delete">Delete</button> -->
+          </div>
+        </div>
+        <div class="body" id="msg-body" tabindex="0"></div>
+      </article>
+    </main>
+  </div>
+
+  <script>
+    // Hard-coded messages
+    var messages = [
+      {
+        id: 'm1',
+        from: 'apate-ops@apate.local',
+        subject: 'Airlock telemetry spike — immediate review',
+        time: '2216-06-10 09:12',
+        body: `Team,\n\nTelemetry shows a short high-pressure spike on the airlock sequence at 03:12 UTC. The controller logged an emergency override followed by a forced depressurization. We've attached the partial logs.\n\n— Ops\n`,
+        unread: true
+      },
+      {
+        id: 'm2',
+        from: 'legal@robopenguins.com',
+        subject: 'Liability waiver — apate mining incidents',
+        time: '2216-06-09 15:42',
+        body: `Counsel,\n\nPlease confirm receipt of the updated liability waiver. The board requires signed copies from the on-site contractor within 72 hours.\n\nRegards,\nLegal Department`,
+        unread: true
+      },
+      {
+        id: 'm3',
+        from: 'friend@example.com',
+        subject: 'Longshot: want to try the old debugger again?',
+        time: '2216-06-08 08:03',
+        body: `Hey,\n\nIf you're up for it, I found an old GDB script that makes core dumps nostalgic again. Coffee's on me.\n\n— Sam`,
+        unread: true
+      }
+    ];
+
+    // Application state
+    const listEl = document.getElementById('list');
+    const viewer = document.getElementById('viewer');
+    const emptyEl = document.getElementById('empty');
+    const messageEl = document.getElementById('message');
+    const msgSubject = document.getElementById('msg-subject');
+    const msgFrom = document.getElementById('msg-from');
+    const msgTime = document.getElementById('msg-time');
+    const msgBody = document.getElementById('msg-body');
+    const searchInput = document.getElementById('search');
+
+    function renderList(filter = '') {
+      listEl.innerHTML = '';
+      const normalized = filter.trim().toLowerCase();
+      const visible = messages.filter(m => {
+        if (!normalized) return true;
+        return m.subject.toLowerCase().includes(normalized) || m.from.toLowerCase().includes(normalized);
+      });
+
+      if (visible.length === 0) {
+        listEl.innerHTML = '<div style="padding:18px;color:var(--muted)">No messages</div>';
+        return;
+      }
+
+      visible.forEach(m => {
+        const item = document.createElement('div');
+        item.className = 'msg-item ' + (m.unread ? 'unread' : 'read');
+        item.setAttribute('role','listitem');
+        item.dataset.id = m.id;
+        item.innerHTML = `
+          <div class="avatar">${m.from.split('@')[0].charAt(0).toUpperCase()}</div>
+          <div class="meta">
+            <div class="top">
+              <div class="from">${escapeHtml(m.from)}</div>
+              <div class="time">${m.time}</div>
+            </div>
+            <div class="subject">${escapeHtml(m.subject)}</div>
+          </div>
+          <div class="dot" aria-hidden="true"></div>
+        `;
+        item.addEventListener('click', () => openMessage(m.id));
+        listEl.appendChild(item);
+      });
+    }
+
+    function openMessage(id) {
+      const m = messages.find(x => x.id === id);
+      if (!m) return;
+      // mark read
+      if (m.unread) {
+        m.unread = false;
+        renderList(searchInput.value);
+      }
+      emptyEl.style.display = 'none';
+      messageEl.style.display = 'block';
+      msgSubject.textContent = m.subject;
+      msgFrom.textContent = 'From: ' + m.from;
+      msgTime.textContent = m.time;
+      msgBody.textContent = m.body;
+      // attach current id to viewer for actions
+      messageEl.dataset.current = m.id;
+    }
+
+    function toggleMark() {
+      const id = messageEl.dataset.current;
+      if (!id) return;
+      const m = messages.find(x => x.id === id);
+      m.unread = !m.unread;
+      renderList(searchInput.value);
+    }
+
+    function deleteCurrent() {
+      const id = messageEl.dataset.current;
+      if (!id) return;
+      messages = messages.filter(x => x.id !== id);
+      messageEl.style.display = 'none';
+      emptyEl.style.display = 'block';
+      renderList(searchInput.value);
+    }
+
+    // simple HTML escape for inserted text nodes
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+    }
+
+    // wire up controls
+    document.getElementById('mark-read').addEventListener('click', toggleMark);
+    //document.getElementById('delete').addEventListener('click', deleteCurrent);
+    searchInput.addEventListener('input', ()=>renderList(searchInput.value));
+
+    // initial render
+    renderList();
+
+    // expose for console debugging
+    window._emails = messages;
+  </script>
+</body>
+</html>
