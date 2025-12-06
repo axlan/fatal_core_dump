@@ -3,55 +3,87 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Simple Email Client</title>
+  <title>Ansible Mail</title>
   <style>
-    :root{
-      --bg:#0f1724;
-      --panel:#0b1220;
-      --muted:#9aa4bf;
-      --accent:#4f46e5;
-      --card:#0e1630;
-      --unread:#ef4444;
-      color-scheme: dark;
-    }
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#061025);font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;}
-    .app{max-width:1100px;margin:28px auto;padding:18px;display:grid;grid-template-columns:320px 1fr;gap:18px;}
-    header{grid-column:1/-1;color:#e6eef9;display:flex;align-items:center;justify-content:space-between;padding:10px 4px}
-    header h1{font-size:1.1rem;margin:0;font-weight:600;letter-spacing:.6px}
-    .panel{background:linear-gradient(180deg,var(--panel),#071226);border-radius:10px;padding:12px;box-shadow:0 6px 30px rgba(2,6,23,.6);min-height:420px}
+    /* Embedded Win95-like styling; ignores external styles.css */
+    :root{ --bg:#0a0a0a; --panel:#c8c8c8; --panel-dark:#808080; --text:#000000; }
+    html,body{height:100%;margin:0;background:linear-gradient(#0a0a0a,#071021);font-family:"MS Sans Serif",Arial,Helvetica,sans-serif;color:var(--text)}
+    .app{max-width:1100px;margin:28px auto;padding:18px;display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:stretch}
+
+    /* Title bar with strong bevels */
+    /* header spans both columns; remove left margin so title-box aligns with inbox column */
+    header{grid-column:1/-1;padding:6px 0;margin:0 0 12px 0;display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start}
+    .title-box{background:var(--panel);padding:10px 12px;border-top:2px solid #ffffff;border-left:2px solid #ffffff;border-bottom:2px solid var(--panel-dark);border-right:2px solid var(--panel-dark);display:flex;align-items:center;gap:12px;grid-column:1/-1;justify-self:center}
+    .title-box h1{margin:0;font-size:20px;font-weight:bold;letter-spacing:1px}
+    .title-logo{height:128px;width:auto;display:block}
+
+    /* Panels */
+    .panel{background:var(--panel);padding:12px;border-top:2px solid #ffffff;border-left:2px solid #ffffff;border-bottom:2px solid var(--panel-dark);border-right:2px solid var(--panel-dark);min-height:420px;display:flex;flex-direction:column;align-self:stretch}
     .inbox{display:flex;flex-direction:column;height:100%}
     .controls{display:flex;gap:8px;margin-bottom:10px}
-    .controls input{flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.04);background:transparent;color:var(--muted)}
-    .controls button{padding:8px 12px;border-radius:8px;border:0;background:var(--accent);color:white;cursor:pointer}
-    .list{overflow:auto;border-radius:8px;padding:6px;margin-top:6px}
-    .msg-item{display:flex;gap:10px;padding:10px;border-radius:8px;align-items:flex-start;cursor:pointer}
-    .msg-item:hover{background:rgba(255,255,255,.02)}
-    .avatar{width:44px;height:44px;border-radius:8px;background:#0b1220;display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:700}
+    input[type=search]{flex:1;padding:6px;border:1px solid var(--panel-dark);background:#ffffff}
+    .list{overflow:auto;padding:6px;margin-top:6px}
+    .msg-item{display:flex;gap:10px;padding:8px;border:1px solid transparent;align-items:flex-start;cursor:pointer}
+    .msg-item:hover{background:#e8e8e8}
+    .avatar{width:44px;height:44px;background:#ffffff;display:flex;align-items:center;justify-content:center;color:#000;font-weight:700;border:1px solid var(--panel-dark)}
     .meta{flex:1;min-width:0}
-    .meta .top{display:flex;justify-content:space-between;gap:8px}
-    .from{font-weight:600;color:#e6eef9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .subject{color:var(--muted);font-size:.95rem;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .time{color:var(--muted);font-size:.8rem;white-space:nowrap}
+    .from{font-weight:700;color:#000}
+    .subject{color:#202020;font-size:13px;margin-top:6px}
+    .time{color:#202020;font-size:12px}
     .dot{width:10px;height:10px;border-radius:50%}
-    .unread .dot{background:var(--unread)}
-    .read .dot{background:transparent;border:1px solid rgba(255,255,255,.04)}
-    .message-view{padding:18px;display:flex;flex-direction:column;gap:12px}
-    .message-view h2{margin:0;color:#e6eef9}
-    .message-meta{display:flex;gap:12px;align-items:center;color:var(--muted);font-size:.9rem}
-    .body{background:linear-gradient(180deg,var(--card),#071226);padding:16px;border-radius:8px;color:#dbe7ff;line-height:1.6;overflow:auto;flex:1}
-    .empty{color:var(--muted);text-align:center;margin-top:60px}
-    @media (max-width:880px){
-      .app{grid-template-columns:1fr; padding:12px}
-      header{flex-direction:column;align-items:flex-start;gap:8px}
-      .panel{min-height:unset}
+    .unread .dot{background:#ef4444}
+    .read .dot{background:transparent;border:1px solid #808080}
+
+    .message-view{padding:12px;display:flex;flex-direction:column;gap:12px;height:100%}
+    .message-view h2{margin:0;color:#000}
+    .message-meta{display:flex;gap:12px;align-items:center;color:#202020;font-size:12px}
+    .body{background:#ffffff;padding:12px;border:1px solid var(--panel-dark);color:#000;line-height:1.6;overflow:auto;flex:1}
+    .empty{color:#202020;text-align:center;margin-top:60px}
+
+    .container { max-width: 900px; margin: 0 auto; background: #fff; border: 1px solid #e1e4e8; padding: 28px; box-shadow: 0 6px 18px rgba(15,23,42,0.06); }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .brand .logo { width:85px; height:72px; border-radius:8px; background:#0a3a6b; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:20px; }
+    h1 { font-size:20px; margin:0; }
+    .meta { color:#475569; margin-top:6px; font-size:13px; }
+    section { margin-top:18px; }
+    h2 { font-size:16px; margin:12px 0; color:#0b3a66; }
+    table { width:100%; border-collapse: collapse; margin-top:8px; }
+    th, td { text-align:left; padding:8px 10px; border:1px solid #eef0f3; font-size:14px; vertical-align:top; }
+    th { background:#f1f5f9; width:240px; color:#0b395f; }
+    .timeline { font-family: monospace; background:#f8fafc; padding:10px; border-radius:6px; border:1px solid #eef2f7; }
+    .actions { background:#f9fafb; border-left:4px solid #0b66c3; padding:10px; border-radius:4px; }
+    .signature { margin-top:20px; }
+    .footer { margin-top:28px; font-size:12px; color:#6b7280; border-top:1px solid #eef2f5; padding-top:12px; }
+    .note { font-size:13px; color:#374151; }
+    .red { color:#b91c1c; font-weight:600; }
+
+    /* Buttons with classic bevel */
+    button, .btn {
+      background:var(--panel);
+      border-top:2px solid #ffffff;
+      border-left:2px solid #ffffff;
+      border-bottom:2px solid var(--panel-dark);
+      border-right:2px solid var(--panel-dark);
+      padding:6px 10px;
+      cursor:pointer;
+      font-family:inherit;
     }
+
+    .get-started-btn { display:inline-block; text-decoration:none; color:#000; background:var(--panel); padding:6px 10px; border-top:2px solid #ffffff;border-left:2px solid #ffffff;border-bottom:2px solid var(--panel-dark);border-right:2px solid var(--panel-dark); }
+    .get-started-btn:active{ border-top:2px solid var(--panel-dark);border-left:2px solid var(--panel-dark);border-bottom:2px solid #ffffff;border-right:2px solid #ffffff }
+
+    @media (max-width:880px){ .app{grid-template-columns:1fr;padding:12px} header{flex-direction:column;align-items:flex-start} .panel{min-height:unset} }
   </style>
 </head>
 <body>
   <div class="app" role="application" aria-label="Simple email client">
     <header>
-      <h1>Simple Mail — Offline Demo</h1>
-      <div style="color:var(--muted);font-size:.9rem">No server, messages are hard-coded</div>
+      <div class="title-box">
+        <img src="astris_logo.png" alt="Astris logo" class="title-logo">
+        <div>
+          <h1>Ansible Mail</h1>
+        </div>
+      </div>
       <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
       <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
       <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -70,7 +102,7 @@
 
     <main class="panel message-view" id="viewer" aria-live="polite">
       <div id="empty" class="empty">
-        <p style="font-weight:600;color:#e6eef9">No message selected</p>
+        <p style="font-weight:600;color:#000000">No message selected</p>
         <p style="margin-top:8px;color:var(--muted)">Select a message on the left to view its contents.</p>
       </div>
 
@@ -81,7 +113,7 @@
             <div class="message-meta"><span id="msg-from"></span><span id="msg-time"></span></div>
           </div>
           <div style="display:flex;gap:8px">
-            <button id="mark-read" title="Toggle read">Mark</button>
+            <button id="mark-read" title="Toggle read">Mark Unread</button>
             <!-- <button id="delete" title="Delete">Delete</button> -->
           </div>
         </div>
@@ -95,28 +127,203 @@
     var messages = [
       {
         id: 'm1',
-        from: 'apate-ops@apate.local',
-        subject: 'Airlock telemetry spike — immediate review',
-        time: '2216-06-10 09:12',
-        body: `Team,\n\nTelemetry shows a short high-pressure spike on the airlock sequence at 03:12 UTC. The controller logged an emergency override followed by a forced depressurization. We've attached the partial logs.\n\n— Ops\n`,
-        unread: true
+        from: 'apate-hr@astris.com',
+        subject: 'Welcome to the Collective',
+        time: '2216-04-10 09:12',
+        body: `<p>Congratulations on joining the ranks of the outer system's premier mediation provider.<br><br>You should already have your credentials authenticated.<br>As a specialist in legacy computation, you can spend some time getting aquatinted with our infrastructure and archive systems while waiting for your first assignment.<br><br>Arnold Pate - Personal Liaison AAC</p>`,
+        unread: false
       },
       {
         id: 'm2',
-        from: 'legal@robopenguins.com',
-        subject: 'Liability waiver — apate mining incidents',
+        from: 'mharris-ops@astris.com',
+        subject: 'Archon LLC A382 Mining Investigation',
         time: '2216-06-09 15:42',
-        body: `Counsel,\n\nPlease confirm receipt of the updated liability waiver. The board requires signed copies from the on-site contractor within 72 hours.\n\nRegards,\nLegal Department`,
-        unread: true
+        body: `<p>Counsel,<br><br>You're being assigned to a labor relations dispute. There was an incident in an Archon LLC facility resulting in employee death.<br>Due to the proprietary systems involved, and the need for discretion, you will need to respond on site. Please visit the off site briefing facilities for further instructions.<br>Mike Harris - Operations AAC</p>`,
+        unread: false
       },
       {
         id: 'm3',
-        from: 'friend@example.com',
-        subject: 'Longshot: want to try the old debugger again?',
-        time: '2216-06-08 08:03',
-        body: `Hey,\n\nIf you're up for it, I found an old GDB script that makes core dumps nostalgic again. Coffee's on me.\n\n— Sam`,
+        from: 'sheart-legal@astris.com',
+        subject: 'Liability waiver',
+        time: '2216-06-09 16:42',
+        body: `<p>Counsel,<br><br>Please confirm receipt of the updated liability waiver. The board requires signed copies from the on-site contractor within 72 hours.<br><br>Regards,<br>Legal Department</p>`,
+        unread: false
+      },
+      {
+        id: 'm4',
+        from: 'archive@astris.com',
+        subject: 'Incident Report',
+        time: '2216-06-10 09:42',
+        body: `<div class="container" role="main" aria-labelledby="title">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true">ARCHON</div>
+        <div>
+          <h1 id="title">Archon LLC — A382 Mining Station</h1>
+          <div class="meta">Internal Accident Investigation Report — Station A382</div>
+        </div>
+      </div>
+    </header>
+
+    <section>
+      <h2>1. Report Overview</h2>
+      <table>
+        <tr>
+          <th>Report ID</th>
+          <td>ARC-A382-2216-05-27-01</td>
+        </tr>
+        <tr>
+          <th>Prepared by</th>
+          <td>Station Safety Office / Incident Investigation Team</td>
+        </tr>
+        <tr>
+          <th>Date of Report</th>
+          <td>May 27, 2216</td>
+        </tr>
+        <tr>
+          <th>Type</th>
+          <td>Fatality — Airlock / Depressurization Event</td>
+        </tr>
+        <tr>
+          <th>Location</th>
+          <td>A382 Mining Station — Sector B, Forward External Airlock #3 (Exterior Door)</td>
+        </tr>
+        <tr>
+          <th>Immediate Action</th>
+          <td>Station emergency response initiated; airlock sealed; external area secured; operations suspended pending investigation.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>2. Executive Summary</h2>
+        <p class="note">
+        At approximately 07:42 Z on May 25, 2216, a fatal incident occurred at A382 Mining Station when an internal airlock exterior hatch to opened while an employee was present at the interior doorway and prior to donning a certified extravehicular suit. The employee was exposed to the exterior environment and did not survive.
+      </p>
+    </section>
+
+    <section>
+      <h2>3. Incident Details</h2>
+      <table>
+        <tr>
+          <th>Employee</th>
+          <td>Alex Mercer — Maintenance Technician (ID: 4821)</td>
+        </tr>
+        <tr>
+          <th>Date & Time</th>
+          <td>May 25, 2216 — 07:46 Z (local station time)</td>
+        </tr>
+        <tr>
+          <th>Activity</th>
+          <td>Scheduled exterior maintenance: inspection of mining array connector on outboard strut B3.</td>
+        </tr>
+        <tr>
+          <th>Equipment Involved</th>
+          <td>Forward External Airlock #3 (airlock control PLC A3-Ex3); exterior hatch actuator assembly; suit locker A3-SLK-2.</td>
+        </tr>
+        <tr>
+          <th>Environmental Conditions</th>
+          <td>External vacuum; ambient temperature at exterior: -24°C equivalent; telemetry shows exterior pressure nominal (vacuum).</td>
+        </tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>4. Timeline (Collected from shift logs, CCTV & automated telemetry)</h2>
+      <div class="timeline">
+        07:30:32 — Technician Alex Mercer signs out for scheduled maintenance.<br/>
+        07:37:12 — Technician arrives at Forward External Airlock #3, interior side. Communication with maintenance lead indicates work to proceed after suit gear check.<br/>
+        07:40:50 — Technician interacts with exterior airlock control panel 3A1C3.<br/>
+        07:41:10 — Airlock control reports "airlock_state -> AIRLOCK_INTERIOR_OPEN".<br/>
+        07:41:20 — Technician is observed entering airlock.<br/>
+        07:41:50 — Technician interacts with interior airlock control panel 3A1C4.<br/>
+        07:42:15 — Airlock control reports "airlock_state -> AIRLOCK_CLOSED_PRESSURIZED".<br/>
+        07:42:15 — Without expected logging or notifications, the external door opens causing rapid depressurization.<br/>
+        07:42:17 — Airlock control application terminates with "segmentation fault (core dumped)".<br/>
+        07:42:19 — Technician is observed being thrown back by rapid decompression.<br/>
+        07:42:30 — Airlock control application restarts automatically sealing and repressurizing airlock.<br/>
+        07:43:21 — The control software fault notifies maintenance who initiate medical and rescue attempt.<br/>
+        07:54:24 — Emergency response team arrives; Technician pronounced deceased at scene by station medical officer at 08:02.<br/>
+      </div>
+    </section>
+
+    <section>
+      <h2>5. Witness Statements (summarized, names redacted where requested)</h2>
+      <p><strong>Maintenance Lead (on-shift):</strong> Confirms technician arrived and was to perform standard inspection.</p>
+      <p><strong>Senior Technician (last to perform airlock inspection):</strong> No anomalies reported during last routine maintenance check.</p>
+      <p><strong>Remote Operations:</strong> States no local or remote open command was issued. Logs show the command to open and close interior door, but nothing else.</p>
+    </section>
+
+    <section>
+      <h2>6. Evidence Collected</h2>
+      <ul>
+        <li>Airlock PLC telemetry and event log (A3-EX3) snapshot (preserved).</li>
+        <li>CCTV footage from interior corridor and airlock cameras (archived).</li>
+        <li>Suits and suit locker telemetry (locked/unlocked timestamps).</li>
+        <li>Operator console logs and maintenance scheduling records.</li>
+        <li>Physical inspection of exterior hatch actuator and interlock hardware (post-incident, safe-mode inspection).</li>
+        <li>Airlock computer storage snapshot including core dump.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>7. Immediate Corrective Actions (Already Implemented)</h2>
+      <div class="actions">
+        <ul>
+          <li>All external airlock cycles at A382 suspended until formal clearance.</li>
+          <li>Isolation of Forward External Airlock #3 actuator power; hatch locked in safe position.</li>
+          <li>Temporary manual interlock override disabled; hard lockout installed pending repairs.</li>
+          <li>Full forensic capture of PLC and console logs; chain-of-custody preserved for electronics and controller modules.</li>
+          <li>In compliance with the software responsibility act, Arbitration Authority contacted; external investigation team assigned.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>8. Post Audit Follow on Actions</h2>
+      <div class="actions">
+        <ul>
+          <li>Implement recommended hardware and software changes.</li>
+          <li>If liability is determined, initiate appropriate legal and regulatory actions.</li>
+          <li>Determine if any issues jeopardize continued station operations.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>9. Distribution</h2>
+      <p class="note">This document is classified as <span class="red">Internal — Confidential</span>. Distribution limited to Station Command, Corporate Safety, Corporate Legal, and Investigation Team members. Public release requires corporate approval and redaction of personal identifiers.</p>
+    </section>
+
+    <section class="signature">
+      <p>Prepared by:</p>
+      <p><strong>Investigation Team Lead:</strong> Mara Quinn — Station Safety Officer</p>
+      <p><strong>Reviewed by:</strong> Elias Kor (Operations Manager); Dr. S. Rhee (Corporate Safety)</p>
+      <p style="margin-top:12px; font-size:13px;">Date: May 27, 2216</p>
+    </section>
+
+    <div class="footer">
+      <div><strong>Attachments (see incident folder A382/INC-2025-11-27):</strong></div>
+      <ul>
+        <li>PLC event log snapshot (A3-EX3-logs.tar.gz)</li>
+        <li>CCTV footage clips (internal and airlock cameras)</li>
+        <li>Photographs of actuator assembly and interlock sensors</li>
+        <li>Signed witness statements</li>
+      </ul>
+      <p>If you have questions or require further information, contact the Station Safety Office: safety.a382@archon-llc.com</p>
+    </div>
+  </div>
+`,
         unread: true
-      }
+      },
+      {
+        id: 'm5',
+        from: 'mharris-ops@astris.com',
+        subject: 'Transport to A382',
+        time: '2216-06-11 10:42',
+        body: `The ship is at standby on dock 12 berth A3. Here are your travel credentials:<br><br><a href="rpg_maker/index.html">tracer2_b429_access.zrt</a><br><br>Make your initial report after reviewing the accident recording and doing an on premise verification of the airlock functionality.<br><br>Mike Harris - Operations AAC</p>`,
+        unread: true
+      },
     ];
 
     // Application state
@@ -177,7 +384,7 @@
       msgSubject.textContent = m.subject;
       msgFrom.textContent = 'From: ' + m.from;
       msgTime.textContent = m.time;
-      msgBody.textContent = m.body;
+      msgBody.innerHTML = m.body;
       // attach current id to viewer for actions
       messageEl.dataset.current = m.id;
     }
