@@ -11,6 +11,25 @@
     <link rel="stylesheet" type="text/css" href="css/game.css">
     <title>Fatal Core Dump</title>
     <style>
+        body {
+            background-color: black;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        #game-container {
+            flex: 1;
+        }
+
+        .button-container {
+            padding: 20px;
+            text-align: center;
+            background-color: black;
+        }
+
         .get-started-btn {
             display: inline-block;
             background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
@@ -40,10 +59,11 @@
     </style>
 </head>
 
-<body style="background-color: black">
+<body>
+    <div id="game-container"></div>
     <script type="text/javascript" src="js/main.js"></script>
     <div class="button-container">
-        <a href="report1.html" class="get-started-btn">Report Initial Findings</a>
+        <a href="../report1.html" class="get-started-btn">Report Initial Findings</a>
     </div>
 </body>
 

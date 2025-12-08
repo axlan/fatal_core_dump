@@ -149,3 +149,101 @@ footer p {
         font-size: 1.5rem;
     }
 }
+
+/* Report1 Form Styles */
+.form-group {
+    margin: 24px 0;
+    padding: 16px;
+    background: rgba(255, 107, 107, 0.05);
+    border-left: 4px solid #ff6b6b;
+    border-radius: 4px;
+}
+
+.form-group h2 {
+    margin: 0 0 16px 0;
+    font-size: 1.2rem;
+    color: #ff6b6b;
+}
+
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.radio-option input[type="radio"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    accent-color: #ff6b6b;
+}
+
+.radio-option label {
+    cursor: pointer;
+    flex: 1;
+    color: #d0d0d0;
+    margin: 0;
+}
+
+.radio-option input[type="radio"]:hover + label {
+    color: #e0e0e0;
+}
+
+.submit-btn {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+    color: #fff;
+    padding: 15px 40px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: 2px solid #ff6b6b;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.submit-btn:hover {
+    background: linear-gradient(135deg, #ff5252 0%, #ff3838 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.5);
+}
+
+.submit-btn:active {
+    transform: translateY(-1px);
+}
+
+.submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.result-message {
+    margin-top: 24px;
+    padding: 16px;
+    border-radius: 5px;
+    display: none;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.result-message.success {
+    background: rgba(34, 197, 94, 0.1);
+    border: 2px solid #22c55e;
+    color: #86efac;
+    display: block;
+}
+
+.result-message.error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 2px solid #ff6b6b;
+    color: #fca5a5;
+    display: block;
+}

@@ -57,6 +57,7 @@
     .note { font-size:13px; color:#374151; }
     .red { color:#b91c1c; font-weight:600; }
 
+
     /* Buttons with classic bevel */
     button, .btn {
       background:var(--panel);
@@ -137,7 +138,7 @@
         id: 'm2',
         from: 'mharris-ops@astris.com',
         subject: 'Archon LLC A382 Mining Investigation',
-        time: '2216-06-09 15:42',
+        time: '2216-06-09 15:23',
         body: `<p>Counsel,<br><br>You're being assigned to a labor relations dispute. There was an incident in an Archon LLC facility resulting in employee death.<br>Due to the proprietary systems involved, and the need for discretion, you will need to respond on site. Please visit the off site briefing facilities for further instructions.<br>Mike Harris - Operations AAC</p>`,
         unread: false
       },
@@ -153,7 +154,7 @@
         id: 'm4',
         from: 'archive@astris.com',
         subject: 'Incident Report',
-        time: '2216-06-10 09:42',
+        time: '2216-06-10 09:38',
         body: `<div class="container" role="main" aria-labelledby="title">
     <header>
       <div class="brand">
@@ -178,7 +179,7 @@
         </tr>
         <tr>
           <th>Date of Report</th>
-          <td>May 27, 2216</td>
+          <td>June 09, 2216</td>
         </tr>
         <tr>
           <th>Type</th>
@@ -198,7 +199,7 @@
     <section>
       <h2>2. Executive Summary</h2>
         <p class="note">
-        At approximately 07:46 Z on May 25, 2216, a fatal incident occurred at A382 Mining Station when an internal airlock control sequence permitted the exterior hatch to open while an employee was present at the interior doorway and prior to donning a certified extravehicular suit. The employee was exposed to the exterior environment and did not survive. This report documents the facts collected, preliminary findings, identified causes, and recommended corrective actions to prevent recurrence.
+        At approximately 07:42 Z on May 25, 2216, a fatal incident occurred at A382 Mining Station when an internal airlock exterior hatch to opened while an employee was present at the interior doorway and prior to donning a certified extravehicular suit. The employee was exposed to the exterior environment and did not survive.
       </p>
     </section>
 
@@ -231,139 +232,77 @@
     <section>
       <h2>4. Timeline (Collected from shift logs, CCTV & automated telemetry)</h2>
       <div class="timeline">
-        07:30 — Technician Alex Mercer signs out for scheduled maintenance.<br/>
-        07:37 — Technician arrives at Forward External Airlock #3, interior side. Communication with maintenance lead indicates work to proceed after suit gear check.<br/>
-        07:40 — Airlock control panel reports "interlock check in progress"; suit locker status shows no suit removed from locker A3-SLK-2.<br/>
-        07:44 — Maintenance lead authorizes pre-EVA preparation; technician is observed performing visual inspection of exterior hatch area through interior airlock viewport.<br/>
-        07:45:55 — Airlock PLC reports "Cycle Start" and begins depressurization sequence (unexpected — no explicit EVA authorization logged).<br/>
-        07:46:02 — Interior speakers announce "External Hatch Opening". Interior hatch remains closed. Exterior hatch begins to open while interior pressure is still within safe limits.<br/>
-        07:46:07 — Technician moves toward interior hatch but does not have a suited seal in place; CCTV shows technician exposed at the inner doorway when exterior hatch reaches full open.<br/>
-        07:46:20 — Emergency stop command issued by on-shift operator but exterior hatch remains open; external environment rapidly depressurizes adjacent compartment; immediate medical and rescue attempt initiated.<br/>
-        07:54 — Emergency response team arrives; evacuation and emergency measures performed. Technician pronounced deceased at scene by station medical officer at 08:02.<br/>
+        07:30:32 — Technician Alex Mercer signs out for scheduled maintenance.<br/>
+        07:37:12 — Technician arrives at Forward External Airlock #3, interior side. Communication with maintenance lead indicates work to proceed after suit gear check.<br/>
+        07:40:50 — Technician interacts with exterior airlock control panel 3A1C3.<br/>
+        07:41:10 — Airlock control reports "airlock_state -> AIRLOCK_INTERIOR_OPEN".<br/>
+        07:41:20 — Technician is observed entering airlock.<br/>
+        07:41:50 — Technician interacts with interior airlock control panel 3A1C4.<br/>
+        07:42:15 — Airlock control reports "airlock_state -> AIRLOCK_CLOSED_PRESSURIZED".<br/>
+        07:42:15 — Without expected logging or notifications, the external door opens causing rapid depressurization.<br/>
+        07:42:17 — Airlock control application terminates with "segmentation fault (core dumped)".<br/>
+        07:42:19 — Technician is observed being thrown back by rapid decompression.<br/>
+        07:42:30 — Airlock control application restarts automatically sealing and repressurizing airlock.<br/>
+        07:43:21 — The control software fault notifies maintenance who initiate medical and rescue attempt.<br/>
+        07:54:24 — Emergency response team arrives; Technician pronounced deceased at scene by station medical officer at 08:02.<br/>
       </div>
     </section>
 
     <section>
       <h2>5. Witness Statements (summarized, names redacted where requested)</h2>
-      <p><strong>Maintenance Lead (on-shift):</strong> Confirms technician arrived and was to perform standard inspection. States no authorization to commence EVA was given at 07:45 — believed technician would don suit before sequence start.</p>
-      <p><strong>Airlock Operator:</strong> States no manual open command was issued from console. Logs show an automated sequence started. Emergency stop was attempted immediately upon noticing exterior hatch movement.</p>
-      <p><strong>Nearby Crew:</strong> Reported hearing the airlock sequence and seeing technician at the hatch without suit. Attempted to assist but were impeded by rapid change in pressure and safety systems.</p>
+      <p><strong>Maintenance Lead:</strong> Confirms routine inspections had been performed without any notes. Post accident inspection showed no physical anomalies.</p>
+      <p><strong>Senior Technician:</strong> No anomalies reported during last routine maintenance check. <strong>However, it appears that the airlock was left in diagnostic mode.</strong>. This was part of a data collection effort by the Archon LLC in house software development team.</p>
+      <p><strong>Remote Operations:</strong> States no local or remote open command was issued. Logs last show the local commands to open and close interior door.</p>
     </section>
 
     <section>
-      <h2>6. Evidence Collected</h2>
+      <h2>6. Diagnostic Mode Follow Up Details</h2>
+      <p>The only departure from nominal operation was the diagnostic mode being left on.</p>
+      <p>The documented effects of Diagnostic Mode are as follows:</p>
+      <ul>
+        <li>The application runs with a "debug" binary. This has fewer optimizations and additional debugging information.</li>
+        <li>Some memory protection strategies are turned off.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>7. Evidence Collected</h2>
       <ul>
         <li>Airlock PLC telemetry and event log (A3-EX3) snapshot (preserved).</li>
         <li>CCTV footage from interior corridor and airlock cameras (archived).</li>
         <li>Suits and suit locker telemetry (locked/unlocked timestamps).</li>
         <li>Operator console logs and maintenance scheduling records.</li>
         <li>Physical inspection of exterior hatch actuator and interlock hardware (post-incident, safe-mode inspection).</li>
+        <li>Airlock computer storage snapshot including core dump.</li>
       </ul>
     </section>
 
     <section>
-      <h2>7. Preliminary Findings</h2>
-      <ol>
-        <li><strong>Unauthorized Airlock Cycle:</strong> System telemetry indicates the airlock entered a ‟Cycle Start” state and proceeded through depressurization/opening without an explicit authorized EVA command recorded by the operator console.</li>
-        <li><strong>Interlock Failure or Bypass:</strong> The interior mechanical interlock (designed to prevent exterior hatch opening unless interior hatch sealed and suit lock engaged) did not prevent exterior hatch actuation. Physical inspection suggests an electrical interlock signal was present but the hatch actuator responded despite interlock state.</li>
-        <li><strong>Human Factors:</strong> The technician was positioned at the interior doorway without full suit seal. Communication indicates assumptions were made by both technician and lead that the other would confirm suit readiness prior to cycle start.</li>
-        <li><strong>Software/Control Anomaly:</strong> Airlock PLC shows a transient fault and a restart event 2 minutes prior to the cycle start; sequence timestamps overlap with automated maintenance scheduling task that should not have authority to actuate hatch without manual confirmation.</li>
-      </ol>
-    </section>
-
-    <section>
-      <h2>8. Root Cause Analysis (Preliminary)</h2>
-      <p class="note"><strong>Root Causes Identified:</strong></p>
-      <ul>
-        <li><strong>Control System Deficiency:</strong> A software/configuration error permitted an automated maintenance task to initiate a full airlock cycle without satisfying interlock condition checks at the PLC level.</li>
-        <li><strong>Mechanical/Electrical Vulnerability:</strong> The hatch actuator responded to a control signal despite an interlock assertion — likely due to insufficient hardwired fail-safe separation between actuator power and interlock sensor circuits.</li>
-        <li><strong>Procedural and Human Factors:</strong> Inadequate procedural enforcement (pre-EVA checklist not physically verified), and a breakdown in cross-check behavior between technician and lead.</li>
-      </ul>
-    </section>
-
-    <section>
-      <h2>9. Immediate Corrective Actions (Already Implemented)</h2>
+      <h2>8. Immediate Corrective Actions (Already Implemented)</h2>
       <div class="actions">
         <ul>
           <li>All external airlock cycles at A382 suspended until formal clearance.</li>
           <li>Isolation of Forward External Airlock #3 actuator power; hatch locked in safe position.</li>
           <li>Temporary manual interlock override disabled; hard lockout installed pending repairs.</li>
-          <li>Emergency stand-down and mandatory safety briefing for all station personnel (completed 09:30 Z, May 25, 2216).</li>
           <li>Full forensic capture of PLC and console logs; chain-of-custody preserved for electronics and controller modules.</li>
+          <li>In compliance with the software responsibility act, Arbitration Authority contacted; external investigation team assigned.</li>
         </ul>
       </div>
     </section>
 
     <section>
-      <h2>10. Recommended Corrective Actions (For Implementation)</h2>
-      <ol>
-        <li><strong>Technical Remediations (High Priority):</strong>
-          <ul>
-            <li>Perform immediate software rollback or patch at PLC that enforces <em>hard</em> interlock checks prior to exterior hatch actuation.</li>
-            <li>Re-design hatch actuator wiring to ensure mechanical power cannot be applied when interlock sensors indicate unsafe conditions (introduce separate safety-rated contactors).</li>
-            <li>Install redundant, independent interlock verification channels (diverse sensors) on all external airlocks.</li>
-          </ul>
-        </li>
-        <li><strong>Procedural & Administrative:</strong>
-          <ul>
-            <li>Revise EVA authorization procedures to require two-person signed confirmation (technician + lead) on a physical checklist before any airlock cycle.</li>
-            <li>Implement a mandatory "suit-on, seal-verified" confirmation step with a visual confirmation protocol (camera/indicator) recorded in the log before cycle initiation.</li>
-            <li>Update maintenance scheduling system to remove any automated tasks that can actuate safety-critical hardware without a manual final authorization.</li>
-          </ul>
-        </li>
-        <li><strong>Training & Culture:</strong>
-          <ul>
-            <li>Conduct ASAP retraining for all maintenance and operations personnel on new procedures and on human-factors awareness to avoid assumption-based actions.</li>
-            <li>Introduce periodic emergency drills for airlock depressurization and rescue procedures.</li>
-          </ul>
-        </li>
-        <li><strong>Investigation & Reporting:</strong>
-          <ul>
-            <li>Complete full root cause report within 30 days, including hardware failure analysis and software code review.</li>
-            <li>Coordinate with corporate safety and legal to report to regulatory bodies as required and to conduct an independent third-party audit of airlock systems across the fleet.</li>
-          </ul>
-        </li>
-      </ol>
+      <h2>9. Post Audit Follow on Actions</h2>
+      <div class="actions">
+        <ul>
+          <li>Implement recommended hardware and software changes.</li>
+          <li>If liability is determined, initiate appropriate legal and regulatory actions.</li>
+          <li>Determine if any issues jeopardize continued station operations.</li>
+        </ul>
+      </div>
     </section>
 
     <section>
-      <h2>11. Long-Term Recommendations</h2>
-      <p class="note">Consider a station-wide program to upgrade legacy interlock hardware to modern safety-rated relays and implement centralized monitoring of safety-critical system health. Evaluate personnel scheduling and shift overlap to ensure supervision on all external work windows.</p>
-    </section>
-
-    <section>
-      <h2>12. Actions Required of Responsible Parties</h2>
-      <table>
-        <tr>
-          <th>Responsible</th>
-          <th>Action</th>
-          <th>Due</th>
-        </tr>
-        <tr>
-          <td>Station Engineering Lead</td>
-          <td>Isolate and repair Forward External Airlock #3 actuator and implement hardware fail-safes.</td>
-          <td>Immediate (isolation); Repair plan within 5 days.</td>
-        </tr>
-        <tr>
-          <td>Operations Manager</td>
-          <td>Enforce temporary suspension of all unsanctioned airlock cycles; implement two-person authorization checklist.</td>
-          <td>Within 24 hours.</td>
-        </tr>
-        <tr>
-          <td>Corporate Safety</td>
-          <td>Initiate independent review and audit; report to regulatory authority per corporate legal counsel.</td>
-          <td>Independent review initiated within 48 hours; report within 30 days.</td>
-        </tr>
-      </table>
-    </section>
-
-    <section>
-      <h2>13. Conclusions</h2>
-      <p class="note">This incident is a fatal workplace event resulting from a combination of technical failures and procedural shortcomings. Archon LLC treats the loss of life with the highest gravity. Immediate containment actions have been taken, and the investigation is ongoing. The recommendations above are intended to eliminate the identified vulnerabilities and to strengthen human-system processes to prevent recurrence.</p>
-    </section>
-
-    <section>
-      <h2>14. Distribution</h2>
+      <h2>10. Distribution</h2>
       <p class="note">This document is classified as <span class="red">Internal — Confidential</span>. Distribution limited to Station Command, Corporate Safety, Corporate Legal, and Investigation Team members. Public release requires corporate approval and redaction of personal identifiers.</p>
     </section>
 
@@ -390,9 +329,106 @@
       },
       {
         id: 'm5',
+        from: 'rlark-psych@astris.com',
+        subject: 'Interpersonal Dynamics Overview',
+        time: '2216-06-11 10:21',
+        body: `
+<h1>Interpersonal Dynamics Report<br>A382 Mining Station<br><small>Owned by Archon LLC</small></h1>
+<p><em>Date: May 25, 2216</em></p>
+
+<section class="overview">
+    <h2>Overview</h2>
+    <p>
+        This report provides a sociological and operational overview of interpersonal dynamics aboard the
+        A382 Mining Station, with particular attention to how contractual obligations, corporate provisions,
+        and economic pressures shape the behavior, morale, and interactions of station personnel.
+    </p>
+</section>
+
+<section class="dynamics">
+    <h2>1. Economic Dependency and De Facto Indenturing</h2>
+    <p>
+        All employees stationed aboard A382 are bound by long-term employment contracts with Archon LLC.
+        Due to the extreme cost of interstellar transport, workers are unable to independently afford passage
+        off the station. This economic barrier creates a functional system of indenture: while not explicitly
+        labeled as such, the inability to leave without corporate assistance binds workers to the station for
+        the duration of their contract.
+    </p>
+    <p>
+        As a result, interpersonal dynamics are heavily influenced by shared dependency, creating a mixture of
+        solidarity among workers and a palpable undercurrent of resignation regarding long-term prospects.
+    </p>
+</section>
+
+<section class="dynamics">
+    <h2>2. Company-Provided Amenities</h2>
+    <p>
+        Archon LLC supplies all essential amenities, including housing pods, food, medical care, entertainment
+        terminals, and climate-controlled communal spaces. While this eliminates logistical burdens on the
+        workforce, it also reinforces the corporate monopoly on quality of life aboard the station.
+    </p>
+    <p>
+        Workers frequently rely on these amenities as points of social connection. Communal dining and shared
+        recreation hubs serve as the primary venues for relationship-building, conflict resolution, and
+        stress management.
+    </p>
+</section>
+
+<section class="dynamics">
+    <h2>3. Productivity Pressure and Lethal Stakes</h2>
+    <p>
+        The station's output quotas heavily influence worker behavior. Insufficient productivity is grounds
+        for contract termination. Due to the cost of offsite evacuation and the station’s remote location,
+        termination effectively equates to a death sentence—employees would be removed from protected
+        living zones without the means to leave the hazardous environment.
+    </p>
+    <p>
+        This reality creates a culture of heightened vigilance, mutual monitoring, and collective efforts to
+        ensure no crew member falls behind. Peer pressure is intense, and interpersonal tensions often arise
+        when one individual's performance is perceived as endangering the entire team's standing.
+    </p>
+</section>
+
+<section class="contract">
+    <h2>4. Contractual Framework and Safeguards</h2>
+    <p>
+        The employment contract is explicit regarding both obligations and protections. While workers are
+        required to meet productivity benchmarks and remain on-site for the contract duration, Archon LLC is
+        legally bound to provide living conditions and food of a minimum certified quality.
+    </p>
+    <p>
+        Additionally, the contract stipulates that any negligence by the company in providing safe living or
+        working conditions triggers mandatory remediation: the corporation must fund the employee's
+        offsite transportation and severance package. This clause provides a rare point of leverage for
+        workers and serves as a shared reference point during disputes concerning maintenance delays,
+        environmental controls, or equipment failures.
+    </p>
+</section>
+
+<section class="dynamics">
+    <h2>5. Social Cohesion and Conflict Patterns</h2>
+    <p>
+        Interpersonal relationships aboard A382 tend to polarize into two categories:
+    </p>
+    <ul>
+        <li><strong>Cooperative Cohorts:</strong> Small groups formed around mutual support, shared shifts, and
+            communal coping strategies.</li>
+        <li><strong>Stress-Driven Factions:</strong> Occasional cliques formed around distrust of management,
+            fears of underperformance, or disagreements regarding contract interpretation.</li>
+    </ul>
+    <p>
+        Overall, the social fabric of A382 is characterized by a mix of camaraderie and pressure, all mediated
+        through the omnipresent influence of corporate policy and economic immobility.
+    </p>
+</section>
+        `,
+        unread: true
+      },
+      {
+        id: 'm6',
         from: 'mharris-ops@astris.com',
         subject: 'Transport to A382',
-        time: '2216-06-11 10:42',
+        time: '2216-06-11 10:45',
         body: `The ship is at standby on dock 12 berth A3. Here are your travel credentials:<br><br><a href="rpg_maker/index.html">tracer2_b429_access.zrt</a><br><br>Make your initial report after reviewing the accident recording and doing an on premise verification of the airlock functionality.<br><br>Mike Harris - Operations AAC</p>`,
         unread: true
       },
