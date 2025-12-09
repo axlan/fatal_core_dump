@@ -20,7 +20,7 @@ enum SDNMsgType
     SDN_MSG_TYPE_SET_OPEN = 4,
     SDN_MSG_TYPE_SET_AIRLOCK_OPEN = 4,
     SDN_MSG_TYPE_SENSOR_OCCUPANCY = 5,
-    SDN_MSG_TYPE_DEBUG_WRITE_MEM = 6,
+    SDN_MSG_TYPE_DEBUG_WRITE_CONFIG_INT = 6,
     SDN_MSG_TYPE_CLEAR_FAULTS = 7,
     SDN_MSG_TYPE_LOG = 8,
 };
@@ -116,13 +116,12 @@ struct SDNSetAirlockOpenMessage
     uint8_t open; // See SDNAirlockOpen
 };
 
-typedef struct SDNDebugWriteMemMessage SDNDebugWriteMemMessage;
-struct SDNDebugWriteMemMessage
+typedef struct SDNDebugWriteConfigInt SDNDebugWriteConfigInt;
+struct SDNDebugWriteConfigInt
 {
     SDNMsgHeader msg_header;
-    uint64_t address; // address to write to
-    // variable length payload follows; use msg_header.msg_length to determine size
-    uint8_t data[];
+    char key[32]; // key to update
+    int32_t value;
 };
 
 typedef struct SDNClearFaultsMessage SDNClearFaultsMessage;

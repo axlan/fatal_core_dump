@@ -7,7 +7,7 @@ CFLAGS_BASE := -fPIC -Wall -Wextra
 
 ifeq ($(MODE),debug)
 # Debug mode: no optimizations, include debug symbols
-CFLAGS := $(CFLAGS_BASE) -O0 -g
+CFLAGS := $(CFLAGS_BASE) -O0 -g -DAPP_DEBUG_BUILD=1
 else
 # Release mode: optimize
 CFLAGS := $(CFLAGS_BASE) -O2

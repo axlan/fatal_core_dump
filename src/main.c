@@ -7,6 +7,12 @@
 #include "log.h"
 #include "sdn_interface.h"
 
+/////////////// Macros ///////////////////
+#ifndef APP_DEBUG_BUILD
+    #define APP_DEBUG_BUILD 0
+#endif
+
+
 /////////////// Constants ////////////////
 
 static const float PRESSURE_ERROR_TOLERANCE = 0.1;
@@ -52,7 +58,18 @@ enum AirlockState
     AIRLOCK_DEPRESSURIZING,
 };
 
-////////////////////// Implementation //////////////////////
+typedef struct AirlockConfig AirlockConfig;
+struct AirlockConfig
+{
+    uint32_t device_id;
+    uint32_t inside_door_id;
+    uint32_t outside_door_id;
+    uint32_t pressure_ctrl_id;
+    uint32_t occupancy_sensor_id;
+    uint32_t message_buffer_size;
+};
+
+////////////////////// Implementation ///////////////////////
 
 static bool ControlDoor(uint32_t device_id, uint32_t door_device_id, bool is_open)
 {
@@ -105,17 +122,59 @@ bool InitializeSDN(uint32_t device_id, uint32_t inside_door_id, uint32_t outside
     return true;
 }
 
+static bool LoadConfig(AirlockConfig *config)
+{
+    int tmp = 0;
+
+    if (!LoadConfigInt(&tmp, "device_id"))
+    {
+        return false;
+    }
+    config->device_id = (uint32_t)tmp;
+
+    if (!LoadConfigInt(&tmp, "inside_door_id"))
+    {
+        return false;
+    }
+    config->inside_door_id = (uint32_t)tmp;
+
+    if (!LoadConfigInt(&tmp, "outside_door_id"))
+    {
+        return false;
+    }
+    config->outside_door_id = (uint32_t)tmp;
+
+    if (!LoadConfigInt(&tmp, "pressure_ctrl_id"))
+    {
+        return false;
+    }
+    config->pressure_ctrl_id = (uint32_t)tmp;
+
+    if (!LoadConfigInt(&tmp, "occupancy_sensor_id"))
+    {
+        return false;
+    }
+    config->occupancy_sensor_id = (uint32_t)tmp;
+
+    if (!LoadConfigInt(&tmp, "message_buffer_size"))
+    {
+        return false;
+    }
+    config->message_buffer_size = (uint32_t)tmp;
+
+    return true;
+}
+
 int main()
 {
-    uint32_t device_id = 0;
-    uint32_t inside_door_id = 0;
-    uint32_t outside_door_id = 0;
-    uint32_t pressure_ctrl_id = 0;
-    uint32_t occupancy_sensor_id = 0;
-    uint32_t message_buffer_size = 0;
-    int tmp = 0;
+    AirlockConfig config = {0};
     void *message_buffer = NULL;
     uint32_t fault_bits = 0;
+
+    if (!LoadConfig(&config))
+    {
+        return 1;
+    }
 
     DoorStatus door_status[2];
     memset(door_status, 0, sizeof(door_status));
@@ -141,59 +200,23 @@ int main()
     *airlock_pressures[0] = NAN;
     *airlock_pressures[1] = NAN;
 
-    if (!LoadConfigInt(&tmp, "device_id"))
-    {
-        return 1;
-    }
-    device_id = (uint32_t)tmp;
-
-    if (!LoadConfigInt(&tmp, "inside_door_id"))
-    {
-        return 1;
-    }
-    inside_door_id = (uint32_t)tmp;
-
-    if (!LoadConfigInt(&tmp, "outside_door_id"))
-    {
-        return 1;
-    }
-    outside_door_id = (uint32_t)tmp;
-
-    if (!LoadConfigInt(&tmp, "pressure_ctrl_id"))
-    {
-        return 1;
-    }
-    pressure_ctrl_id = (uint32_t)tmp;
-
-    if (!LoadConfigInt(&tmp, "occupancy_sensor_id"))
-    {
-        return 1;
-    }
-    occupancy_sensor_id = (uint32_t)tmp;
-
-    if (!LoadConfigInt(&tmp, "message_buffer_size"))
-    {
-        return 1;
-    }
-    message_buffer_size = (uint32_t)tmp;
-
-    if (!InitializeSDN(device_id, inside_door_id, outside_door_id))
+    if (!InitializeSDN(config.device_id, config.inside_door_id, config.outside_door_id))
     {
         return 2;
     }
 
-    message_buffer = malloc(message_buffer_size);
+    message_buffer = malloc(config.message_buffer_size);
     if (message_buffer == NULL)
     {
         return 3;
     }
 
-    if (!ControlDoor(device_id, outside_door_id, false) || !ControlDoor(device_id, inside_door_id, false))
+    if (!ControlDoor(config.device_id, config.outside_door_id, false) || !ControlDoor(config.device_id, config.inside_door_id, false))
     {
         return 4;
     }
 
-    if (!ControlPressure(device_id, pressure_ctrl_id, true, &pressure_change_time))
+    if (!ControlPressure(config.device_id, config.pressure_ctrl_id, true, &pressure_change_time))
     {
         return 4;
     }
@@ -202,7 +225,7 @@ int main()
     {
         while (true)
         {
-            int ret = ReadNextMessage(message_buffer, message_buffer_size);
+            int ret = ReadNextMessage(message_buffer, config.message_buffer_size);
             if (ret < 0)
             {
                 return 5;
@@ -223,9 +246,9 @@ int main()
                     SDNHeartBeatMessage *hb = (SDNHeartBeatMessage *)message_buffer;
                     uint32_t src_id = msg_header->device_id;
                     int idx = -1;
-                    if (src_id == inside_door_id)
+                    if (src_id == config.inside_door_id)
                         idx = INNER_DOOR_IDX;
-                    else if (src_id == outside_door_id)
+                    else if (src_id == config.outside_door_id)
                         idx = OUTER_DOOR_IDX;
                     if (idx >= 0)
                     {
@@ -246,9 +269,9 @@ int main()
                     SDNPressureMessage *pm = (SDNPressureMessage *)message_buffer;
                     uint32_t src_id = msg_header->device_id;
                     int idx = -1;
-                    if (src_id == inside_door_id)
+                    if (src_id == config.inside_door_id)
                         idx = INNER_DOOR_IDX;
-                    else if (src_id == outside_door_id)
+                    else if (src_id == config.outside_door_id)
                         idx = OUTER_DOOR_IDX;
                     if (idx >= 0)
                     {
@@ -281,7 +304,7 @@ int main()
                     SDNAirlockOpen airlock_req = cf->open;
                     if (airlock_req == SDN_AIRLOCK_CLOSED)
                     {
-                        if (!ControlDoor(device_id, outside_door_id, false) || !ControlDoor(device_id, inside_door_id, false))
+                        if (!ControlDoor(config.device_id, config.outside_door_id, false) || !ControlDoor(config.device_id, config.inside_door_id, false))
                         {
                             return 4;
                         }
@@ -306,7 +329,7 @@ int main()
                             break;
                         case AIRLOCK_CLOSED_PRESSURIZED:
                             // safe to open interior door
-                            if (!ControlDoor(device_id, inside_door_id, true))
+                            if (!ControlDoor(config.device_id, config.inside_door_id, true))
                             {
                                 return 4;
                             }
@@ -317,11 +340,11 @@ int main()
                         case AIRLOCK_CLOSED_DEPRESSURIZED:
                         case AIRLOCK_DEPRESSURIZING:
                             // close exterior first (if needed), then pressurize
-                            if (!ControlDoor(device_id, outside_door_id, false))
+                            if (!ControlDoor(config.device_id, config.outside_door_id, false))
                             {
                                 return 4;
                             }
-                            if (!ControlPressure(device_id, pressure_ctrl_id, true, &pressure_change_time))
+                            if (!ControlPressure(config.device_id, config.pressure_ctrl_id, true, &pressure_change_time))
                             {
                                 return 4;
                             }
@@ -336,7 +359,7 @@ int main()
                     else if (airlock_req == SDN_AIRLOCK_EXTERIOR_OPEN)
                     {
                         // NOTE: Pointers to original request message are invalid now since buffer has been reused.
-                        int occupancy_resp = GetResponse(message_buffer, message_buffer_size, occupancy_sensor_id, SDN_MSG_TYPE_SENSOR_OCCUPANCY);
+                        int occupancy_resp = GetResponse(message_buffer, config.message_buffer_size, config.occupancy_sensor_id, SDN_MSG_TYPE_SENSOR_OCCUPANCY);
                         if (occupancy_resp < (int)sizeof(SDNOccupancyMessage))
                         {
                             return 5;
@@ -363,7 +386,7 @@ int main()
                                 break;
                             case AIRLOCK_CLOSED_DEPRESSURIZED:
                                 // safe to open exterior door
-                                if (!ControlDoor(device_id, outside_door_id, true))
+                                if (!ControlDoor(config.device_id, config.outside_door_id, true))
                                 {
                                     return 4;
                                 }
@@ -374,11 +397,11 @@ int main()
                             case AIRLOCK_CLOSED_PRESSURIZED:
                             case AIRLOCK_PRESSURIZING:
                                 // close interior first (if needed), then depressurize
-                                if (!ControlDoor(device_id, inside_door_id, false))
+                                if (!ControlDoor(config.device_id, config.inside_door_id, false))
                                 {
                                     return 4;
                                 }
-                                if (!ControlPressure(device_id, pressure_ctrl_id, false, &pressure_change_time))
+                                if (!ControlPressure(config.device_id, config.pressure_ctrl_id, false, &pressure_change_time))
                                 {
                                     return 4;
                                 }
@@ -419,14 +442,20 @@ int main()
             }
             break;
 
-            case SDN_MSG_TYPE_DEBUG_WRITE_MEM:
+#if APP_DEBUG_BUILD
+            case SDN_MSG_TYPE_DEBUG_WRITE_CONFIG_INT:
             {
-                SDNDebugWriteMemMessage *cf = (SDNDebugWriteMemMessage *)message_buffer;
-                size_t payload_size = cf->msg_header.msg_length - sizeof(SDNDebugWriteMemMessage);
-                memcpy((uint8_t *)cf->address, cf->data, payload_size);
+                SDNDebugWriteConfigInt *cf = (SDNDebugWriteConfigInt *)message_buffer;
+                cf->key[sizeof(cf->key) - 1] = 0;
                 fault_bits &= FAULT_DEBUGGER;
+                if (WriteConfigInt(cf->key, cf->value)) {
+                    if (!LoadConfig(&config)) {
+                        return 1;
+                    }
+                }
             }
             break;
+#endif
 
             default:
                 break;
