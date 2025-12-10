@@ -68,6 +68,9 @@ struct SDNOccupancyInfo
 {
     uint32_t user_id;
     uint8_t suit_status;
+    uint16_t user_preferences_len;
+    // variable length payload follows; use user_preferences_len to determine size
+    uint8_t user_preferences[];
 };
 
 typedef struct SDNOccupancyMessage SDNOccupancyMessage;

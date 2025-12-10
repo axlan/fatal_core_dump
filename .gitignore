@@ -10,6 +10,8 @@
 
 # Editor and OS files
 .idea/
+.codechecker/
 *.swp
 *~
 .DS_Store
+.gdb_history

@@ -365,16 +365,24 @@ int main()
                             return 5;
                         }
 
-                        const SDNOccupancyInfo *occupants = ((SDNOccupancyMessage *)message_buffer)->occupants;
-                        size_t num_occupants = (occupancy_resp - sizeof(SDNOccupancyMessage)) / sizeof(SDNOccupancyInfo);
                         bool safe_to_open = true;
-                        for (unsigned i = 0; i < num_occupants; i++)
+
+                        // Iterate through variable-length occupant entries
+                        size_t buffer_end = (size_t)occupancy_resp;
+                        size_t offset = sizeof(SDNOccupancyMessage);
+
+                        while (offset + sizeof(SDNOccupancyInfo) < buffer_end)
                         {
-                            if (occupants[i].suit_status != SDN_SUIT_STATUS_SEALED)
+                            const SDNOccupancyInfo *occupant = (const SDNOccupancyInfo *)((uint8_t *)message_buffer + offset);
+
+                            if (occupant->suit_status != SDN_SUIT_STATUS_SEALED)
                             {
                                 safe_to_open = false;
                                 break;
                             }
+
+                            // Move to next occupant entry
+                            offset += sizeof(SDNOccupancyInfo) + occupant->user_preferences_len;
                         }
 
                         if (safe_to_open)

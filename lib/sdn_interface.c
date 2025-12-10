@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <string.h>
+
 #include "sdn_interface.h"
 #include "log.h"
 
@@ -166,6 +168,33 @@ static size_t SendAirlockExtOpenCmd(void *msg_buffer, size_t buffer_size_bytes, 
     return SendAirlockCmd(msg_buffer, buffer_size_bytes, next_time_ms, SDN_AIRLOCK_EXTERIOR_OPEN);
 }
 
+static size_t SendAirlockCloseCmd(void *msg_buffer, size_t buffer_size_bytes, sdn_timestamp_t *next_time_ms)
+{
+    sdn_log(SDN_DEBUG, "SDN_AIRLOCK_CLOSED");
+    return SendAirlockCmd(msg_buffer, buffer_size_bytes, next_time_ms, SDN_AIRLOCK_CLOSED);
+}
+
+static size_t SendLargeBufferSizeConfigCmd(void *msg_buffer, size_t buffer_size_bytes, sdn_timestamp_t *next_time_ms)
+{
+    *next_time_ms = 0xFFFFFFFFFFFFFFFF;
+    if (buffer_size_bytes >= sizeof(SDNDebugWriteConfigInt))
+    {
+        SDNDebugWriteConfigInt *msg = (SDNDebugWriteConfigInt *)msg_buffer;
+        msg->msg_header.device_id = SDN_DEVICE_ID_CONTROL_PANEL_STATION;
+        msg->msg_header.msg_length = sizeof(SDNSetAirlockOpenMessage);
+        msg->msg_header.msg_type = SDN_MSG_TYPE_DEBUG_WRITE_CONFIG_INT;
+        msg->msg_header.timestamp = dummy_timestamp;
+        strcpy(msg->key, "message_buffer_size");
+        msg->value = 10240;
+        return sizeof(SDNDebugWriteConfigInt);
+    }
+    else
+    {
+        sdn_log(SDN_ERROR, "ReadNextMessage: buffer too small for SendLargeBufferSizeConfigCmd");
+    }
+    return 0;
+}
+
 typedef size_t (*MessageGenerator)(void *msg_buffer, size_t buffer_size_bytes, sdn_timestamp_t *next_time_ms);
 typedef struct MessageEvent MessageEvent;
 struct MessageEvent
@@ -197,6 +226,10 @@ static MessageEvent message_events[] = {
      .generator = SendAirlockIntOpenCmd},
     {.next_time_ms = 650,
      .generator = SendAirlockExtOpenCmd},
+    {.next_time_ms = 1000,
+     .generator = SendAirlockCloseCmd},
+    {.next_time_ms = 2000,
+     .generator = SendLargeBufferSizeConfigCmd},
 };
 static size_t NUM_MESSAGE_EVENTS = sizeof(message_events) / sizeof(MessageEvent);
 
