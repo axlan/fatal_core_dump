@@ -12,6 +12,9 @@ typedef uint64_t sdn_timestamp_t;
 
 typedef void (*sdn_msg_callback_t)(void *message_data, size_t msg_len);
 
+#define SDN_CMD_SUCCESS 0
+#define SDN_HEALTH_GOOD 0
+
 typedef enum SDNMsgType SDNMsgType;
 enum SDNMsgType
 {
@@ -25,6 +28,7 @@ enum SDNMsgType
     SDN_MSG_TYPE_DEBUG_WRITE_CONFIG_INT = 6,
     SDN_MSG_TYPE_CLEAR_FAULTS = 7,
     SDN_MSG_TYPE_LOG = 8,
+    SDN_MSG_TYPE_SET_SUIT_OCCUPANT = 10,
 };
 
 typedef struct SDNHandler SDNHandler;
@@ -32,6 +36,14 @@ struct SDNHandler
 {
     SDNMsgType type;
     sdn_msg_callback_t callback;
+};
+
+typedef enum SDNResponseStatus SDNResponseStatus;
+enum SDNResponseStatus
+{
+    SDN_RESPONSE_GOOD = 0,
+    SDN_RESPONSE_FAILED = 1,
+    SDN_RESPONSE_BUFFER_TOO_SMALL = 2,
 };
 
 
@@ -65,8 +77,8 @@ struct SDNPressureMessage
     float pressure_pa;
 };
 
-typedef enum SDNSuiteStatus SDNSuiteStatus;
-enum SDNSuiteStatus
+typedef enum SDNSuitStatus SDNSuitStatus;
+enum SDNSuitStatus
 {
     SDN_SUIT_STATUS_INVALID = 0,
     SDN_SUIT_STATUS_SEALED = 1,
@@ -78,9 +90,6 @@ struct SDNOccupancyInfo
 {
     uint32_t user_id;
     uint8_t suit_status;
-    uint16_t user_preferences_len;
-    // variable length payload follows; use user_preferences_len to determine size
-    uint8_t user_preferences[];
 };
 
 typedef struct SDNOccupancyMessage SDNOccupancyMessage;
@@ -90,6 +99,16 @@ struct SDNOccupancyMessage
     uint32_t measurement_id;
     // variable length payload follows; use msg_header.msg_length to determine size
     SDNOccupancyInfo occupants[];
+};
+
+typedef struct SDNSetSuitOccupantMessage SDNSetSuitOccupantMessage;
+struct SDNSetSuitOccupantMessage
+{
+    SDNMsgHeader msg_header;
+    uint32_t user_id;
+    uint16_t user_preferences_len;
+    // variable length payload follows; use user_preferences_len to determine size
+    uint8_t user_preferences[];
 };
 
 typedef struct SDNHeartBeatMessage SDNHeartBeatMessage;
@@ -153,8 +172,8 @@ struct SDNLogMessage
     char message_str[];
 };
 
-const uint32_t SDN_MEASUREMENT_ID_DOOR_PRESSURE_SIDE_1 = 1;
-const uint32_t SDN_MEASUREMENT_ID_DOOR_PRESSURE_SIDE_2 = 2;
+#define SDN_MEASUREMENT_ID_DOOR_PRESSURE_SIDE_1 1
+#define SDN_MEASUREMENT_ID_DOOR_PRESSURE_SIDE_2 2
 
 bool RegisterDevice(uint32_t device_id, SDNDeviceType device_type);
 
@@ -170,8 +189,10 @@ int ReadNextMessage(void *msg_buffer, size_t buffer_size_bytes);
 
 bool ExecuteCmd(const SDNMsgHeader *header, uint32_t target_device_id);
 
-int GetResponse(void *msg_buffer, size_t buffer_size_bytes, uint32_t target_device_id, SDNMsgType request_type);
+SDNResponseStatus GetResponse(void *msg_buffer, size_t buffer_size_bytes, uint32_t target_device_id, SDNMsgType request_type);
 
 int ProcessMessageData(SDNHandler* handlers, size_t num_handlers, void *msg_buffer, size_t buffer_size_bytes);
+
+void SendCmdResponse(uint32_t response_code);
 
 #pragma pack(pop)

@@ -37,7 +37,9 @@ static const uint8_t OUTER_PRESSURE_ZONE = 1;
 
 static const char *DOOR_NAMES[2] = {"station", "exterior"};
 
-static const size_t MAX_USER_DATA_SIZE = 1024;
+#define MAX_USER_DATA_SIZE 1024
+#define MAX_SEND_MESSAGE_SIZE (MAX_USER_DATA_SIZE + sizeof(SDNSetSuitOccupantMessage))
+#define MAX_NUM_OCCUPANTS 10
 
 ///////////// Definitions /////////////////////
 
@@ -66,8 +68,9 @@ struct AirlockConfig
     uint32_t inside_door_id;
     uint32_t outside_door_id;
     uint32_t pressure_ctrl_id;
+    uint32_t suit_locker_id;
     uint32_t occupancy_sensor_id;
-    uint32_t message_buffer_size;
+    uint32_t rx_message_buffer_size;
 };
 
 typedef struct AirlockState AirlockState;
@@ -87,7 +90,9 @@ struct AirlockState
 ////////////////////// Global Variables ///////////////////////
 
 AirlockState state = {0};
-void *message_buffer = NULL;
+void *rx_message_buffer = NULL;
+uint8_t message_serialization_buffer[MAX_SEND_MESSAGE_SIZE];
+SDNOccupancyMessage occupancy_msg_buffer[MAX_NUM_OCCUPANTS];
 
 ////////////////////// Implementation ///////////////////////
 
@@ -117,25 +122,26 @@ static bool ControlPressure(uint32_t device_id, uint32_t pressure_device_id, boo
     return ExecuteCmd(&pressure_cmd.msg_header, pressure_device_id);
 }
 
-bool InitializeSDN(uint32_t device_id, uint32_t inside_door_id, uint32_t outside_door_id)
+static bool InitializeSDN(const AirlockConfig *config)
 {
-    if (!RegisterDevice(device_id, SDN_DEVICE_TYPE_AIRLOCK_CTRL))
+    assert(config != NULL);
+    if (!RegisterDevice(config->device_id, SDN_DEVICE_TYPE_AIRLOCK_CTRL))
     {
         return false;
     }
-    if (!SubscribeToMessage(inside_door_id, SDN_MSG_TYPE_HEARTBEAT))
+    if (!SubscribeToMessage(config->inside_door_id, SDN_MSG_TYPE_HEARTBEAT))
     {
         return false;
     }
-    if (!SubscribeToMessage(inside_door_id, SDN_MSG_TYPE_SENSOR_PRESSURE))
+    if (!SubscribeToMessage(config->inside_door_id, SDN_MSG_TYPE_SENSOR_PRESSURE))
     {
         return false;
     }
-    if (!SubscribeToMessage(outside_door_id, SDN_MSG_TYPE_HEARTBEAT))
+    if (!SubscribeToMessage(config->outside_door_id, SDN_MSG_TYPE_HEARTBEAT))
     {
         return false;
     }
-    if (!SubscribeToMessage(outside_door_id, SDN_MSG_TYPE_SENSOR_PRESSURE))
+    if (!SubscribeToMessage(config->outside_door_id, SDN_MSG_TYPE_SENSOR_PRESSURE))
     {
         return false;
     }
@@ -174,22 +180,28 @@ static bool LoadConfig(AirlockConfig *config)
     {
         return false;
     }
-    config->occupancy_sensor_id = (uint32_t)tmp;
+    config->suit_locker_id = (uint32_t)tmp;
 
-    if (!LoadConfigInt(&tmp, "message_buffer_size"))
+    if (!LoadConfigInt(&tmp, "suit_locker_id"))
     {
         return false;
     }
-    config->message_buffer_size = (uint32_t)tmp;
+    config->suit_locker_id = (uint32_t)tmp;
+
+    if (!LoadConfigInt(&tmp, "rx_message_buffer_size"))
+    {
+        return false;
+    }
+    config->rx_message_buffer_size = (uint32_t)tmp;
 
     return true;
 }
 
-void HandleHeartBeat(void *message_data, size_t msg_len)
+static void HandleHeartBeat(const void *message_data, size_t msg_len)
 {
-    if ((size_t)msg_len >= sizeof(SDNHeartBeatMessage))
+    if (msg_len >= sizeof(SDNHeartBeatMessage))
     {
-        SDNHeartBeatMessage *hb = (SDNHeartBeatMessage *)message_data;
+        const SDNHeartBeatMessage *hb = (const SDNHeartBeatMessage *)message_data;
         uint32_t src_id = hb->msg_header.device_id;
         int idx = -1;
         if (src_id == state.config.inside_door_id)
@@ -207,11 +219,11 @@ void HandleHeartBeat(void *message_data, size_t msg_len)
     }
 }
 
-void HandleSensorPressure(void *message_data, size_t msg_len)
+static void HandleSensorPressure(const void *message_data, size_t msg_len)
 {
-    if ((size_t)msg_len >= sizeof(SDNPressureMessage))
+    if (msg_len >= sizeof(SDNPressureMessage))
     {
-        SDNPressureMessage *pm = (SDNPressureMessage *)message_data;
+        const SDNPressureMessage *pm = (const SDNPressureMessage *)message_data;
         uint32_t src_id = pm->msg_header.device_id;
         int idx = -1;
         if (src_id == state.config.inside_door_id)
@@ -237,21 +249,23 @@ void HandleSensorPressure(void *message_data, size_t msg_len)
     }
 }
 
-void HandleSetAirlockOpen(void *message_data, size_t msg_len)
+static void HandleSetAirlockOpen(const void *message_data, size_t msg_len)
 {
     if (state.fault_bits != 0)
     {
         sdn_log(SDN_WARN, "Door commands ignored while fault active.");
+        SendCmdResponse(0x100);
         return;
     }
 
-    if ((size_t)msg_len < sizeof(SDNSetAirlockOpenMessage))
+    if (msg_len < sizeof(SDNSetAirlockOpenMessage))
     {
         sdn_log(SDN_WARN, "Received SET_AIRLOCK_OPEN message with invalid length %d", (int)msg_len);
+        SendCmdResponse(0x200);
         return;
     }
 
-    SDNSetAirlockOpenMessage *cf = (SDNSetAirlockOpenMessage *)message_data;
+    const SDNSetAirlockOpenMessage *cf = (const SDNSetAirlockOpenMessage *)message_data;
     SDNAirlockOpen airlock_req = cf->open;
     if (airlock_req == SDN_AIRLOCK_CLOSED)
     {
@@ -306,31 +320,40 @@ void HandleSetAirlockOpen(void *message_data, size_t msg_len)
     }
     else if (airlock_req == SDN_AIRLOCK_EXTERIOR_OPEN)
     {
-        int occupancy_resp = GetResponse(message_data, state.config.message_buffer_size, state.config.occupancy_sensor_id, SDN_MSG_TYPE_SENSOR_OCCUPANCY);
-        if (occupancy_resp < (int)sizeof(SDNOccupancyMessage))
-        {
-            exit(5);
-        }
-
         bool safe_to_open = true;
-
-        size_t buffer_end = (size_t)occupancy_resp;
-        size_t offset = sizeof(SDNOccupancyMessage);
-
-        while (offset + sizeof(uint32_t) + sizeof(uint8_t) + sizeof(uint16_t) <= buffer_end)
+        SDNResponseStatus occupancy_resp = GetResponse(occupancy_msg_buffer, sizeof(occupancy_msg_buffer), state.config.occupancy_sensor_id, SDN_MSG_TYPE_SENSOR_OCCUPANCY);
+        switch (occupancy_resp)
         {
-            const SDNOccupancyInfo *occupant = (const SDNOccupancyInfo *)((uint8_t *)message_data + offset);
-            if (occupant->suit_status != SDN_SUIT_STATUS_SEALED)
+        case SDN_RESPONSE_GOOD:
+        {
+            const size_t num_occupants = (occupancy_resp - sizeof(SDNOccupancyMessage)) / sizeof(SDNOccupancyInfo);
+
+            if (num_occupants > MAX_NUM_OCCUPANTS)
             {
                 safe_to_open = false;
-                break;
             }
-            size_t entry_size = sizeof(uint32_t) + sizeof(uint8_t) + sizeof(uint16_t) + occupant->user_preferences_len;
-            if (offset + entry_size > buffer_end)
+            else
             {
-                break;
+                for (const SDNOccupancyInfo *occupant = occupancy_msg_buffer->occupants; occupant < occupancy_msg_buffer->occupants + num_occupants; occupant++)
+                {
+                    if (occupant == NULL || occupant->suit_status != SDN_SUIT_STATUS_SEALED)
+                    {
+                        safe_to_open = false;
+                        break;
+                    }
+                }
             }
-            offset += entry_size;
+        }
+        break;
+        case SDN_RESPONSE_BUFFER_TOO_SMALL:
+        {
+            sdn_log(SDN_WARN, "Received SDN_AIRLOCK_EXTERIOR_OPEN message with too many occupants");
+            safe_to_open = false;
+        }
+        break;
+
+        default:
+            exit(5);
         }
 
         if (safe_to_open)
@@ -370,42 +393,74 @@ void HandleSetAirlockOpen(void *message_data, size_t msg_len)
         else
         {
             sdn_log(SDN_WARN, "Received SDN_AIRLOCK_EXTERIOR_OPEN message with unsealed occupants");
+            SendCmdResponse(0x001);
+            return;
         }
     }
+    SendCmdResponse(SDN_CMD_SUCCESS);
 }
 
-void HandleClearFaults(void *message_data, size_t msg_len)
+static void HandleClearFaults(const void *message_data, size_t msg_len)
 {
-    if ((size_t)msg_len >= sizeof(SDNClearFaultsMessage))
+    if (msg_len >= sizeof(SDNClearFaultsMessage))
     {
-        SDNClearFaultsMessage *cf = (SDNClearFaultsMessage *)message_data;
+        const SDNClearFaultsMessage *cf = (const SDNClearFaultsMessage *)message_data;
         state.fault_bits &= ~cf->fault_mask;
+        SendCmdResponse(SDN_CMD_SUCCESS);
     }
     else
     {
         sdn_log(SDN_WARN, "Received CLEAR_FAULTS message with invalid length %d", (int)msg_len);
+        SendCmdResponse(0x200);
+    }
+}
+
+static void HandleSetSuitOccupant(const void *message_data, size_t msg_len)
+{
+    if (msg_len >= sizeof(SDNSetSuitOccupantMessage) && msg_len < MAX_SEND_MESSAGE_SIZE)
+    {
+        SDNSetSuitOccupantMessage *send_ptr = (SDNSetSuitOccupantMessage *)message_serialization_buffer;
+        memcpy(send_ptr, message_data, msg_len);
+        send_ptr->msg_header.device_id = state.config.device_id;
+        if (ExecuteCmd(&send_ptr->msg_header, state.config.suit_locker_id))
+        {
+            SendCmdResponse(SDN_CMD_SUCCESS);
+        }
+        else
+        {
+            SendCmdResponse(0x001);
+        }
+    }
+    else
+    {
+        sdn_log(SDN_WARN, "Received SDN_MSG_TYPE_SET_SUIT_OCCUPANT message with invalid length %d", (int)msg_len);
+        SendCmdResponse(0x200);
     }
 }
 
 #if APP_DEBUG_BUILD
-void HandleDebugWriteConfigInt(void *message_data, size_t msg_len)
+static void HandleDebugWriteConfigInt(void *message_data, size_t msg_len)
 {
-    if ((size_t)msg_len >= sizeof(SDNDebugWriteConfigInt))
+    if (msg_len >= sizeof(SDNDebugWriteConfigInt))
     {
+        uint32_t cmd_response = 0x001;
         SDNDebugWriteConfigInt *cf = (SDNDebugWriteConfigInt *)message_data;
         cf->key[sizeof(cf->key) - 1] = 0;
         state.fault_bits &= FAULT_DEBUGGER;
         if (WriteConfigInt(cf->key, cf->value))
         {
+            cmd_response = SDN_CMD_SUCCESS;
             if (!LoadConfig(&state.config))
             {
                 exit(1);
             }
         }
+        SendCmdResponse(cmd_response);
     }
     else
     {
         sdn_log(SDN_WARN, "Received DEBUG_WRITE_CONFIG_INT with invalid length %d", (int)msg_len);
+        SendCmdResponse(0x200);
     }
 }
 #endif
@@ -422,7 +477,7 @@ int main()
     sdn_timestamp_t start_time = GetCurrentTimestampMS();
     for (int i = 0; i < 2; i++)
     {
-        state.door_status[i].heartbeat.msg_header.timestamp = start_time;
+        state.door_status[i].heartbeat = (SDNHeartBeatMessage){.health = SDN_HEALTH_GOOD, .msg_header.timestamp = start_time};
         state.door_status[i].pressure[0].msg_header.timestamp = start_time;
         state.door_status[i].pressure[1].msg_header.timestamp = start_time;
     }
@@ -441,13 +496,13 @@ int main()
     state.airlock_pressures[1] = &state.door_status[OUTER_DOOR_IDX].pressure[OUTER_DOOR_AIRLOCK_SIDE_IDX].pressure_pa;
     *state.airlock_pressures[1] = NAN;
 
-    if (!InitializeSDN(state.config.device_id, state.config.inside_door_id, state.config.outside_door_id))
+    if (!InitializeSDN(&state.config))
     {
         return 2;
     }
 
-    message_buffer = malloc(state.config.message_buffer_size);
-    if (message_buffer == NULL)
+    rx_message_buffer = malloc(state.config.rx_message_buffer_size);
+    if (rx_message_buffer == NULL)
     {
         return 3;
     }
@@ -466,7 +521,7 @@ int main()
     {
         while (true)
         {
-            int ret = ReadNextMessage(message_buffer, state.config.message_buffer_size);
+            int ret = ReadNextMessage(rx_message_buffer, state.config.rx_message_buffer_size);
             if (ret < 0)
             {
                 return 5;
@@ -477,28 +532,32 @@ int main()
                 break;
             }
 
-            SDNMsgHeader *msg_header = (SDNMsgHeader *)message_buffer;
+            SDNMsgHeader *msg_header = (SDNMsgHeader *)rx_message_buffer;
             switch (msg_header->msg_type)
             {
             case SDN_MSG_TYPE_HEARTBEAT:
-                HandleHeartBeat(message_buffer, ret);
+                HandleHeartBeat(rx_message_buffer, ret);
                 break;
 
             case SDN_MSG_TYPE_SENSOR_PRESSURE:
-                HandleSensorPressure(message_buffer, ret);
+                HandleSensorPressure(rx_message_buffer, ret);
                 break;
 
             case SDN_MSG_TYPE_SET_AIRLOCK_OPEN:
-                HandleSetAirlockOpen(message_buffer, ret);
+                HandleSetAirlockOpen(rx_message_buffer, ret);
                 break;
 
             case SDN_MSG_TYPE_CLEAR_FAULTS:
-                HandleClearFaults(message_buffer, ret);
+                HandleClearFaults(rx_message_buffer, ret);
+                break;
+
+            case SDN_MSG_TYPE_SET_SUIT_OCCUPANT:
+                HandleSetSuitOccupant(rx_message_buffer, ret);
                 break;
 
 #if APP_DEBUG_BUILD
             case SDN_MSG_TYPE_DEBUG_WRITE_CONFIG_INT:
-                HandleDebugWriteConfigInt(message_buffer, ret);
+                HandleDebugWriteConfigInt(rx_message_buffer, ret);
                 break;
 #endif
 

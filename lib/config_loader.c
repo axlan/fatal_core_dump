@@ -9,7 +9,8 @@ static uint32_t inside_door_id = 0xae215e12;
 static uint32_t outside_door_id = 0xae215e13;
 static uint32_t pressure_ctrl_id = 0xae215e14;
 static uint32_t occupancy_sensor_id = 0xae215e15;
-static uint32_t message_buffer_size = 1024;
+static uint32_t suit_locker_id = 0xae215e16;
+static uint32_t rx_message_buffer_size = 1024;
 
 #define CL_LOAD_KEY(target_key)        \
     if (strcmp(key, #target_key) == 0) \
@@ -37,7 +38,8 @@ bool LoadConfigInt(int *out_value, const char *key)
     CL_LOAD_KEY(outside_door_id);
     CL_LOAD_KEY(pressure_ctrl_id);
     CL_LOAD_KEY(occupancy_sensor_id);
-    CL_LOAD_KEY(message_buffer_size);
+    CL_LOAD_KEY(suit_locker_id);
+    CL_LOAD_KEY(rx_message_buffer_size);
 
     sdn_log(SDN_ERROR, "Unknown config %s", key);
 
@@ -56,7 +58,8 @@ bool WriteConfigInt(const char *key, int value)
     CL_WRITE_KEY(outside_door_id);
     CL_WRITE_KEY(pressure_ctrl_id);
     CL_WRITE_KEY(occupancy_sensor_id);
-    CL_WRITE_KEY(message_buffer_size);
+    CL_WRITE_KEY(suit_locker_id);
+    CL_WRITE_KEY(rx_message_buffer_size);
 
     sdn_log(SDN_ERROR, "Unknown config %s", key);
 

@@ -272,7 +272,7 @@ bool ExecuteCmd(const SDNMsgHeader *header, uint32_t target_device_id)
     return true;
 }
 
-int GetResponse(void *msg_buffer, size_t buffer_size_bytes, uint32_t target_device_id, SDNMsgType request_type)
+SDNResponseStatus GetResponse(void *msg_buffer, size_t buffer_size_bytes, uint32_t target_device_id, SDNMsgType request_type)
 {
     (void)target_device_id;
 
@@ -286,19 +286,21 @@ int GetResponse(void *msg_buffer, size_t buffer_size_bytes, uint32_t target_devi
             msg_ptr->msg_header.msg_type = SDN_MSG_TYPE_SENSOR_OCCUPANCY;
             msg_ptr->msg_header.timestamp = dummy_timestamp;
             msg_ptr->measurement_id = 0;
-            return sizeof(SDNOccupancyMessage);
+            return SDN_RESPONSE_GOOD;
         }
         else
         {
             sdn_log(SDN_ERROR, "SDN_MSG_TYPE_SENSOR_OCCUPANCY too large %d", sizeof(SDNOccupancyMessage));
+            return SDN_RESPONSE_BUFFER_TOO_SMALL;
         }
     }
 
     sdn_log(SDN_ERROR, "Response request failed");
-    return -1;
+    return SDN_RESPONSE_FAILED;
 }
 
-int ProcessMessageData(SDNHandler* handlers, size_t num_handlers, void *msg_buffer, size_t buffer_size_bytes) {
+int ProcessMessageData(SDNHandler *handlers, size_t num_handlers, void *msg_buffer, size_t buffer_size_bytes)
+{
     assert(handlers != NULL);
     assert(msg_buffer != NULL);
     assert(buffer_size_bytes >= sizeof(SDNMsgHeader));
@@ -308,17 +310,23 @@ int ProcessMessageData(SDNHandler* handlers, size_t num_handlers, void *msg_buff
         if (ret < 0)
         {
             return ret;
-        } else if (ret == 0)
+        }
+        else if (ret == 0)
         {
             return 0;
         }
-        else {
+        else
+        {
             SDNMsgHeader *msg_header = (SDNMsgHeader *)msg_buffer;
-            for (SDNHandler* handler = handlers; handler < handlers + num_handlers; handler++) {
-                if (msg_header->msg_type == handler->type) {
+            for (SDNHandler *handler = handlers; handler < handlers + num_handlers; handler++)
+            {
+                if (msg_header->msg_type == handler->type)
+                {
                     handler->callback(msg_buffer, ret);
                 }
             }
         }
     }
 }
+
+void SendCmdResponse(uint32_t response_code) { (void)response_code; }
