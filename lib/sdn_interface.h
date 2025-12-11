@@ -10,6 +10,8 @@
 
 typedef uint64_t sdn_timestamp_t;
 
+typedef void (*sdn_msg_callback_t)(void *message_data, size_t msg_len);
+
 typedef enum SDNMsgType SDNMsgType;
 enum SDNMsgType
 {
@@ -24,6 +26,14 @@ enum SDNMsgType
     SDN_MSG_TYPE_CLEAR_FAULTS = 7,
     SDN_MSG_TYPE_LOG = 8,
 };
+
+typedef struct SDNHandler SDNHandler;
+struct SDNHandler
+{
+    SDNMsgType type;
+    sdn_msg_callback_t callback;
+};
+
 
 typedef enum SDNDeviceType SDNDeviceType;
 enum SDNDeviceType
@@ -161,5 +171,7 @@ int ReadNextMessage(void *msg_buffer, size_t buffer_size_bytes);
 bool ExecuteCmd(const SDNMsgHeader *header, uint32_t target_device_id);
 
 int GetResponse(void *msg_buffer, size_t buffer_size_bytes, uint32_t target_device_id, SDNMsgType request_type);
+
+int ProcessMessageData(SDNHandler* handlers, size_t num_handlers, void *msg_buffer, size_t buffer_size_bytes);
 
 #pragma pack(pop)
