@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "sdn_interface.h"
 #include "log.h"
@@ -295,4 +296,29 @@ int GetResponse(void *msg_buffer, size_t buffer_size_bytes, uint32_t target_devi
 
     sdn_log(SDN_ERROR, "Response request failed");
     return -1;
+}
+
+int ProcessMessageData(SDNHandler* handlers, size_t num_handlers, void *msg_buffer, size_t buffer_size_bytes) {
+    assert(handlers != NULL);
+    assert(msg_buffer != NULL);
+    assert(buffer_size_bytes >= sizeof(SDNMsgHeader));
+    while (true)
+    {
+        int ret = ReadNextMessage(msg_buffer, buffer_size_bytes);
+        if (ret < 0)
+        {
+            return ret;
+        } else if (ret == 0)
+        {
+            return 0;
+        }
+        else {
+            SDNMsgHeader *msg_header = (SDNMsgHeader *)msg_buffer;
+            for (SDNHandler* handler = handlers; handler < handlers + num_handlers; handler++) {
+                if (msg_header->msg_type == handler->type) {
+                    handler->callback(msg_buffer, ret);
+                }
+            }
+        }
+    }
 }
