@@ -298,7 +298,8 @@ int GetResponse(void *msg_buffer, size_t buffer_size_bytes, uint32_t target_devi
     return -1;
 }
 
-int ProcessMessageData(SDNHandler* handlers, size_t num_handlers, void *msg_buffer, size_t buffer_size_bytes) {
+int ProcessMessageData(SDNHandler *handlers, size_t num_handlers, void *msg_buffer, size_t buffer_size_bytes)
+{
     assert(handlers != NULL);
     assert(msg_buffer != NULL);
     assert(buffer_size_bytes >= sizeof(SDNMsgHeader));
@@ -308,17 +309,56 @@ int ProcessMessageData(SDNHandler* handlers, size_t num_handlers, void *msg_buff
         if (ret < 0)
         {
             return ret;
-        } else if (ret == 0)
+        }
+        else if (ret == 0)
         {
             return 0;
         }
-        else {
+        else
+        {
             SDNMsgHeader *msg_header = (SDNMsgHeader *)msg_buffer;
-            for (SDNHandler* handler = handlers; handler < handlers + num_handlers; handler++) {
-                if (msg_header->msg_type == handler->type) {
+            for (SDNHandler *handler = handlers; handler < handlers + num_handlers; handler++)
+            {
+                if (msg_header->msg_type == handler->type)
+                {
                     handler->callback(msg_buffer, ret);
                 }
             }
         }
     }
+}
+
+void SendCmdResponse(uint32_t response_code) { (void)response_code; }
+
+const SDNOccupancyInfo* GetFirstOccupant(const SDNOccupancyMessage* message, size_t* remaining_data_size) {
+    assert(message != NULL);
+    assert(message->msg_header.msg_length >= sizeof(SDNOccupancyMessage));
+    *remaining_data_size = message->msg_header.msg_length - sizeof(SDNOccupancyMessage);
+    if (*remaining_data_size < sizeof(SDNOccupancyInfo)) {
+        return NULL;
+    }
+
+    size_t info_size = sizeof(SDNOccupancyInfo) + message->occupants->user_preferences_len;
+    if (*remaining_data_size < info_size) {
+        return NULL;
+    }
+
+    *remaining_data_size -= info_size;
+    return message->occupants;
+}
+
+const SDNOccupancyInfo* GetNextOccupant(const SDNOccupancyInfo* current, size_t* remaining_data_size) {
+    if (remaining_data_size < sizeof(SDNOccupancyInfo)) {
+        return NULL;
+    }
+
+    const SDNOccupancyInfo* next_ptr = (const SDNOccupancyInfo*)(current->user_preferences + current->user_preferences_len);
+
+    size_t info_size = sizeof(SDNOccupancyInfo) + next_ptr->user_preferences_len;
+    if (*remaining_data_size < info_size) {
+        return NULL;
+    }
+
+    *remaining_data_size -= info_size;
+    return next_ptr;
 }
