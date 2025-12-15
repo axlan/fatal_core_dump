@@ -10,7 +10,7 @@
 
 typedef uint64_t sdn_timestamp_t;
 
-typedef void (*sdn_msg_callback_t)(void *message_data, size_t msg_len);
+typedef void (*sdn_msg_callback_t)(const void *message_data, size_t msg_len);
 
 #define SDN_CMD_SUCCESS 0
 #define SDN_HEALTH_GOOD 0
