@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "config_loader.h"
@@ -41,6 +43,16 @@ static const char *DOOR_NAMES[2] = {"station", "exterior"};
 #define MAX_SEND_MESSAGE_SIZE (MAX_USER_DATA_SIZE + sizeof(SDNSetSuitOccupantMessage))
 #define MAX_NUM_OCCUPANTS 10
 
+// HandleHeartBeat
+// HandleSensorPressure
+// HandleSetAirlockOpen
+// HandleSetSuitOccupant
+// if state.config.remote_fault_clear
+// HandleClearFaults
+// #if APP_DEBUG_BUILD
+// HandleDebugWriteConfigInt
+#define MIN_NUM_MESSAGE_HANDLERS 4
+
 ///////////// Definitions /////////////////////
 
 typedef struct DoorStatus DoorStatus;
@@ -71,6 +83,8 @@ struct AirlockConfig
     uint32_t suit_locker_id;
     uint32_t occupancy_sensor_id;
     uint32_t rx_message_buffer_size;
+    bool apply_config_change;
+    bool remote_fault_clear;
 };
 
 typedef struct AirlockState AirlockState;
@@ -90,9 +104,10 @@ struct AirlockState
 ////////////////////// Global Variables ///////////////////////
 
 AirlockState state = {0};
-void *rx_message_buffer = NULL;
-uint8_t message_serialization_buffer[MAX_SEND_MESSAGE_SIZE];
+uint8_t *message_serialization_buffer = NULL;
 SDNOccupancyMessage occupancy_msg_buffer[MAX_NUM_OCCUPANTS];
+void *rx_message_buffer = NULL;
+SDNHandler *message_handlers = NULL;
 
 ////////////////////// Implementation ///////////////////////
 
@@ -193,6 +208,19 @@ static bool LoadConfig(AirlockConfig *config)
         return false;
     }
     config->rx_message_buffer_size = (uint32_t)tmp;
+
+    bool tmp_bool = false;
+    if (!LoadConfigBool(&tmp_bool, "apply_config_change"))
+    {
+        return false;
+    }
+    config->apply_config_change = tmp_bool;
+
+    if (!LoadConfigBool(&tmp_bool, "remote_fault_clear"))
+    {
+        return false;
+    }
+    config->remote_fault_clear = tmp_bool;
 
     return true;
 }
@@ -439,7 +467,7 @@ static void HandleSetSuitOccupant(const void *message_data, size_t msg_len)
 }
 
 #if APP_DEBUG_BUILD
-static void HandleDebugWriteConfigInt(void *message_data, size_t msg_len)
+static void HandleDebugWriteConfigInt(const void *message_data, size_t msg_len)
 {
     if (msg_len >= sizeof(SDNDebugWriteConfigInt))
     {
@@ -447,13 +475,14 @@ static void HandleDebugWriteConfigInt(void *message_data, size_t msg_len)
         SDNDebugWriteConfigInt *cf = (SDNDebugWriteConfigInt *)message_data;
         cf->key[sizeof(cf->key) - 1] = 0;
         state.fault_bits &= FAULT_DEBUGGER;
-        if (WriteConfigInt(cf->key, cf->value))
+        if (WriteConfigInt(cf->key, cf->value) || WriteConfigBool(cf->key, (bool)cf->value))
         {
             cmd_response = SDN_CMD_SUCCESS;
-            if (!LoadConfig(&state.config))
-            {
-                exit(1);
-            }
+        }
+
+        if (state.config.apply_config_change && cmd_response == SDN_CMD_SUCCESS && !LoadConfig(&state.config))
+        {
+            exit(1);
         }
         SendCmdResponse(cmd_response);
     }
@@ -467,6 +496,9 @@ static void HandleDebugWriteConfigInt(void *message_data, size_t msg_len)
 
 int main()
 {
+    uint8_t message_serialization_buffer_stack[MAX_SEND_MESSAGE_SIZE];
+    message_serialization_buffer = message_serialization_buffer_stack;
+
     if (!LoadConfig(&state.config))
     {
         return 1;
@@ -507,6 +539,38 @@ int main()
         return 3;
     }
 
+    size_t num_message_handlers = MIN_NUM_MESSAGE_HANDLERS;
+    if (state.config.remote_fault_clear)
+    {
+        num_message_handlers++;
+    }
+#if APP_DEBUG_BUILD
+    num_message_handlers++;
+#endif
+    message_handlers = malloc(sizeof(SDNHandler) * num_message_handlers);
+    if (message_handlers == NULL)
+    {
+        return 3;
+    }
+    num_message_handlers = 0;
+    message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_SET_SUIT_OCCUPANT,
+                                                            .callback = HandleSetSuitOccupant};
+    message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_HEARTBEAT,
+                                                            .callback = HandleHeartBeat};
+    message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_SENSOR_PRESSURE,
+                                                            .callback = HandleSensorPressure};
+    message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_SET_AIRLOCK_OPEN,
+                                                            .callback = HandleSetAirlockOpen};
+    if (state.config.remote_fault_clear)
+    {
+        message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_CLEAR_FAULTS,
+                                                                .callback = HandleClearFaults};
+    }
+#if APP_DEBUG_BUILD
+    message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_DEBUG_WRITE_CONFIG_INT,
+                                                            .callback = HandleDebugWriteConfigInt};
+#endif
+
     if (!ControlDoor(state.config.device_id, state.config.outside_door_id, false) || !ControlDoor(state.config.device_id, state.config.inside_door_id, false))
     {
         return 4;
@@ -519,51 +583,9 @@ int main()
 
     while (true)
     {
-        while (true)
+        if (ProcessMessageData(message_handlers, num_message_handlers, rx_message_buffer, state.config.rx_message_buffer_size) < 0)
         {
-            int ret = ReadNextMessage(rx_message_buffer, state.config.rx_message_buffer_size);
-            if (ret < 0)
-            {
-                return 5;
-            }
-
-            if (ret <= 0)
-            {
-                break;
-            }
-
-            SDNMsgHeader *msg_header = (SDNMsgHeader *)rx_message_buffer;
-            switch (msg_header->msg_type)
-            {
-            case SDN_MSG_TYPE_HEARTBEAT:
-                HandleHeartBeat(rx_message_buffer, ret);
-                break;
-
-            case SDN_MSG_TYPE_SENSOR_PRESSURE:
-                HandleSensorPressure(rx_message_buffer, ret);
-                break;
-
-            case SDN_MSG_TYPE_SET_AIRLOCK_OPEN:
-                HandleSetAirlockOpen(rx_message_buffer, ret);
-                break;
-
-            case SDN_MSG_TYPE_CLEAR_FAULTS:
-                HandleClearFaults(rx_message_buffer, ret);
-                break;
-
-            case SDN_MSG_TYPE_SET_SUIT_OCCUPANT:
-                HandleSetSuitOccupant(rx_message_buffer, ret);
-                break;
-
-#if APP_DEBUG_BUILD
-            case SDN_MSG_TYPE_DEBUG_WRITE_CONFIG_INT:
-                HandleDebugWriteConfigInt(rx_message_buffer, ret);
-                break;
-#endif
-
-            default:
-                break;
-            }
+            return 5;
         }
 
         sdn_timestamp_t now = GetCurrentTimestampMS();

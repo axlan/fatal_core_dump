@@ -25,13 +25,14 @@ static bool ControlDoor(uint32_t device_id, uint32_t door_device_id, bool is_ope
 // message_data in RDI, msg_len in RSI
 static void HandleSetSuitOccupant(const void *message_data, size_t msg_len)
 {
+    (void)msg_len;
     SDNSetSuitOccupantMessage *send_ptr = (SDNSetSuitOccupantMessage *)message_data;
     printf("HandleSetSuitOccupant user_id: 0x%X\n", send_ptr->user_id);
 }
 
 #define BUFFER_SIZE 128
 
-int main(int argc, char *argv[])
+int main()
 {
     uint8_t stack_buffer[BUFFER_SIZE * 2];
 

@@ -60,6 +60,8 @@ launch.json:
 
 `make && ./bin/airlock_ctrl | grep -v DEBUG`
 
+`pwndbg -x minimal_example/analysis.gdbinit bin/airlock_ctrl`
+
 
 Sequence of events:
 1. Maintenance puts controller into debug mode.

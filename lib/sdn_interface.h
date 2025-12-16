@@ -106,8 +106,7 @@ struct SDNSetSuitOccupantMessage
 {
     SDNMsgHeader msg_header;
     uint32_t user_id;
-    uint16_t user_preferences_len;
-    // variable length payload follows; use user_preferences_len to determine size
+    // variable length payload follows; use msg_header.msg_length to determine size
     uint8_t user_preferences[];
 };
 
