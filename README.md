@@ -74,4 +74,13 @@ Sequence of events:
 5. Malicious payload is loaded by unwitting user
 6. When the user X tries to checkout the spacesuit, it instead runs the payload causing the room to vent and
 
+```sh
+coredumpctl -o core.dump dump bin/airlock_ctrl
+pwndbg bin/airlock_ctrl  core.dump -x minimal_example/analysis.gdbinit
+x/20i $pc - 64
+x/32s $pc - 8
 
+info symbol  0x555555555e7e
+info symbol  0x555555555269
+info frame
+```

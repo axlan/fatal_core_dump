@@ -1,12 +1,20 @@
 add-symbol-file bin/libsdn_interface.so
 
+define xbt
+  set $xbp = (void **)$arg0
+  while 1
+    x/2a $xbp
+    set $xbp = (void **)$xbp[0]
+  end
+end
+
 break main.c:577
 break SendAttackCmd
 break SendFailureCmd
 #break sdn_interface.c:453
 
 set exec-wrapper env -i
-r
+#r
 
 print HandleSetSuitOccupant
 print ControlDoor

