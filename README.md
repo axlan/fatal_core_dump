@@ -75,6 +75,7 @@ Sequence of events:
 6. When the user X tries to checkout the spacesuit, it instead runs the payload causing the room to vent and
 
 ```sh
+env -i setarch $(uname -m) -R /home/jdiamond/src/fatal_core_dump/bin/airlock_ctrl
 coredumpctl -o core.dump dump bin/airlock_ctrl
 pwndbg bin/airlock_ctrl  core.dump -x minimal_example/analysis.gdbinit
 x/20i $pc - 64

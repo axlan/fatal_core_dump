@@ -189,8 +189,6 @@ bool ExecuteCmd(const SDNMsgHeader *header, uint32_t target_device_id);
 
 SDNResponseStatus GetResponse(void *msg_buffer, size_t buffer_size_bytes, uint32_t target_device_id, SDNMsgType request_type);
 
-int ProcessMessageData(SDNHandler *handlers, size_t num_handlers, void *msg_buffer, size_t buffer_size_bytes, void *context);
-
 void SendCmdResponse(uint32_t response_code);
 
 #pragma pack(pop)

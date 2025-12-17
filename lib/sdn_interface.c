@@ -425,36 +425,4 @@ SDNResponseStatus GetResponse(void *msg_buffer, size_t buffer_size_bytes,
     return SDN_RESPONSE_FAILED;
 }
 
-int ProcessMessageData(SDNHandler *handlers, size_t num_handlers,
-                       void *msg_buffer, size_t buffer_size_bytes, void *context)
-{
-    assert(handlers != NULL);
-    assert(msg_buffer != NULL);
-    assert(buffer_size_bytes >= sizeof(SDNMsgHeader));
-    while (true)
-    {
-        int ret = ReadNextMessage(msg_buffer, buffer_size_bytes);
-        if (ret < 0)
-        {
-            return ret;
-        }
-        else if (ret == 0)
-        {
-            return 0;
-        }
-        else
-        {
-            SDNMsgHeader *msg_header = (SDNMsgHeader *)msg_buffer;
-            for (SDNHandler *handler = handlers; handler < handlers + num_handlers;
-                 handler++)
-            {
-                if (msg_header->msg_type == handler->type)
-                {
-                    handler->callback(msg_buffer, ret, context);
-                }
-            }
-        }
-    }
-}
-
 void SendCmdResponse(uint32_t response_code) { (void)response_code; }
