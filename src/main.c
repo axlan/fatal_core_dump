@@ -99,15 +99,9 @@ struct AirlockState
     float *station_pressure;
     float *exterior_pressure;
     float *airlock_pressures[2];
+
+    uint8_t message_serialization_buffer[MAX_SEND_MESSAGE_SIZE];
 };
-
-////////////////////// Global Variables ///////////////////////
-
-AirlockState state = {0};
-uint8_t *message_serialization_buffer = NULL;
-SDNOccupancyMessage occupancy_msg_buffer[MAX_NUM_OCCUPANTS];
-void *rx_message_buffer = NULL;
-SDNHandler *message_handlers = NULL;
 
 ////////////////////// Implementation ///////////////////////
 
@@ -195,7 +189,7 @@ static bool LoadConfig(AirlockConfig *config)
     {
         return false;
     }
-    config->suit_locker_id = (uint32_t)tmp;
+    config->occupancy_sensor_id = (uint32_t)tmp;
 
     if (!LoadConfigInt(&tmp, "suit_locker_id"))
     {
@@ -225,20 +219,21 @@ static bool LoadConfig(AirlockConfig *config)
     return true;
 }
 
-static void HandleHeartBeat(const void *message_data, size_t msg_len)
+static void HandleHeartBeat(const void *message_data, size_t msg_len, void *context)
 {
+    AirlockState *state = context;
     if (msg_len >= sizeof(SDNHeartBeatMessage))
     {
         const SDNHeartBeatMessage *hb = (const SDNHeartBeatMessage *)message_data;
         uint32_t src_id = hb->msg_header.device_id;
         int idx = -1;
-        if (src_id == state.config.inside_door_id)
+        if (src_id == state->config.inside_door_id)
             idx = INNER_DOOR_IDX;
-        else if (src_id == state.config.outside_door_id)
+        else if (src_id == state->config.outside_door_id)
             idx = OUTER_DOOR_IDX;
         if (idx >= 0)
         {
-            state.door_status[idx].heartbeat = *hb;
+            state->door_status[idx].heartbeat = *hb;
         }
     }
     else
@@ -247,16 +242,17 @@ static void HandleHeartBeat(const void *message_data, size_t msg_len)
     }
 }
 
-static void HandleSensorPressure(const void *message_data, size_t msg_len)
+static void HandleSensorPressure(const void *message_data, size_t msg_len, void *context)
 {
+    AirlockState *state = context;
     if (msg_len >= sizeof(SDNPressureMessage))
     {
         const SDNPressureMessage *pm = (const SDNPressureMessage *)message_data;
         uint32_t src_id = pm->msg_header.device_id;
         int idx = -1;
-        if (src_id == state.config.inside_door_id)
+        if (src_id == state->config.inside_door_id)
             idx = INNER_DOOR_IDX;
-        else if (src_id == state.config.outside_door_id)
+        else if (src_id == state->config.outside_door_id)
             idx = OUTER_DOOR_IDX;
         if (idx >= 0)
         {
@@ -267,7 +263,7 @@ static void HandleSensorPressure(const void *message_data, size_t msg_len)
                 side_idx = 1;
             if (side_idx >= 0)
             {
-                state.door_status[idx].pressure[side_idx] = *pm;
+                state->door_status[idx].pressure[side_idx] = *pm;
             }
         }
     }
@@ -277,9 +273,11 @@ static void HandleSensorPressure(const void *message_data, size_t msg_len)
     }
 }
 
-static void HandleSetAirlockOpen(const void *message_data, size_t msg_len)
+static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void *context)
 {
-    if (state.fault_bits != 0)
+    AirlockState *state = context;
+    SDNOccupancyMessage occupancy_msg_buffer[MAX_NUM_OCCUPANTS];
+    if (state->fault_bits != 0)
     {
         sdn_log(SDN_WARN, "Door commands ignored while fault active.");
         SendCmdResponse(0x100);
@@ -297,49 +295,49 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len)
     SDNAirlockOpen airlock_req = cf->open;
     if (airlock_req == SDN_AIRLOCK_CLOSED)
     {
-        if (!ControlDoor(state.config.device_id, state.config.outside_door_id, false) || !ControlDoor(state.config.device_id, state.config.inside_door_id, false))
+        if (!ControlDoor(state->config.device_id, state->config.outside_door_id, false) || !ControlDoor(state->config.device_id, state->config.inside_door_id, false))
         {
             /* fatal control error; keep behavior consistent with previous main */
             exit(4);
         }
 
-        if (state.airlock_state == AIRLOCK_INTERIOR_OPEN)
+        if (state->airlock_state == AIRLOCK_INTERIOR_OPEN)
         {
-            state.airlock_state = AIRLOCK_CLOSED_PRESSURIZED;
+            state->airlock_state = AIRLOCK_CLOSED_PRESSURIZED;
             sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_CLOSED_PRESSURIZED");
         }
-        else if (state.airlock_state == AIRLOCK_EXTERIOR_OPEN)
+        else if (state->airlock_state == AIRLOCK_EXTERIOR_OPEN)
         {
-            state.airlock_state = AIRLOCK_CLOSED_DEPRESSURIZED;
+            state->airlock_state = AIRLOCK_CLOSED_DEPRESSURIZED;
             sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_CLOSED_DEPRESSURIZED");
         }
     }
     else if (airlock_req == SDN_AIRLOCK_INTERIOR_OPEN)
     {
-        switch (state.airlock_state)
+        switch (state->airlock_state)
         {
         case AIRLOCK_INTERIOR_OPEN:
             break;
         case AIRLOCK_CLOSED_PRESSURIZED:
-            if (!ControlDoor(state.config.device_id, state.config.inside_door_id, true))
+            if (!ControlDoor(state->config.device_id, state->config.inside_door_id, true))
             {
                 exit(4);
             }
-            state.airlock_state = AIRLOCK_INTERIOR_OPEN;
+            state->airlock_state = AIRLOCK_INTERIOR_OPEN;
             sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_INTERIOR_OPEN");
             break;
         case AIRLOCK_EXTERIOR_OPEN:
         case AIRLOCK_CLOSED_DEPRESSURIZED:
         case AIRLOCK_DEPRESSURIZING:
-            if (!ControlDoor(state.config.device_id, state.config.outside_door_id, false))
+            if (!ControlDoor(state->config.device_id, state->config.outside_door_id, false))
             {
                 exit(4);
             }
-            if (!ControlPressure(state.config.device_id, state.config.pressure_ctrl_id, true, &state.pressure_change_time))
+            if (!ControlPressure(state->config.device_id, state->config.pressure_ctrl_id, true, &state->pressure_change_time))
             {
                 exit(4);
             }
-            state.airlock_state = AIRLOCK_PRESSURIZING;
+            state->airlock_state = AIRLOCK_PRESSURIZING;
             sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_PRESSURIZING");
             break;
         case AIRLOCK_PRESSURIZING:
@@ -349,7 +347,7 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len)
     else if (airlock_req == SDN_AIRLOCK_EXTERIOR_OPEN)
     {
         bool safe_to_open = true;
-        SDNResponseStatus occupancy_resp = GetResponse(occupancy_msg_buffer, sizeof(occupancy_msg_buffer), state.config.occupancy_sensor_id, SDN_MSG_TYPE_SENSOR_OCCUPANCY);
+        SDNResponseStatus occupancy_resp = GetResponse(occupancy_msg_buffer, sizeof(occupancy_msg_buffer), state->config.occupancy_sensor_id, SDN_MSG_TYPE_SENSOR_OCCUPANCY);
         switch (occupancy_resp)
         {
         case SDN_RESPONSE_GOOD:
@@ -386,30 +384,30 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len)
 
         if (safe_to_open)
         {
-            switch (state.airlock_state)
+            switch (state->airlock_state)
             {
             case AIRLOCK_EXTERIOR_OPEN:
                 break;
             case AIRLOCK_CLOSED_DEPRESSURIZED:
-                if (!ControlDoor(state.config.device_id, state.config.outside_door_id, true))
+                if (!ControlDoor(state->config.device_id, state->config.outside_door_id, true))
                 {
                     exit(4);
                 }
-                state.airlock_state = AIRLOCK_EXTERIOR_OPEN;
+                state->airlock_state = AIRLOCK_EXTERIOR_OPEN;
                 sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_EXTERIOR_OPEN");
                 break;
             case AIRLOCK_INTERIOR_OPEN:
             case AIRLOCK_CLOSED_PRESSURIZED:
             case AIRLOCK_PRESSURIZING:
-                if (!ControlDoor(state.config.device_id, state.config.inside_door_id, false))
+                if (!ControlDoor(state->config.device_id, state->config.inside_door_id, false))
                 {
                     exit(4);
                 }
-                if (!ControlPressure(state.config.device_id, state.config.pressure_ctrl_id, false, &state.pressure_change_time))
+                if (!ControlPressure(state->config.device_id, state->config.pressure_ctrl_id, false, &state->pressure_change_time))
                 {
                     exit(4);
                 }
-                state.airlock_state = AIRLOCK_DEPRESSURIZING;
+                state->airlock_state = AIRLOCK_DEPRESSURIZING;
                 sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_DEPRESSURIZING");
                 break;
             case AIRLOCK_DEPRESSURIZING:
@@ -428,12 +426,13 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len)
     SendCmdResponse(SDN_CMD_SUCCESS);
 }
 
-static void HandleClearFaults(const void *message_data, size_t msg_len)
+static void HandleClearFaults(const void *message_data, size_t msg_len, void *context)
 {
+    AirlockState *state = context;
     if (msg_len >= sizeof(SDNClearFaultsMessage))
     {
         const SDNClearFaultsMessage *cf = (const SDNClearFaultsMessage *)message_data;
-        state.fault_bits &= ~cf->fault_mask;
+        state->fault_bits &= ~cf->fault_mask;
         SendCmdResponse(SDN_CMD_SUCCESS);
     }
     else
@@ -443,14 +442,15 @@ static void HandleClearFaults(const void *message_data, size_t msg_len)
     }
 }
 
-static void HandleSetSuitOccupant(const void *message_data, size_t msg_len)
+static void HandleSetSuitOccupant(const void *message_data, size_t msg_len, void *context)
 {
+    AirlockState *state = context;
     if (msg_len >= sizeof(SDNSetSuitOccupantMessage) && msg_len < MAX_SEND_MESSAGE_SIZE)
     {
-        SDNSetSuitOccupantMessage *send_ptr = (SDNSetSuitOccupantMessage *)message_serialization_buffer;
+        SDNSetSuitOccupantMessage *send_ptr = (SDNSetSuitOccupantMessage *)state->message_serialization_buffer;
         memcpy(send_ptr, message_data, msg_len);
-        send_ptr->msg_header.device_id = state.config.device_id;
-        if (ExecuteCmd(&send_ptr->msg_header, state.config.suit_locker_id))
+        send_ptr->msg_header.device_id = state->config.device_id;
+        if (ExecuteCmd(&send_ptr->msg_header, state->config.suit_locker_id))
         {
             SendCmdResponse(SDN_CMD_SUCCESS);
         }
@@ -467,20 +467,21 @@ static void HandleSetSuitOccupant(const void *message_data, size_t msg_len)
 }
 
 #if APP_DEBUG_BUILD
-static void HandleDebugWriteConfigInt(const void *message_data, size_t msg_len)
+static void HandleDebugWriteConfigInt(const void *message_data, size_t msg_len, void *context)
 {
+    AirlockState *state = context;
     if (msg_len >= sizeof(SDNDebugWriteConfigInt))
     {
         uint32_t cmd_response = 0x001;
         SDNDebugWriteConfigInt *cf = (SDNDebugWriteConfigInt *)message_data;
         cf->key[sizeof(cf->key) - 1] = 0;
-        state.fault_bits &= FAULT_DEBUGGER;
+        state->fault_bits &= FAULT_DEBUGGER;
         if (WriteConfigInt(cf->key, cf->value) || WriteConfigBool(cf->key, (bool)cf->value))
         {
             cmd_response = SDN_CMD_SUCCESS;
         }
 
-        if (state.config.apply_config_change && cmd_response == SDN_CMD_SUCCESS && !LoadConfig(&state.config))
+        if (state->config.apply_config_change && cmd_response == SDN_CMD_SUCCESS && !LoadConfig(&state->config))
         {
             exit(1);
         }
@@ -496,8 +497,10 @@ static void HandleDebugWriteConfigInt(const void *message_data, size_t msg_len)
 
 int main()
 {
-    uint8_t message_serialization_buffer_stack[MAX_SEND_MESSAGE_SIZE];
-    message_serialization_buffer = message_serialization_buffer_stack;
+    AirlockState state = {0};
+
+    void *rx_message_buffer = NULL;
+    SDNHandler *message_handlers = NULL;
 
     if (!LoadConfig(&state.config))
     {
@@ -583,7 +586,7 @@ int main()
 
     while (true)
     {
-        if (ProcessMessageData(message_handlers, num_message_handlers, rx_message_buffer, state.config.rx_message_buffer_size) < 0)
+        if (ProcessMessageData(message_handlers, num_message_handlers, rx_message_buffer, state.config.rx_message_buffer_size, &state) < 0)
         {
             return 5;
         }

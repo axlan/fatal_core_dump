@@ -10,7 +10,7 @@
 
 typedef uint64_t sdn_timestamp_t;
 
-typedef void (*sdn_msg_callback_t)(const void *message_data, size_t msg_len);
+typedef void (*sdn_msg_callback_t)(const void *message_data, size_t msg_len, void *context);
 
 #define SDN_CMD_SUCCESS 0
 #define SDN_HEALTH_GOOD 0
@@ -45,7 +45,6 @@ enum SDNResponseStatus
     SDN_RESPONSE_FAILED = 1,
     SDN_RESPONSE_BUFFER_TOO_SMALL = 2,
 };
-
 
 typedef enum SDNDeviceType SDNDeviceType;
 enum SDNDeviceType
@@ -190,7 +189,7 @@ bool ExecuteCmd(const SDNMsgHeader *header, uint32_t target_device_id);
 
 SDNResponseStatus GetResponse(void *msg_buffer, size_t buffer_size_bytes, uint32_t target_device_id, SDNMsgType request_type);
 
-int ProcessMessageData(SDNHandler* handlers, size_t num_handlers, void *msg_buffer, size_t buffer_size_bytes);
+int ProcessMessageData(SDNHandler *handlers, size_t num_handlers, void *msg_buffer, size_t buffer_size_bytes, void *context);
 
 void SendCmdResponse(uint32_t response_code);
 

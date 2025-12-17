@@ -22,10 +22,11 @@ static bool ControlDoor(uint32_t device_id, uint32_t door_device_id, bool is_ope
     return ExecuteCmd(&door_cmd.msg_header, door_device_id);
 }
 
-// message_data in RDI, msg_len in RSI
-static void HandleSetSuitOccupant(const void *message_data, size_t msg_len)
+// message_data in RDI, msg_len in RSI, context in RDX
+static void HandleSetSuitOccupant(const void *message_data, size_t msg_len, void* context)
 {
     (void)msg_len;
+    (void)context;
     SDNSetSuitOccupantMessage *send_ptr = (SDNSetSuitOccupantMessage *)message_data;
     printf("HandleSetSuitOccupant user_id: 0x%X\n", send_ptr->user_id);
 }
@@ -73,7 +74,7 @@ int main()
         };
         memcpy(buffer, &DUMMY_MSG, sizeof(DUMMY_MSG));
 
-        (*cb)(buffer, sizeof(DUMMY_MSG));
+        (*cb)(buffer, sizeof(DUMMY_MSG), NULL);
     }
 }
 
