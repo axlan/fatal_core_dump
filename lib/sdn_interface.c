@@ -395,9 +395,9 @@ bool ExecuteCmd(const SDNMsgHeader *header, uint32_t target_device_id)
     return true;
 }
 
-SDNResponseStatus GetResponse(void *msg_buffer, size_t buffer_size_bytes,
-                              uint32_t target_device_id,
-                              SDNMsgType request_type)
+SDNResponseStatus RequestMessage(void *msg_buffer, size_t buffer_size_bytes,
+                                            uint32_t target_device_id,
+                                            SDNMsgType request_type)
 {
     (void)target_device_id;
 

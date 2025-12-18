@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station Device Network (SDN) Protocol Datasheet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: white;
+            padding: 2rem;
+            border-bottom: 4px solid #ffc107;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .meta-info {
+            background: #e8eaf6;
+            padding: 1.5rem 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            border-bottom: 2px solid #3f51b5;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .meta-label {
+            font-size: 0.85rem;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .meta-value {
+            font-size: 1.1rem;
+            color: #1a237e;
+            font-weight: 500;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        h2 {
+            color: #1a237e;
+            font-size: 1.8rem;
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #ffc107;
+        }
+
+        h3 {
+            color: #283593;
+            font-size: 1.4rem;
+            margin: 1.5rem 0 0.75rem 0;
+        }
+
+        h4 {
+            color: #3f51b5;
+            font-size: 1.1rem;
+            margin: 1rem 0 0.5rem 0;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        th {
+            background: #3f51b5;
+            color: white;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tr:nth-child(even) {
+            background: #f5f5f5;
+        }
+
+        tr:hover {
+            background: #e8eaf6;
+        }
+
+        .message-structure {
+            background: #f9f9f9;
+            border-left: 4px solid #3f51b5;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .note {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .warning {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .note strong,
+        .warning strong,
+        .info strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        code {
+            background: #f5f5f5;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #d32f2f;
+        }
+
+        .state-diagram {
+            background: #fafafa;
+            border: 2px solid #3f51b5;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .state-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .state-list li {
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background: white;
+            border-left: 3px solid #2196f3;
+            padding-left: 1rem;
+        }
+
+        .state-list li strong {
+            color: #1a237e;
+        }
+
+        ul {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        footer {
+            background: #263238;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .function-signature {
+            background: #f9f9f9;
+            border-left: 4px solid #3f51b5;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Station Device Network (SDN)</h1>
+            <div class="subtitle">Protocol Specification & Datasheet</div>
+        </header>
+
+        <div class="meta-info">
+            <div class="meta-item">
+                <span class="meta-label">Document Version</span>
+                <span class="meta-value">1.1</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Protocol Version</span>
+                <span class="meta-value">SDN-1.0</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Date</span>
+                <span class="meta-value">December 2032</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Status</span>
+                <span class="meta-value">Active</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <section id="overview">
+                <h2>1. Overview</h2>
+                <p>The Station Device Network (SDN) protocol is a comprehensive inter-device messaging framework
+                    designed for critical space station systems. It provides reliable, structured communication between
+                    life support equipment, environmental controls, pressure suits, airlocks, and monitoring systems.
+                </p>
+
+                <h3>1.1 Key Features</h3>
+                <ul>
+                    <li>Packed binary format for efficient bandwidth utilization</li>
+                    <li>Timestamped messages for event sequencing</li>
+                    <li>Support for sensor telemetry and control commands</li>
+                    <li>Health monitoring and fault management</li>
+                    <li>Variable-length payloads for flexible data structures</li>
+                    <li>Command-response architecture with status reporting</li>
+                </ul>
+
+                <h3>1.2 Target Applications</h3>
+                <ul>
+                    <li>Environmental Control and Life Support Systems (ECLSS)</li>
+                    <li>Airlock sequencing and pressure management</li>
+                    <li>Pressure suit monitoring and configuration</li>
+                    <li>Emergency response coordination</li>
+                    <li>System health monitoring and diagnostics</li>
+                </ul>
+            </section>
+
+            <section id="device-types">
+                <h2>2. Device Types</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Type ID</th>
+                            <th>Device Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>0</td>
+                            <td>INVALID</td>
+                            <td>Invalid/uninitialized device type</td>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>SUIT</td>
+                            <td>Pressure suit with integrated life support systems</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>PANEL</td>
+                            <td>Control panel interface for manual operation</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>REMOTE</td>
+                            <td>Remote terminal or monitoring station</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>DOOR</td>
+                            <td>Standard door with pressure sensors on both sides</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>AIRLOCK_CTRL</td>
+                            <td>Airlock controller with dual-door coordination and safety interlocks</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="message-structure">
+                <h2>3. Message Structure</h2>
+
+                <h3>3.1 Common Header (SDNMsgHeader)</h3>
+                <p>All messages begin with a common 16-byte header:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Offset</th>
+                            <th>Size</th>
+                            <th>Field</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>0</td>
+                            <td>2 bytes</td>
+                            <td>msg_type</td>
+                            <td>Message type identifier (see section 4)</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>2 bytes</td>
+                            <td>msg_length</td>
+                            <td>Total message size including header</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>4 bytes</td>
+                            <td>device_id</td>
+                            <td>Unique identifier of sending device</td>
+                        </tr>
+                        <tr>
+                            <td>8</td>
+                            <td>8 bytes</td>
+                            <td>timestamp</td>
+                            <td>Message creation time in milliseconds</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="note">
+                    <strong>Note</strong>
+                    All structures use packed alignment (#pragma pack(1)) to ensure consistent binary layout across
+                    platforms. This is critical for network communication.
+                </div>
+
+                <h3>3.2 Variable-Length Messages</h3>
+                <p>Several message types include flexible array members for variable-length payloads. The actual payload
+                    size is determined by:</p>
+                <div class="message-structure">
+                    payload_size = msg_header.msg_length - sizeof(fixed_fields)
+                </div>
+            </section>
+
+            <section id="message-types">
+                <h2>4. Message Types</h2>
+
+                <h3>4.1 Heartbeat (Type 1)</h3>
+                <p>Periodic health status message broadcast by all devices. Must be sent regularly to avoid timing out.
+                </p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>msg_header</td>
+                            <td>SDNMsgHeader</td>
+                            <td>Standard message header</td>
+                        </tr>
+                        <tr>
+                            <td>health</td>
+                            <td>uint32_t</td>
+                            <td>Health status: 0 = healthy (SDN_HEALTH_GOOD), non-zero = fault bits</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong>Size:</strong> 20 bytes</p>
+
+                <h3>4.2 Sensor Pressure (Type 2)</h3>
+                <p>Atmospheric pressure measurement from environmental sensors. Multiple sensors on a device are
+                    disambiguated by measurement_id.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>msg_header</td>
+                            <td>SDNMsgHeader</td>
+                            <td>Standard message header</td>
+                        </tr>
+                        <tr>
+                            <td>measurement_id</td>
+                            <td>uint32_t</td>
+                            <td>Sensor identifier (see predefined IDs)</td>
+                        </tr>
+                        <tr>
+                            <td>pressure_pa</td>
+                            <td>float</td>
+                            <td>Pressure reading in Pascals</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong>Size:</strong> 24 bytes</p>
+
+                <h4>Predefined Measurement IDs</h4>
+                <ul>
+                    <li><code>SDN_MEASUREMENT_ID_DOOR_PRESSURE_SIDE_1 = 1</code></li>
+                    <li><code>SDN_MEASUREMENT_ID_DOOR_PRESSURE_SIDE_2 = 2</code></li>
+                </ul>
+
+                <h3>4.3 Set Pressure Zone (Type 3)</h3>
+                <p>Command to open pressure valve to specified equalization zone.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>msg_header</td>
+                            <td>SDNMsgHeader</td>
+                            <td>Standard message header</td>
+                        </tr>
+                        <tr>
+                            <td>zone_id</td>
+                            <td>uint8_t</td>
+                            <td>Target pressure zone identifier</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong>Size:</strong> 17 bytes</p>
+
+                <h3>4.4 Set Open (Type 4)</h3>
+                <p>Generic open/close command for standard doors and hatches.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>msg_header</td>
+                            <td>SDNMsgHeader</td>
+                            <td>Standard message header</td>
+                        </tr>
+                        <tr>
+                            <td>open</td>
+                            <td>uint8_t</td>
+                            <td>0=closed, non-zero=open</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong>Size:</strong> 17 bytes</p>
+
+                <h3>4.5 Set Airlock Open (Type 5)</h3>
+                <p>Airlock door control command. Controls which airlock door (if any) is open. Safety interlocks prevent
+                    both doors from opening simultaneously.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>msg_header</td>
+                            <td>SDNMsgHeader</td>
+                            <td>Standard message header</td>
+                        </tr>
+                        <tr>
+                            <td>open</td>
+                            <td>uint8_t</td>
+                            <td>Door state (see SDNAirlockOpen enum)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong>Size:</strong> 17 bytes</p>
+
+                <h4>Airlock States (SDNAirlockOpen)</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Value</th>
+                            <th>State</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>0</td>
+                            <td>CLOSED</td>
+                            <td>Both doors sealed</td>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>INTERIOR_OPEN</td>
+                            <td>Station-side door open</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>EXTERIOR_OPEN</td>
+                            <td>Space-side door open</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="warning">
+                    <strong>Safety Critical - Airlock Operation</strong>
+                    Airlock controllers must enforce interlocks preventing simultaneous opening of both doors. Attempted
+                    dual-door open commands must be rejected.
+                </div>
+
+                <h4>Airlock Command Behavior</h4>
+
+                <div class="info">
+                    <strong>Pre-Conditions</strong>
+                    <ul>
+                        <li>Command is rejected if any fault bits are active (returns SDN_RESPONSE_CMD_ERROR_1)</li>
+                        <li>Message length must be valid (returns SDN_RESPONSE_INVALID_MSG_LEN if too small)</li>
+                    </ul>
+                </div>
+
+                <div class="state-diagram">
+                    <h4>1. SDN_AIRLOCK_CLOSED</h4>
+                    <p>Closes both interior and exterior doors. Transitions state based on which door was previously
+                        open:</p>
+                    <ul class="state-list">
+                        <li><strong>From INTERIOR_OPEN:</strong> Transitions to CLOSED_PRESSURIZED</li>
+                        <li><strong>From EXTERIOR_OPEN:</strong> Transitions to CLOSED_DEPRESSURIZED</li>
+                    </ul>
+
+                    <h4>2. SDN_AIRLOCK_INTERIOR_OPEN (Station-side)</h4>
+                    <ul class="state-list">
+                        <li><strong>From CLOSED_PRESSURIZED:</strong> Directly opens interior door</li>
+                        <li><strong>From EXTERIOR_OPEN / CLOSED_DEPRESSURIZED / DEPRESSURIZING:</strong>
+                            <ul>
+                                <li>Closes exterior door</li>
+                                <li>Initiates pressurization sequence</li>
+                                <li>Enters PRESSURIZING state (door opens when pressurization completes)</li>
+                            </ul>
+                        </li>
+                        <li><strong>Already INTERIOR_OPEN or PRESSURIZING:</strong> No action (idempotent)</li>
+                    </ul>
+
+                    <h4>3. SDN_AIRLOCK_EXTERIOR_OPEN (Space-side)</h4>
+
+                    <div class="warning">
+                        <strong>Critical Safety Check</strong>
+                        Queries occupancy sensor to verify all occupants have sealed suits:
+                        <ul>
+                            <li>Rejects command if any occupant is unsealed (returns SDN_RESPONSE_CMD_ERROR_2)</li>
+                            <li>Rejects if too many occupants present</li>
+                        </ul>
+                    </div>
+
+                    <ul class="state-list">
+                        <li><strong>From CLOSED_DEPRESSURIZED:</strong> Directly opens exterior door</li>
+                        <li><strong>From INTERIOR_OPEN / CLOSED_PRESSURIZED / PRESSURIZING:</strong>
+                            <ul>
+                                <li>Closes interior door</li>
+                                <li>Initiates depressurization sequence</li>
+                                <li>Enters DEPRESSURIZING state (door opens when depressurization completes)</li>
+                            </ul>
+                        </li>
+                        <li><strong>Already EXTERIOR_OPEN or DEPRESSURIZING:</strong> No action</li>
+                    </ul>
+                </div>
+
+                <div class="warning">
+                    <strong>Key Safety Features</strong>
+                    <ul>
+                        <li>Never allows both doors open simultaneously</li>
+                        <li>Requires pressure equalization before door transitions</li>
+                        <li>Validates suit status before exposing occupants to vacuum</li>
+                        <li>Fatal error (exit) on door/pressure control failures</li>
+                    </ul>
+                </div>
+
+                <h3>4.6 Sensor Occupancy (Type 6)</h3>
+                <p>Reports personnel presence and suit status. Variable-length message. The measurement_id identifies
+                    the sensor/location.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>msg_header</td>
+                            <td>SDNMsgHeader</td>
+                            <td>Standard message header</td>
+                        </tr>
+                        <tr>
+                            <td>measurement_id</td>
+                            <td>uint32_t</td>
+                            <td>Sensor/location identifier</td>
+                        </tr>
+                        <tr>
+                            <td>occupants[]</td>
+                            <td>SDNOccupancyInfo[]</td>
+                            <td>Array of occupant records (variable length)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong>Minimum Size:</strong> 20 bytes (no occupants)</p>
+
+                <h4>SDNOccupancyInfo Structure</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Size</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>user_id</td>
+                            <td>uint32_t</td>
+                            <td>4 bytes</td>
+                            <td>Unique personnel identifier</td>
+                        </tr>
+                        <tr>
+                            <td>suit_status</td>
+                            <td>uint8_t</td>
+                            <td>1 byte</td>
+                            <td>0=INVALID, 1=SEALED, 2=UNSEALED</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>4.7 Debug Write Config Int (Type 7)</h3>
+                <p>Runtime configuration parameter update for testing and calibration. By default, configuration is only
+                    reloaded by resetting the device.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>msg_header</td>
+                            <td>SDNMsgHeader</td>
+                            <td>Standard message header</td>
+                        </tr>
+                        <tr>
+                            <td>key[32]</td>
+                            <td>char[]</td>
+                            <td>Configuration key name (null-terminated)</td>
+                        </tr>
+                        <tr>
+                            <td>value</td>
+                            <td>int32_t</td>
+                            <td>New configuration value</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong>Size:</strong> 52 bytes</p>
+
+                <div class="note">
+                    <strong>Note</strong>
+                    This command is intended for testing and debugging. Production systems should use persistent
+                    configuration files.
+                </div>
+
+                <h3>4.8 Clear Faults (Type 8)</h3>
+                <p>Command to reset fault conditions after corrective action.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>msg_header</td>
+                            <td>SDNMsgHeader</td>
+                            <td>Standard message header</td>
+                        </tr>
+                        <tr>
+                            <td>fault_mask</td>
+                            <td>uint32_t</td>
+                            <td>Bitmask of faults to clear (application-defined)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong>Size:</strong> 20 bytes</p>
+
+                <h3>4.9 Log (Type 9)</h3>
+                <p>Diagnostic and operational log message. Variable-length message.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>msg_header</td>
+                            <td>SDNMsgHeader</td>
+                            <td>Standard message header</td>
+                        </tr>
+                        <tr>
+                            <td>severity</td>
+                            <td>uint8_t</td>
+                            <td>0=CRITICAL, 1=ERROR, 2=WARNING, higher values less severe</td>
+                        </tr>
+                        <tr>
+                            <td>message_str[]</td>
+                            <td>char[]</td>
+                            <td>Log message text (null-terminated, variable length)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong>Minimum Size:</strong> 17 bytes (empty message)</p>
+
+                <h3>4.10 Set Suit Occupant (Type 10)</h3>
+                <p>Unlocks and configure pressure suit for specific user. Variable-length message.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>msg_header</td>
+                            <td>SDNMsgHeader</td>
+                            <td>Standard message header</td>
+                        </tr>
+                        <tr>
+                            <td>user_id</td>
+                            <td>uint32_t</td>
+                            <td>User identifier to configure suit for</td>
+                        </tr>
+                        <tr>
+                            <td>user_preferences[]</td>
+                            <td>uint8_t[]</td>
+                            <td>Custom preference data (variable length)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong>Minimum Size:</strong> 20 bytes (no preferences)</p>
+            </section>
+
+            <section id="response-codes">
+                <h2>5. Response Status Codes</h2>
+                <p>Commands return status codes indicating success or failure reason:</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Constant</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>0</td>
+                            <td>SDN_RESPONSE_GOOD</td>
+                            <td>Operation completed successfully</td>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>SDN_RESPONSE_FAILED</td>
+                            <td>Operation failed (generic error)</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>SDN_RESPONSE_BUFFER_TOO_SMALL</td>
+                            <td>Provided buffer insufficient for response</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>SDN_RESPONSE_INVALID_MSG_LEN</td>
+                            <td>Message had invalid length</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>SDN_RESPONSE_CMD_ERROR_1</td>
+                            <td>Command-specific error (e.g., faults active)</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>SDN_RESPONSE_CMD_ERROR_2</td>
+                            <td>Command-specific error (e.g., unsafe conditions)</td>
+                        </tr>
+                        <tr>
+                            <td>6</td>
+                            <td>SDN_RESPONSE_CMD_ERROR_3</td>
+                            <td>Command-specific error (e.g., timeout)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="api">
+                <h2>6. API Functions</h2>
+
+
+                <section id="device-management">
+                    <h3>6.1 Device Management</h3>
+
+                    <h4>RegisterDevice</h4>
+                    <div class="function-signature">
+                        bool RegisterDevice(uint32_t device_id, SDNDeviceType device_type)
+                    </div>
+
+                    <p><strong>Description:</strong> Registers a device with the SDN network. Must be called during
+                        device initialization before any message transmission or reception.</p>
+
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>device_id</td>
+                                <td>uint32_t</td>
+                                <td>Unique identifier for this device (must be unique across the network)</td>
+                            </tr>
+                            <tr>
+                                <td>device_type</td>
+                                <td>SDNDeviceType</td>
+                                <td>Device category: SUIT, PANEL, REMOTE, DOOR, or AIRLOCK_CTRL</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p><strong>Returns:</strong></p>
+                    <ul>
+                        <li><code>true</code> - Registration successful, device can now send/receive messages</li>
+                        <li><code>false</code> - Registration failed (device_id already in use or invalid device_type)
+                        </li>
+                    </ul>
+
+                    <div class="warning">
+                        <strong>Critical</strong>
+                        This function must be called successfully before any other SDN operations. Attempting to use
+                        other functions before registration will result in undefined behavior.
+                    </div>
+                </section>
+
+                <section id="messaging">
+                    <h3>6.2 Messaging & Subscription</h3>
+
+                    <h4>SubscribeToMessage</h4>
+                    <div class="function-signature">
+                        bool SubscribeToMessage(uint32_t device_id, SDNMsgType message_type)
+                    </div>
+
+                    <p><strong>Description:</strong> Subscribes to receive messages of a specific type from a specific
+                        device. Once subscribed, messages of that type from the specified device will be delivered via
+                        ReadNextMessage().</p>
+
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>device_id</td>
+                                <td>uint32_t</td>
+                                <td>The device to subscribe to (source device)</td>
+                            </tr>
+                            <tr>
+                                <td>message_type</td>
+                                <td>SDNMsgType</td>
+                                <td>Type of message to receive (HEARTBEAT, SENSOR_PRESSURE, etc.)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p><strong>Returns:</strong></p>
+                    <ul>
+                        <li><code>true</code> - Subscription successful</li>
+                        <li><code>false</code> - Subscription failed (invalid device_id or message_type)</li>
+                    </ul>
+
+                    <div class="info">
+                        <strong>Note</strong>
+                        Multiple subscriptions can be active simultaneously. Call this function once for each
+                        device/message-type combination you want to receive.
+                    </div>
+                    <h4>ReadNextMessage</h4>
+                    <div class="function-signature">
+                        int ReadNextMessage(void *msg_buffer, size_t buffer_size_bytes)
+                    </div>
+
+                    <p><strong>Description:</strong> Blocking call that retrieves the next available message
+                        from subscribed sources. Returns when a message is available or an error occurs. The
+                        message will always begin with an SDNMsgHeader.</p>
+
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>msg_buffer</td>
+                                <td>void*</td>
+                                <td>Buffer to store the received message</td>
+                            </tr>
+                            <tr>
+                                <td>buffer_size_bytes</td>
+                                <td>size_t</td>
+                                <td>Size of the provided buffer in bytes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p><strong>Returns:</strong></p>
+                    <ul>
+                        <li><strong>Positive value:</strong> Number of bytes read (message size)</li>
+                        <li><strong>Negative value:</strong> Error code (network error, buffer too small, etc.)
+                        </li>
+                    </ul>
+
+                    <div class="warning">
+                        <strong>Warning</strong>
+                        This is a blocking call. The function will not return until a message is received or an
+                        error occurs. For non-blocking operation, implement timeout handling or use a separate
+                        thread.
+                    </div>
+                </section>
+
+                <section id="health-monitoring">
+                    <h3>6.3 Health Monitoring</h3>
+
+                    <h4>BroadcastHeartbeat</h4>
+                    <div class="function-signature">
+                        bool BroadcastHeartbeat(uint32_t fault_bits)
+                    </div>
+
+                    <p><strong>Description:</strong> Broadcasts a heartbeat message to the network indicating device
+                        health status. This must be called periodically to prevent the device from being marked as
+                        unresponsive or failed.</p>
+
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>fault_bits</td>
+                                <td>uint32_t</td>
+                                <td>Bitmask of current fault conditions (0 = SDN_HEALTH_GOOD, non-zero = fault bits)
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p><strong>Returns:</strong></p>
+                    <ul>
+                        <li><code>true</code> - Heartbeat broadcast successful</li>
+                        <li><code>false</code> - Broadcast failed (network error)</li>
+                    </ul>
+
+                    <div class="info">
+                        <strong>Recommended Intervals</strong>
+                        <ul>
+                            <li><strong>Critical devices (SUIT, AIRLOCK_CTRL):</strong> 2 seconds</li>
+                            <li><strong>Standard devices (DOOR, PANEL):</strong> 5 seconds</li>
+                            <li><strong>Monitoring devices (REMOTE):</strong> 10 seconds</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="command-execution">
+                    <h3>6.4 Command Execution</h3>
+
+                    <h4>ExecuteCmd</h4>
+                    <div class="function-signature">
+                        bool ExecuteCmd(const SDNMsgHeader *header, uint32_t target_device_id)
+                    </div>
+
+                    <p><strong>Description:</strong> Sends a command message to a specific device and waits for
+                        acknowledgment of execution. The command will be processed by the target device's message
+                        handler.</p>
+
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>header</td>
+                                <td>const SDNMsgHeader*</td>
+                                <td>Pointer to the complete command message (including header and payload)</td>
+                            </tr>
+                            <tr>
+                                <td>target_device_id</td>
+                                <td>uint32_t</td>
+                                <td>Device identifier to execute the command</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p><strong>Returns:</strong></p>
+                    <ul>
+                        <li><code>true</code> - Command was accepted and acknowledged by target device</li>
+                        <li><code>false</code> - Command was rejected or failed (target unreachable, invalid command,
+                            etc.)</li>
+                    </ul>
+
+                    <div class="note">
+                        <strong>Note</strong>
+                        The header parameter should point to a complete message structure (e.g.,
+                        SDNSetAirlockOpenMessage, SDNClearFaultsMessage, etc.). The msg_type and msg_length fields must
+                        be set correctly.
+                    </div>
+
+
+                    <h4>RequestMessage</h4>
+                    <div class="function-signature">
+                        SDNResponseStatus RequestMessage(void *msg_buffer, size_t buffer_size_bytes,
+                        uint32_t target_device_id, SDNMsgType request_type)
+                    </div>
+
+                    <p><strong>Description:</strong> Requests a device to send a specific message type. Used to
+                        poll devices for current status or sensor readings. The response is stored in the
+                        provided buffer.</p>
+
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>msg_buffer</td>
+                                <td>void*</td>
+                                <td>Buffer to store the response message</td>
+                            </tr>
+                            <tr>
+                                <td>buffer_size_bytes</td>
+                                <td>size_t</td>
+                                <td>Size of the provided buffer</td>
+                            </tr>
+                            <tr>
+                                <td>target_device_id</td>
+                                <td>uint32_t</td>
+                                <td>Device that should respond</td>
+                            </tr>
+                            <tr>
+                                <td>request_type</td>
+                                <td>SDNMsgType</td>
+                                <td>Type of message being requested</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p><strong>Returns:</strong></p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Status Code</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>SDN_RESPONSE_GOOD</td>
+                                <td>Response received successfully, data in msg_buffer</td>
+                            </tr>
+                            <tr>
+                                <td>SDN_RESPONSE_FAILED</td>
+                                <td>Request failed (device unreachable, timeout, etc.)</td>
+                            </tr>
+                            <tr>
+                                <td>SDN_RESPONSE_BUFFER_TOO_SMALL</td>
+                                <td>Response message larger than provided buffer</td>
+                            </tr>
+                            <tr>
+                                <td>SDN_RESPONSE_INVALID_MSG_LEN</td>
+                                <td>Response had invalid message length</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h4>SendCmdResponse</h4>
+                    <div class="function-signature">
+                        void SendCmdResponse(SDNResponseStatus response_code)
+                    </div>
+
+                    <p><strong>Description:</strong> Sends a response code after processing a received command.
+                        This must be called by command message handlers to acknowledge command processing and
+                        indicate success or failure.</p>
+
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>response_code</td>
+                                <td>SDNResponseStatus</td>
+                                <td>Status code indicating success or reason for failure</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p><strong>Common Response Codes:</strong></p>
+                    <ul>
+                        <li><code>SDN_RESPONSE_GOOD</code> - Command processed successfully</li>
+                        <li><code>SDN_RESPONSE_FAILED</code> - Command failed (generic error)</li>
+                        <li><code>SDN_RESPONSE_INVALID_MSG_LEN</code> - Message length invalid</li>
+                        <li><code>SDN_RESPONSE_CMD_ERROR_1</code> - Command-specific error </li>
+                    </ul>
+
+                    <div class="warning">
+                        <strong>Critical</strong>
+                        Command handlers MUST call SendCmdResponse() exactly once per received command. Failing
+                        to respond will cause the sender to timeout.
+                    </div>
+                </section>
+
+                <section id="utility">
+                    <h3>6.5 Utility Functions</h3>
+
+                    <h4>GetCurrentTimestampMS</h4>
+                    <div class="function-signature">
+                        sdn_timestamp_t GetCurrentTimestampMS(void)
+                    </div>
+
+                    <p><strong>Description:</strong> Returns the current system time in milliseconds since system epoch.
+                        Used to populate the timestamp field in message headers.</p>
+
+                    <p><strong>Returns:</strong> Current time in milliseconds (uint64_t)</p>
+
+                    <div class="info">
+                        <strong>Note</strong>
+                        The timestamp is used for message sequencing and timeout detection. All messages should include
+                        a valid timestamp obtained from this function.
+                    </div>
+                    <h4>SleepMS</h4>
+                    <div class="function-signature">
+                        void SleepMS(unsigned ms)
+                    </div>
+
+                    <p><strong>Description:</strong> Blocks execution for the specified duration in
+                        milliseconds. Used for implementing periodic tasks like heartbeat transmission.</p>
+
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>ms</td>
+                                <td>unsigned</td>
+                                <td>Duration to sleep in milliseconds</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+            </section>
+            <footer>
+                <p>Station Device Network (SDN) Protocol - API Reference v1.1</p>
+                <p>© 2032 - For use in space station critical systems</p>
+            </footer>
+        </div>
+    </div>
+</body>
+
+</html>

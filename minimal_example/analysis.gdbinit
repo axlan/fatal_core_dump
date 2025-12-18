@@ -8,13 +8,13 @@ define xbt
   end
 end
 
-break main.c:577
+break main.c:609
 break SendAttackCmd
 break SendFailureCmd
 #break sdn_interface.c:453
 
 set exec-wrapper env -i
-#r
+r
 
 print HandleSetSuitOccupant
 print ControlDoor

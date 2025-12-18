@@ -280,14 +280,14 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
     if (state->fault_bits != 0)
     {
         sdn_log(SDN_WARN, "Door commands ignored while fault active.");
-        SendCmdResponse(0x100);
+        SendCmdResponse(SDN_RESPONSE_CMD_ERROR_1);
         return;
     }
 
     if (msg_len < sizeof(SDNSetAirlockOpenMessage))
     {
         sdn_log(SDN_WARN, "Received SET_AIRLOCK_OPEN message with invalid length %d", (int)msg_len);
-        SendCmdResponse(0x200);
+        SendCmdResponse(SDN_RESPONSE_INVALID_MSG_LEN);
         return;
     }
 
@@ -347,7 +347,7 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
     else if (airlock_req == SDN_AIRLOCK_EXTERIOR_OPEN)
     {
         bool safe_to_open = true;
-        SDNResponseStatus occupancy_resp = GetResponse(occupancy_msg_buffer, sizeof(occupancy_msg_buffer), state->config.occupancy_sensor_id, SDN_MSG_TYPE_SENSOR_OCCUPANCY);
+        SDNResponseStatus occupancy_resp = RequestMessage(occupancy_msg_buffer, sizeof(occupancy_msg_buffer), state->config.occupancy_sensor_id, SDN_MSG_TYPE_SENSOR_OCCUPANCY);
         switch (occupancy_resp)
         {
         case SDN_RESPONSE_GOOD:
@@ -419,11 +419,11 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
         else
         {
             sdn_log(SDN_WARN, "Received SDN_AIRLOCK_EXTERIOR_OPEN message with unsealed occupants");
-            SendCmdResponse(0x001);
+            SendCmdResponse(SDN_RESPONSE_CMD_ERROR_2);
             return;
         }
     }
-    SendCmdResponse(SDN_CMD_SUCCESS);
+    SendCmdResponse(SDN_RESPONSE_GOOD);
 }
 
 static void HandleClearFaults(const void *message_data, size_t msg_len, void *context)
@@ -433,12 +433,12 @@ static void HandleClearFaults(const void *message_data, size_t msg_len, void *co
     {
         const SDNClearFaultsMessage *cf = (const SDNClearFaultsMessage *)message_data;
         state->fault_bits &= ~cf->fault_mask;
-        SendCmdResponse(SDN_CMD_SUCCESS);
+        SendCmdResponse(SDN_RESPONSE_GOOD);
     }
     else
     {
         sdn_log(SDN_WARN, "Received CLEAR_FAULTS message with invalid length %d", (int)msg_len);
-        SendCmdResponse(0x200);
+        SendCmdResponse(SDN_RESPONSE_INVALID_MSG_LEN);
     }
 }
 
@@ -452,17 +452,17 @@ static void HandleSetSuitOccupant(const void *message_data, size_t msg_len, void
         send_ptr->msg_header.device_id = state->config.device_id;
         if (ExecuteCmd(&send_ptr->msg_header, state->config.suit_locker_id))
         {
-            SendCmdResponse(SDN_CMD_SUCCESS);
+            SendCmdResponse(SDN_RESPONSE_GOOD);
         }
         else
         {
-            SendCmdResponse(0x001);
+            SendCmdResponse(SDN_RESPONSE_CMD_ERROR_1);
         }
     }
     else
     {
         sdn_log(SDN_WARN, "Received SDN_MSG_TYPE_SET_SUIT_OCCUPANT message with invalid length %d", (int)msg_len);
-        SendCmdResponse(0x200);
+        SendCmdResponse(SDN_RESPONSE_INVALID_MSG_LEN);
     }
 }
 
@@ -478,10 +478,10 @@ static void HandleDebugWriteConfigInt(const void *message_data, size_t msg_len, 
         state->fault_bits &= FAULT_DEBUGGER;
         if (WriteConfigInt(cf->key, cf->value) || WriteConfigBool(cf->key, (bool)cf->value))
         {
-            cmd_response = SDN_CMD_SUCCESS;
+            cmd_response = SDN_RESPONSE_GOOD;
         }
 
-        if (state->config.apply_config_change && cmd_response == SDN_CMD_SUCCESS && !LoadConfig(&state->config))
+        if (state->config.apply_config_change && cmd_response == SDN_RESPONSE_GOOD && !LoadConfig(&state->config))
         {
             exit(1);
         }
@@ -490,7 +490,7 @@ static void HandleDebugWriteConfigInt(const void *message_data, size_t msg_len, 
     else
     {
         sdn_log(SDN_WARN, "Received DEBUG_WRITE_CONFIG_INT with invalid length %d", (int)msg_len);
-        SendCmdResponse(0x200);
+        SendCmdResponse(SDN_RESPONSE_INVALID_MSG_LEN);
     }
 }
 #endif
