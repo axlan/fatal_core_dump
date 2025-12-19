@@ -114,7 +114,7 @@ struct AirlockState
     uint8_t message_serialization_buffer[MAX_SEND_MESSAGE_SIZE];
 };
 
-////////////////////// Implementation ///////////////////////
+////////////////////// Helper Functions ///////////////////////
 
 static void exit_with_error(ExitCode exit_code)
 {
@@ -244,6 +244,148 @@ static inline int get_door_idx_from_id(const AirlockConfig *config, uint32_t dev
         return OUTER_DOOR_IDX;
     return -1;
 }
+
+static int ProcessMessageData(SDNHandler *handlers, size_t num_handlers,
+                              void *msg_buffer, size_t buffer_size_bytes, void *context)
+{
+    assert(handlers != NULL);
+    assert(msg_buffer != NULL);
+    assert(buffer_size_bytes >= sizeof(SDNMsgHeader));
+    while (true)
+    {
+        int ret = ReadNextMessage(msg_buffer, buffer_size_bytes);
+        if (ret < 0)
+        {
+            return ret;
+        }
+        else if (ret == 0)
+        {
+            return 0;
+        }
+        else
+        {
+            SDNMsgHeader *msg_header = (SDNMsgHeader *)msg_buffer;
+            for (SDNHandler *handler = handlers; handler < handlers + num_handlers;
+                 handler++)
+            {
+                if (msg_header->msg_type == handler->type)
+                {
+                    handler->callback(msg_buffer, ret, context);
+                }
+            }
+        }
+    }
+}
+
+static void CheckWatchDogs(AirlockState *state)
+{
+    sdn_timestamp_t now = GetCurrentTimestampMS();
+
+    /* Watchdog: check for missed messages from doors and set fault bit */
+    if (!(state->fault_bits & FAULT_DOOR_BIT))
+    {
+        uint32_t door_fault = 0;
+        for (int i = 0; i < 2; ++i)
+        {
+            if (now - state->door_status[i].heartbeat.msg_header.timestamp > DEVICE_WATCHDOG_TIMEOUT_MS)
+            {
+                door_fault = FAULT_DOOR_BIT;
+                sdn_log(SDN_CRITICAL, "%s door heartbeat timeout", DOOR_NAMES[i]);
+            }
+            for (int j = 0; j < 2; ++j)
+            {
+                if (now - state->door_status[i].pressure[j].msg_header.timestamp > DEVICE_WATCHDOG_TIMEOUT_MS)
+                {
+                    door_fault = FAULT_DOOR_BIT;
+                    sdn_log(SDN_CRITICAL, "%s door pressure timeout", DOOR_NAMES[i]);
+                }
+            }
+        }
+        state->fault_bits |= door_fault;
+    }
+
+    if (!(state->fault_bits & FAULT_DOOR_BIT) && !(state->fault_bits & FAULT_PRESSURE))
+    {
+        bool pressure_initialized = !isnan(*state->station_pressure) && !isnan(*state->exterior_pressure) && !isnan(*state->airlock_pressures[0]) && !isnan(*state->airlock_pressures[1]);
+        if (pressure_initialized)
+        {
+            double sp = (double)*state->station_pressure;
+            double ep = (double)*state->exterior_pressure;
+            double ap0 = (double)*state->airlock_pressures[0];
+            double ap1 = (double)*state->airlock_pressures[1];
+
+            bool pressure_fault = false;
+
+            switch (state->airlock_state)
+            {
+            case AIRLOCK_CLOSED_PRESSURIZED:
+                if (fabs(ap0 - sp) > PRESSURE_ERROR_TOLERANCE || fabs(ap1 - sp) > PRESSURE_ERROR_TOLERANCE)
+                {
+                    sdn_log(SDN_CRITICAL, "Airlock not pressurized: ap0=%.3f ap1=%.3f station=%.3f", ap0, ap1, sp);
+                    pressure_fault = true;
+                }
+                break;
+            case AIRLOCK_CLOSED_DEPRESSURIZED:
+                if (fabs(ap0 - ep) > PRESSURE_ERROR_TOLERANCE || fabs(ap1 - ep) > PRESSURE_ERROR_TOLERANCE)
+                {
+                    sdn_log(SDN_CRITICAL, "Airlock not depressurized: ap0=%.3f ap1=%.3f exterior=%.3f", ap0, ap1, ep);
+                    pressure_fault = true;
+                }
+                break;
+            case AIRLOCK_INTERIOR_OPEN:
+                if (fabs(ap0 - sp) > PRESSURE_ERROR_TOLERANCE || fabs(ap1 - sp) > PRESSURE_ERROR_TOLERANCE)
+                {
+                    sdn_log(SDN_CRITICAL, "Interior open but airlock pressure != station: ap0=%.3f ap1=%.3f exterior=%.3f", ap0, ap1, ep);
+                    pressure_fault = true;
+                }
+                break;
+            case AIRLOCK_EXTERIOR_OPEN:
+                if (fabs(ap0 - ep) > PRESSURE_ERROR_TOLERANCE || fabs(ap1 - ep) > PRESSURE_ERROR_TOLERANCE)
+                {
+                    sdn_log(SDN_CRITICAL, "Exterior open but airlock pressure != exterior: ap0=%.3f ap1=%.3f exterior=%.3f", ap0, ap1, ep);
+                    pressure_fault = true;
+                }
+                break;
+            case AIRLOCK_PRESSURIZING:
+                // Expect airlock to approach station pressure
+                if (fabs(ap0 - sp) <= PRESSURE_ERROR_TOLERANCE && fabs(ap1 - sp) <= PRESSURE_ERROR_TOLERANCE)
+                {
+                    state->airlock_state = AIRLOCK_CLOSED_PRESSURIZED;
+                    sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_CLOSED_PRESSURIZED");
+                }
+                break;
+            case AIRLOCK_DEPRESSURIZING:
+                // Expect airlock to approach exterior pressure
+                if (fabs(ap0 - ep) <= PRESSURE_ERROR_TOLERANCE && fabs(ap1 - ep) <= PRESSURE_ERROR_TOLERANCE)
+                {
+                    state->airlock_state = AIRLOCK_CLOSED_DEPRESSURIZED;
+                    sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_CLOSED_DEPRESSURIZED");
+                }
+                break;
+            default:
+                break;
+            }
+
+            if (pressure_fault)
+            {
+                state->fault_bits |= FAULT_PRESSURE;
+            }
+            else
+            {
+                if (state->airlock_state == AIRLOCK_PRESSURIZING || state->airlock_state == AIRLOCK_DEPRESSURIZING)
+                {
+                    if (now - state->pressure_change_time > PRESSURE_CHANGE_TIMEOUT_MS)
+                    {
+                        sdn_log(SDN_ERROR, "Pressure change timeout exceeded");
+                        state->fault_bits |= FAULT_PRESSURE;
+                    }
+                }
+            }
+        }
+    }
+}
+
+//////////////////////////// Message Handlers //////////////////////////////////////
 
 static void HandleHeartBeat(const void *message_data, size_t msg_len, void *context)
 {
@@ -511,38 +653,6 @@ static void HandleDebugWriteConfigInt(const void *message_data, size_t msg_len, 
 }
 #endif
 
-static int ProcessMessageData(SDNHandler *handlers, size_t num_handlers,
-                              void *msg_buffer, size_t buffer_size_bytes, void *context)
-{
-    assert(handlers != NULL);
-    assert(msg_buffer != NULL);
-    assert(buffer_size_bytes >= sizeof(SDNMsgHeader));
-    while (true)
-    {
-        int ret = ReadNextMessage(msg_buffer, buffer_size_bytes);
-        if (ret < 0)
-        {
-            return ret;
-        }
-        else if (ret == 0)
-        {
-            return 0;
-        }
-        else
-        {
-            SDNMsgHeader *msg_header = (SDNMsgHeader *)msg_buffer;
-            for (SDNHandler *handler = handlers; handler < handlers + num_handlers;
-                 handler++)
-            {
-                if (msg_header->msg_type == handler->type)
-                {
-                    handler->callback(msg_buffer, ret, context);
-                }
-            }
-        }
-    }
-}
-
 int main()
 {
     AirlockState state = {0};
@@ -641,110 +751,7 @@ int main()
             exit_with_error(EXIT_CODE_MESSAGE_ERROR);
         }
 
-        sdn_timestamp_t now = GetCurrentTimestampMS();
-
-        /* Watchdog: check for missed messages from doors and set fault bit */
-        if (!(state.fault_bits & FAULT_DOOR_BIT))
-        {
-            uint32_t door_fault = 0;
-            for (int i = 0; i < 2; ++i)
-            {
-                if (now - state.door_status[i].heartbeat.msg_header.timestamp > DEVICE_WATCHDOG_TIMEOUT_MS)
-                {
-                    door_fault = FAULT_DOOR_BIT;
-                    sdn_log(SDN_CRITICAL, "%s door heartbeat timeout", DOOR_NAMES[i]);
-                }
-                for (int j = 0; j < 2; ++j)
-                {
-                    if (now - state.door_status[i].pressure[j].msg_header.timestamp > DEVICE_WATCHDOG_TIMEOUT_MS)
-                    {
-                        door_fault = FAULT_DOOR_BIT;
-                        sdn_log(SDN_CRITICAL, "%s door pressure timeout", DOOR_NAMES[i]);
-                    }
-                }
-            }
-            state.fault_bits |= door_fault;
-        }
-
-        if (!(state.fault_bits & FAULT_DOOR_BIT) && !(state.fault_bits & FAULT_PRESSURE))
-        {
-            bool pressure_initialized = !isnan(*state.station_pressure) && !isnan(*state.exterior_pressure) && !isnan(*state.airlock_pressures[0]) && !isnan(*state.airlock_pressures[1]);
-            if (pressure_initialized)
-            {
-                double sp = (double)*state.station_pressure;
-                double ep = (double)*state.exterior_pressure;
-                double ap0 = (double)*state.airlock_pressures[0];
-                double ap1 = (double)*state.airlock_pressures[1];
-
-                bool pressure_fault = false;
-
-                switch (state.airlock_state)
-                {
-                case AIRLOCK_CLOSED_PRESSURIZED:
-                    if (fabs(ap0 - sp) > PRESSURE_ERROR_TOLERANCE || fabs(ap1 - sp) > PRESSURE_ERROR_TOLERANCE)
-                    {
-                        sdn_log(SDN_CRITICAL, "Airlock not pressurized: ap0=%.3f ap1=%.3f station=%.3f", ap0, ap1, sp);
-                        pressure_fault = true;
-                    }
-                    break;
-                case AIRLOCK_CLOSED_DEPRESSURIZED:
-                    if (fabs(ap0 - ep) > PRESSURE_ERROR_TOLERANCE || fabs(ap1 - ep) > PRESSURE_ERROR_TOLERANCE)
-                    {
-                        sdn_log(SDN_CRITICAL, "Airlock not depressurized: ap0=%.3f ap1=%.3f exterior=%.3f", ap0, ap1, ep);
-                        pressure_fault = true;
-                    }
-                    break;
-                case AIRLOCK_INTERIOR_OPEN:
-                    if (fabs(ap0 - sp) > PRESSURE_ERROR_TOLERANCE || fabs(ap1 - sp) > PRESSURE_ERROR_TOLERANCE)
-                    {
-                        sdn_log(SDN_CRITICAL, "Interior open but airlock pressure != station: ap0=%.3f ap1=%.3f exterior=%.3f", ap0, ap1, ep);
-                        pressure_fault = true;
-                    }
-                    break;
-                case AIRLOCK_EXTERIOR_OPEN:
-                    if (fabs(ap0 - ep) > PRESSURE_ERROR_TOLERANCE || fabs(ap1 - ep) > PRESSURE_ERROR_TOLERANCE)
-                    {
-                        sdn_log(SDN_CRITICAL, "Exterior open but airlock pressure != exterior: ap0=%.3f ap1=%.3f exterior=%.3f", ap0, ap1, ep);
-                        pressure_fault = true;
-                    }
-                    break;
-                case AIRLOCK_PRESSURIZING:
-                    // Expect airlock to approach station pressure
-                    if (fabs(ap0 - sp) <= PRESSURE_ERROR_TOLERANCE && fabs(ap1 - sp) <= PRESSURE_ERROR_TOLERANCE)
-                    {
-                        state.airlock_state = AIRLOCK_CLOSED_PRESSURIZED;
-                        sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_CLOSED_PRESSURIZED");
-                    }
-                    break;
-                case AIRLOCK_DEPRESSURIZING:
-                    // Expect airlock to approach exterior pressure
-                    if (fabs(ap0 - ep) <= PRESSURE_ERROR_TOLERANCE && fabs(ap1 - ep) <= PRESSURE_ERROR_TOLERANCE)
-                    {
-                        state.airlock_state = AIRLOCK_CLOSED_DEPRESSURIZED;
-                        sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_CLOSED_DEPRESSURIZED");
-                    }
-                    break;
-                default:
-                    break;
-                }
-
-                if (pressure_fault)
-                {
-                    state.fault_bits |= FAULT_PRESSURE;
-                }
-                else
-                {
-                    if (state.airlock_state == AIRLOCK_PRESSURIZING || state.airlock_state == AIRLOCK_DEPRESSURIZING)
-                    {
-                        if (now - state.pressure_change_time > PRESSURE_CHANGE_TIMEOUT_MS)
-                        {
-                            sdn_log(SDN_ERROR, "Pressure change timeout exceeded");
-                            state.fault_bits |= FAULT_PRESSURE;
-                        }
-                    }
-                }
-            }
-        }
+        CheckWatchDogs(&state);
 
         BroadcastHeartbeat(state.fault_bits);
         SleepMS(SLEEP_PERIOD_MS);

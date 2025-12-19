@@ -722,8 +722,17 @@
 
                 <div class="note">
                     <strong>Note</strong>
-                    This command is intended for testing and debugging. Production systems should use persistent
-                    configuration files.
+                    <ul>
+                        <li>
+                            This command is intended for testing and debugging. Production systems should use persistent
+                            configuration files.
+                        </li>
+                        <li>
+                            While this configuration parameter is represented as an int32_t, it will implicitly be cast
+                            as
+                            needed if the key corresponds to other types (e.x. bool, uint32_t).
+                        </li>
+                    </ul>
                 </div>
 
                 <h3>4.8 Clear Faults (Type 8)</h3>

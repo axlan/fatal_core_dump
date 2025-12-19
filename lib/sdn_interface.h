@@ -297,6 +297,10 @@ struct SDNSetAirlockOpenMessage
  * Allows modification of device configuration parameters
  * for testing and calibration purposes.
  *
+ * While this configuration parameter is represented as an int32_t, it will
+ * implicitly be cast as needed if the key corresponds to other types
+ * (e.x. bool, uint32_t).
+ *
  * By default configuration is only reloaded by resetting device.
  */
 typedef struct SDNDebugWriteConfigInt SDNDebugWriteConfigInt;
