@@ -8,6 +8,13 @@
 
 #include "sdn_interface.h"
 
+typedef struct AirlockState AirlockState;
+struct AirlockState
+{
+};
+
+typedef void (*sdn_msg_callback_t)(const void *message_data, size_t msg_len, AirlockState *state);
+
 // device_id in RDI, door_device_id in RSI, is_open in RDX
 static bool ControlDoor(uint32_t device_id, uint32_t door_device_id, bool is_open)
 {
@@ -23,10 +30,10 @@ static bool ControlDoor(uint32_t device_id, uint32_t door_device_id, bool is_ope
 }
 
 // message_data in RDI, msg_len in RSI, context in RDX
-static void HandleSetSuitOccupant(const void *message_data, size_t msg_len, void* context)
+static void HandleSetSuitOccupant(const void *message_data, size_t msg_len, AirlockState* state)
 {
     (void)msg_len;
-    (void)context;
+    (void)state;
     SDNSetSuitOccupantMessage *send_ptr = (SDNSetSuitOccupantMessage *)message_data;
     printf("HandleSetSuitOccupant user_id: 0x%X\n", send_ptr->user_id);
 }

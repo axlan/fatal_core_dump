@@ -1,3 +1,12 @@
+/**
+ * @file main.c
+ * @brief Main application logic for the Airlock Controller.
+ *
+ * This file contains the core state machine, message handling, and fault detection
+ * for a space station airlock system. It coordinates two doors and a pressure
+ * controller to ensure safe transitions between the station interior and the
+ * exterior vacuum.
+ */
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
@@ -114,6 +123,27 @@ struct AirlockState
     uint8_t message_serialization_buffer[MAX_SEND_MESSAGE_SIZE];
 };
 
+/**
+ * @brief Callback function type for message handlers
+ * @param message_data Pointer to the received message data. Always starts with @ref SDNMsgHeader.
+ * @param msg_len Length of the message in bytes
+ * @param context User-provided context pointer
+ */
+typedef void (*sdn_msg_callback_t)(const void *message_data, size_t msg_len, AirlockState *state);
+
+/**
+ * @brief Message handler registration structure
+ *
+ * Associates a message type with a callback function for processing
+ * incoming messages of that type.
+ */
+typedef struct SDNHandler SDNHandler;
+struct SDNHandler
+{
+    SDNMsgType type;             ///< Message type this handler processes
+    sdn_msg_callback_t callback; ///< Function to call when message is received
+};
+
 ////////////////////// Helper Functions ///////////////////////
 
 static void exit_with_error(ExitCode exit_code)
@@ -145,6 +175,7 @@ static void exit_with_error(ExitCode exit_code)
 
 static bool ControlDoor(uint32_t device_id, uint32_t door_device_id, bool is_open)
 {
+    sdn_log(SDN_INFO, "Sending ControlDoor command to 0x%x, open=%d", door_device_id, is_open);
     SDNSetOpenMessage door_cmd = {
         .msg_header = {
             .device_id = device_id,
@@ -157,6 +188,7 @@ static bool ControlDoor(uint32_t device_id, uint32_t door_device_id, bool is_ope
 
 static bool ControlPressure(uint32_t device_id, uint32_t pressure_device_id, bool use_internal_pressure, sdn_timestamp_t *pressure_change_time)
 {
+    sdn_log(SDN_INFO, "Sending ControlPressure command to 0x%x, use_internal=%d", pressure_device_id, use_internal_pressure);
     assert(pressure_change_time != NULL);
     *pressure_change_time = GetCurrentTimestampMS();
     SDNSetPressureZoneMessage pressure_cmd = {
@@ -171,6 +203,7 @@ static bool ControlPressure(uint32_t device_id, uint32_t pressure_device_id, boo
 
 static bool InitializeSDN(const AirlockConfig *config)
 {
+    sdn_log(SDN_INFO, "Initializing SDN...");
     assert(config != NULL);
     if (!RegisterDevice(config->device_id, SDN_DEVICE_TYPE_AIRLOCK_CTRL))
     {
@@ -192,11 +225,13 @@ static bool InitializeSDN(const AirlockConfig *config)
     {
         return false;
     }
+    sdn_log(SDN_INFO, "SDN Initialized.");
     return true;
 }
 
 static bool LoadConfig(AirlockConfig *config)
 {
+    sdn_log(SDN_INFO, "Loading configuration...");
     if (!LoadConfigU32(&config->device_id, "device_id"))
     {
         return false;
@@ -233,6 +268,7 @@ static bool LoadConfig(AirlockConfig *config)
     {
         return false;
     }
+    sdn_log(SDN_INFO, "Configuration loaded.");
     return true;
 }
 
@@ -245,11 +281,25 @@ static inline int get_door_idx_from_id(const AirlockConfig *config, uint32_t dev
     return -1;
 }
 
+/**
+ * @brief Reads and dispatches incoming SDN messages to registered handlers.
+ *
+ * This function enters a loop to read messages from the SDN network. For each
+ * valid message received, it iterates through the list of registered handlers
+ * and invokes the callback for the matching message type.
+ *
+ * @param handlers Array of message handlers.
+ * @param num_handlers Number of handlers in the array.
+ * @param msg_buffer Buffer to store incoming messages.
+ * @param buffer_size_bytes Size of the message buffer.
+ * @param state A pointer to the application state, passed to callbacks.
+ * @return Returns a negative value on a read error. The loop continues otherwise.
+ */
 static int ProcessMessageData(SDNHandler *handlers, size_t num_handlers,
-                              void *msg_buffer, size_t buffer_size_bytes, void *context)
+                              void *msg_buffer, size_t buffer_size_bytes, AirlockState *state)
 {
     assert(handlers != NULL);
-    assert(msg_buffer != NULL);
+    assert(state != NULL);
     assert(buffer_size_bytes >= sizeof(SDNMsgHeader));
     while (true)
     {
@@ -270,7 +320,7 @@ static int ProcessMessageData(SDNHandler *handlers, size_t num_handlers,
             {
                 if (msg_header->msg_type == handler->type)
                 {
-                    handler->callback(msg_buffer, ret, context);
+                    handler->callback(msg_buffer, ret, state);
                 }
             }
         }
@@ -319,6 +369,7 @@ static void CheckWatchDogs(AirlockState *state)
             switch (state->airlock_state)
             {
             case AIRLOCK_CLOSED_PRESSURIZED:
+                // In this state, the airlock pressure should match the station pressure.
                 if (fabs(ap0 - sp) > PRESSURE_ERROR_TOLERANCE || fabs(ap1 - sp) > PRESSURE_ERROR_TOLERANCE)
                 {
                     sdn_log(SDN_CRITICAL, "Airlock not pressurized: ap0=%.3f ap1=%.3f station=%.3f", ap0, ap1, sp);
@@ -326,6 +377,7 @@ static void CheckWatchDogs(AirlockState *state)
                 }
                 break;
             case AIRLOCK_CLOSED_DEPRESSURIZED:
+                // In this state, the airlock pressure should match the exterior pressure (vacuum).
                 if (fabs(ap0 - ep) > PRESSURE_ERROR_TOLERANCE || fabs(ap1 - ep) > PRESSURE_ERROR_TOLERANCE)
                 {
                     sdn_log(SDN_CRITICAL, "Airlock not depressurized: ap0=%.3f ap1=%.3f exterior=%.3f", ap0, ap1, ep);
@@ -333,6 +385,7 @@ static void CheckWatchDogs(AirlockState *state)
                 }
                 break;
             case AIRLOCK_INTERIOR_OPEN:
+                // When the interior door is open, the airlock is part of the station; pressures must match.
                 if (fabs(ap0 - sp) > PRESSURE_ERROR_TOLERANCE || fabs(ap1 - sp) > PRESSURE_ERROR_TOLERANCE)
                 {
                     sdn_log(SDN_CRITICAL, "Interior open but airlock pressure != station: ap0=%.3f ap1=%.3f exterior=%.3f", ap0, ap1, ep);
@@ -340,6 +393,7 @@ static void CheckWatchDogs(AirlockState *state)
                 }
                 break;
             case AIRLOCK_EXTERIOR_OPEN:
+                // When the exterior door is open, the airlock is exposed to space; pressures must match.
                 if (fabs(ap0 - ep) > PRESSURE_ERROR_TOLERANCE || fabs(ap1 - ep) > PRESSURE_ERROR_TOLERANCE)
                 {
                     sdn_log(SDN_CRITICAL, "Exterior open but airlock pressure != exterior: ap0=%.3f ap1=%.3f exterior=%.3f", ap0, ap1, ep);
@@ -347,7 +401,8 @@ static void CheckWatchDogs(AirlockState *state)
                 }
                 break;
             case AIRLOCK_PRESSURIZING:
-                // Expect airlock to approach station pressure
+                // While pressurizing, check if the target station pressure has been reached.
+                // If so, transition to the stable pressurized state.
                 if (fabs(ap0 - sp) <= PRESSURE_ERROR_TOLERANCE && fabs(ap1 - sp) <= PRESSURE_ERROR_TOLERANCE)
                 {
                     state->airlock_state = AIRLOCK_CLOSED_PRESSURIZED;
@@ -355,7 +410,7 @@ static void CheckWatchDogs(AirlockState *state)
                 }
                 break;
             case AIRLOCK_DEPRESSURIZING:
-                // Expect airlock to approach exterior pressure
+                // If so, transition to the stable depressurized state.
                 if (fabs(ap0 - ep) <= PRESSURE_ERROR_TOLERANCE && fabs(ap1 - ep) <= PRESSURE_ERROR_TOLERANCE)
                 {
                     state->airlock_state = AIRLOCK_CLOSED_DEPRESSURIZED;
@@ -363,6 +418,8 @@ static void CheckWatchDogs(AirlockState *state)
                 }
                 break;
             default:
+                sdn_log(SDN_ERROR, "Pressure check in unknown state: %d", state->airlock_state);
+                pressure_fault = true;
                 break;
             }
 
@@ -372,6 +429,7 @@ static void CheckWatchDogs(AirlockState *state)
             }
             else
             {
+                // If the airlock is in a transitional pressure state, check for a timeout.
                 if (state->airlock_state == AIRLOCK_PRESSURIZING || state->airlock_state == AIRLOCK_DEPRESSURIZING)
                 {
                     if (now - state->pressure_change_time > PRESSURE_CHANGE_TIMEOUT_MS)
@@ -387,9 +445,8 @@ static void CheckWatchDogs(AirlockState *state)
 
 //////////////////////////// Message Handlers //////////////////////////////////////
 
-static void HandleHeartBeat(const void *message_data, size_t msg_len, void *context)
+static void HandleHeartBeat(const void *message_data, size_t msg_len, AirlockState *state)
 {
-    AirlockState *state = context;
     if (msg_len >= sizeof(SDNHeartBeatMessage))
     {
         const SDNHeartBeatMessage *hb = (const SDNHeartBeatMessage *)message_data;
@@ -405,9 +462,8 @@ static void HandleHeartBeat(const void *message_data, size_t msg_len, void *cont
     }
 }
 
-static void HandleSensorPressure(const void *message_data, size_t msg_len, void *context)
+static void HandleSensorPressure(const void *message_data, size_t msg_len, AirlockState *state)
 {
-    AirlockState *state = context;
     if (msg_len >= sizeof(SDNPressureMessage))
     {
         const SDNPressureMessage *pm = (const SDNPressureMessage *)message_data;
@@ -431,9 +487,9 @@ static void HandleSensorPressure(const void *message_data, size_t msg_len, void 
     }
 }
 
-static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void *context)
+static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, AirlockState *state)
 {
-    AirlockState *state = context;
+    sdn_log(SDN_INFO, "Handling SET_AIRLOCK_OPEN message.");
     SDNOccupancyMessage occupancy_msg_buffer[MAX_NUM_OCCUPANTS];
     if (state->fault_bits != 0)
     {
@@ -451,6 +507,7 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
 
     const SDNSetAirlockOpenMessage *cf = (const SDNSetAirlockOpenMessage *)message_data;
     SDNAirlockOpen airlock_req = cf->open;
+    // Request to close both doors.
     if (airlock_req == SDN_AIRLOCK_CLOSED)
     {
         if (!ControlDoor(state->config.device_id, state->config.outside_door_id, false) || !ControlDoor(state->config.device_id, state->config.inside_door_id, false))
@@ -458,6 +515,7 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
             exit_with_error(EXIT_CODE_CONTROL_CMD_FAILED);
         }
 
+        // Update state based on which door was previously open.
         if (state->airlock_state == AIRLOCK_INTERIOR_OPEN)
         {
             state->airlock_state = AIRLOCK_CLOSED_PRESSURIZED;
@@ -469,6 +527,7 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
             sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_CLOSED_DEPRESSURIZED");
         }
     }
+    // Request to open the interior (station-side) door.
     else if (airlock_req == SDN_AIRLOCK_INTERIOR_OPEN)
     {
         switch (state->airlock_state)
@@ -476,6 +535,7 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
         case AIRLOCK_INTERIOR_OPEN:
             break;
         case AIRLOCK_CLOSED_PRESSURIZED:
+            // Already pressurized, so just open the door.
             if (!ControlDoor(state->config.device_id, state->config.inside_door_id, true))
             {
                 exit_with_error(EXIT_CODE_CONTROL_CMD_FAILED);
@@ -485,6 +545,7 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
             break;
         case AIRLOCK_EXTERIOR_OPEN:
         case AIRLOCK_CLOSED_DEPRESSURIZED:
+            // Airlock is depressurized. Close the outer door and start pressurizing.
         case AIRLOCK_DEPRESSURIZING:
             if (!ControlDoor(state->config.device_id, state->config.outside_door_id, false))
             {
@@ -501,8 +562,11 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
             break;
         }
     }
+    // Request to open the exterior (space-side) door.
     else if (airlock_req == SDN_AIRLOCK_EXTERIOR_OPEN)
     {
+        // Safety Check: Before opening to vacuum, verify all occupants have sealed suits.
+        // Request occupancy information from the sensor.
         bool safe_to_open = true;
         SDNResponseStatus occupancy_resp = RequestMessage(occupancy_msg_buffer, sizeof(occupancy_msg_buffer), state->config.occupancy_sensor_id, SDN_MSG_TYPE_SENSOR_OCCUPANCY);
         switch (occupancy_resp)
@@ -518,6 +582,7 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
             }
             else
             {
+                // Iterate through all occupants and check their suit status.
                 for (const SDNOccupancyInfo *occupant = occupancy_msg_buffer->occupants; occupant < occupancy_msg_buffer->occupants + num_occupants; occupant++)
                 {
                     if (occupant == NULL || occupant->suit_status != SDN_SUIT_STATUS_SEALED)
@@ -547,6 +612,7 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
             case AIRLOCK_EXTERIOR_OPEN:
                 break;
             case AIRLOCK_CLOSED_DEPRESSURIZED:
+                // Already depressurized, so just open the door.
                 if (!ControlDoor(state->config.device_id, state->config.outside_door_id, true))
                 {
                     exit_with_error(EXIT_CODE_CONTROL_CMD_FAILED);
@@ -556,6 +622,7 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
                 break;
             case AIRLOCK_INTERIOR_OPEN:
             case AIRLOCK_CLOSED_PRESSURIZED:
+                // Airlock is pressurized. Close the inner door and start depressurizing.
             case AIRLOCK_PRESSURIZING:
                 if (!ControlDoor(state->config.device_id, state->config.inside_door_id, false))
                 {
@@ -584,9 +651,9 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
     SendCmdResponse(SDN_RESPONSE_GOOD);
 }
 
-static void HandleClearFaults(const void *message_data, size_t msg_len, void *context)
+static void HandleClearFaults(const void *message_data, size_t msg_len, AirlockState *state)
 {
-    AirlockState *state = context;
+    sdn_log(SDN_INFO, "Handling CLEAR_FAULTS message.");
     if (msg_len >= sizeof(SDNClearFaultsMessage))
     {
         const SDNClearFaultsMessage *cf = (const SDNClearFaultsMessage *)message_data;
@@ -600,9 +667,9 @@ static void HandleClearFaults(const void *message_data, size_t msg_len, void *co
     }
 }
 
-static void HandleSetSuitOccupant(const void *message_data, size_t msg_len, void *context)
+static void HandleSetSuitOccupant(const void *message_data, size_t msg_len, AirlockState *state)
 {
-    AirlockState *state = context;
+    sdn_log(SDN_INFO, "Handling SET_SUIT_OCCUPANT message.");
     if (msg_len >= sizeof(SDNSetSuitOccupantMessage) && msg_len < MAX_SEND_MESSAGE_SIZE)
     {
         SDNSetSuitOccupantMessage *send_ptr = (SDNSetSuitOccupantMessage *)state->message_serialization_buffer;
@@ -625,15 +692,16 @@ static void HandleSetSuitOccupant(const void *message_data, size_t msg_len, void
 }
 
 #if APP_DEBUG_BUILD
-static void HandleDebugWriteConfigInt(const void *message_data, size_t msg_len, void *context)
+static void HandleDebugWriteConfigInt(const void *message_data, size_t msg_len, AirlockState *state)
 {
-    AirlockState *state = context;
+    sdn_log(SDN_INFO, "Handling DEBUG_WRITE_CONFIG_INT message.");
     if (msg_len >= sizeof(SDNDebugWriteConfigInt))
     {
         SDNResponseStatus cmd_response = SDN_RESPONSE_CMD_ERROR_3; // Default to error
         SDNDebugWriteConfigInt *cf = (SDNDebugWriteConfigInt *)message_data;
         cf->key[sizeof(cf->key) - 1] = 0;
         state->fault_bits |= FAULT_DEBUGGER;
+        sdn_log(SDN_DEBUG, "Attempting to write config key '%s' with value %d", cf->key, cf->value);
         if (WriteConfigU32(cf->key, (uint32_t)cf->value) || WriteConfigBool(cf->key, (bool)cf->value))
         {
             cmd_response = SDN_RESPONSE_GOOD;
@@ -655,6 +723,7 @@ static void HandleDebugWriteConfigInt(const void *message_data, size_t msg_len, 
 
 int main()
 {
+    sdn_log(SDN_INFO, "Airlock controller starting up.");
     AirlockState state = {0};
 
     void *rx_message_buffer = NULL;
@@ -675,6 +744,7 @@ int main()
         state.door_status[i].pressure[1].msg_header.timestamp = start_time;
     }
 
+    // Set up pointers for convenient access to specific pressure readings.
     state.station_pressure = &state.door_status[INNER_DOOR_IDX].pressure[INNER_DOOR_STATION_SIDE_IDX].pressure_pa;
     *state.station_pressure = NAN;
 
@@ -691,12 +761,14 @@ int main()
         exit_with_error(EXIT_CODE_SDN_INIT_FAILED);
     }
 
+    sdn_log(SDN_INFO, "Allocating RX message buffer of size %u.", state.config.rx_message_buffer_size);
     rx_message_buffer = malloc(state.config.rx_message_buffer_size);
     if (rx_message_buffer == NULL)
     {
         exit_with_error(EXIT_CODE_MEMORY_ALLOC_FAILED);
     }
 
+    sdn_log(SDN_INFO, "Registering message handlers.");
     size_t num_message_handlers = MIN_NUM_MESSAGE_HANDLERS;
     if (state.config.remote_fault_clear)
     {
@@ -737,6 +809,7 @@ int main()
         exit_with_error(EXIT_CODE_CONTROL_CMD_FAILED);
     }
 
+    // Set initial state to pressurizing and command the pressure controller.
     if (!ControlPressure(state.config.device_id, state.config.pressure_ctrl_id, true, &state.pressure_change_time))
     {
         exit_with_error(EXIT_CODE_CONTROL_CMD_FAILED);
@@ -744,6 +817,7 @@ int main()
     state.airlock_state = AIRLOCK_PRESSURIZING;
     sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_PRESSURIZING");
 
+    sdn_log(SDN_INFO, "Entering main loop.");
     while (true)
     {
         if (ProcessMessageData(message_handlers, num_message_handlers, rx_message_buffer, state.config.rx_message_buffer_size, &state) < 0)

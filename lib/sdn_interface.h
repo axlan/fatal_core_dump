@@ -19,14 +19,6 @@
 /** Timestamp type in milliseconds since system epoch */
 typedef uint64_t sdn_timestamp_t;
 
-/**
- * @brief Callback function type for message handlers
- * @param message_data Pointer to the received message data. Always starts with @ref SDNMsgHeader.
- * @param msg_len Length of the message in bytes
- * @param context User-provided context pointer
- */
-typedef void (*sdn_msg_callback_t)(const void *message_data, size_t msg_len, void *context);
-
 /** Device health status indicating normal operation */
 #define SDN_HEALTH_GOOD 0
 
@@ -50,19 +42,6 @@ enum SDNMsgType
     SDN_MSG_TYPE_CLEAR_FAULTS = 8,           ///< Command to clear fault conditions
     SDN_MSG_TYPE_LOG = 9,                    ///< Log message with severity level
     SDN_MSG_TYPE_SET_SUIT_OCCUPANT = 10,     ///< Configure suit for specific occupant
-};
-
-/**
- * @brief Message handler registration structure
- *
- * Associates a message type with a callback function for processing
- * incoming messages of that type.
- */
-typedef struct SDNHandler SDNHandler;
-struct SDNHandler
-{
-    SDNMsgType type;             ///< Message type this handler processes
-    sdn_msg_callback_t callback; ///< Function to call when message is received
 };
 
 /**
