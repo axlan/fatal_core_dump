@@ -2,10 +2,11 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
-bool LoadConfigInt(int *out_value, const char *key);
+bool LoadConfigU32(uint32_t *out_value, const char *key);
 
-bool WriteConfigInt(const char *key, int value);
+bool WriteConfigU32(const char *key, uint32_t value);
 
 bool LoadConfigFloat(double *out_value, const char *key);
 

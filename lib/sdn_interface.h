@@ -44,7 +44,7 @@ enum SDNMsgType
     SDN_MSG_TYPE_SENSOR_PRESSURE = 2,        ///< Pressure sensor reading
     SDN_MSG_TYPE_SET_PRESSURE_ZONE = 3,      ///< Command to set pressure equalization zone
     SDN_MSG_TYPE_SET_OPEN = 4,               ///< Generic open/close command
-    SDN_MSG_TYPE_SET_AIRLOCK_OPEN = 5,       ///< Airlock door control (alias for SET_OPEN)
+    SDN_MSG_TYPE_SET_AIRLOCK_OPEN = 5,       ///< Airlock door control command
     SDN_MSG_TYPE_SENSOR_OCCUPANCY = 6,       ///< Occupancy sensor data with user information
     SDN_MSG_TYPE_DEBUG_WRITE_CONFIG_INT = 7, ///< Debug command to update configuration values
     SDN_MSG_TYPE_CLEAR_FAULTS = 8,           ///< Command to clear fault conditions

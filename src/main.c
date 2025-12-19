@@ -55,6 +55,17 @@ static const char *DOOR_NAMES[2] = {"station", "exterior"};
 
 ///////////// Definitions /////////////////////
 
+typedef enum ExitCode ExitCode;
+enum ExitCode
+{
+    EXIT_CODE_SUCCESS = 0,
+    EXIT_CODE_CONFIG_LOAD_FAILED = 1,
+    EXIT_CODE_SDN_INIT_FAILED = 2,
+    EXIT_CODE_MEMORY_ALLOC_FAILED = 3,
+    EXIT_CODE_CONTROL_CMD_FAILED = 4,
+    EXIT_CODE_MESSAGE_ERROR = 5,
+};
+
 typedef struct DoorStatus DoorStatus;
 struct DoorStatus
 {
@@ -104,6 +115,33 @@ struct AirlockState
 };
 
 ////////////////////// Implementation ///////////////////////
+
+static void exit_with_error(ExitCode exit_code)
+{
+    switch (exit_code)
+    {
+    case EXIT_CODE_CONFIG_LOAD_FAILED:
+        sdn_log(SDN_CRITICAL, "Failed to load configuration.");
+        break;
+    case EXIT_CODE_SDN_INIT_FAILED:
+        sdn_log(SDN_CRITICAL, "Failed to initialize SDN.");
+        break;
+    case EXIT_CODE_MEMORY_ALLOC_FAILED:
+        sdn_log(SDN_CRITICAL, "Memory allocation failed.");
+        break;
+    case EXIT_CODE_CONTROL_CMD_FAILED:
+        sdn_log(SDN_CRITICAL, "Control command failed.");
+        break;
+    case EXIT_CODE_MESSAGE_ERROR:
+        sdn_log(SDN_CRITICAL, "Message processing or request error.");
+        break;
+    case EXIT_CODE_SUCCESS:
+    default:
+        // No message for success or unhandled codes.
+        break;
+    }
+    exit(exit_code);
+}
 
 static bool ControlDoor(uint32_t device_id, uint32_t door_device_id, bool is_open)
 {
@@ -159,64 +197,52 @@ static bool InitializeSDN(const AirlockConfig *config)
 
 static bool LoadConfig(AirlockConfig *config)
 {
-    int tmp = 0;
-
-    if (!LoadConfigInt(&tmp, "device_id"))
+    if (!LoadConfigU32(&config->device_id, "device_id"))
     {
         return false;
     }
-    config->device_id = (uint32_t)tmp;
-
-    if (!LoadConfigInt(&tmp, "inside_door_id"))
+    if (!LoadConfigU32(&config->inside_door_id, "inside_door_id"))
     {
         return false;
     }
-    config->inside_door_id = (uint32_t)tmp;
-
-    if (!LoadConfigInt(&tmp, "outside_door_id"))
+    if (!LoadConfigU32(&config->outside_door_id, "outside_door_id"))
     {
         return false;
     }
-    config->outside_door_id = (uint32_t)tmp;
-
-    if (!LoadConfigInt(&tmp, "pressure_ctrl_id"))
+    if (!LoadConfigU32(&config->pressure_ctrl_id, "pressure_ctrl_id"))
     {
         return false;
     }
-    config->pressure_ctrl_id = (uint32_t)tmp;
-
-    if (!LoadConfigInt(&tmp, "occupancy_sensor_id"))
+    if (!LoadConfigU32(&config->occupancy_sensor_id, "occupancy_sensor_id"))
     {
         return false;
     }
-    config->occupancy_sensor_id = (uint32_t)tmp;
-
-    if (!LoadConfigInt(&tmp, "suit_locker_id"))
+    if (!LoadConfigU32(&config->suit_locker_id, "suit_locker_id"))
     {
         return false;
     }
-    config->suit_locker_id = (uint32_t)tmp;
-
-    if (!LoadConfigInt(&tmp, "rx_message_buffer_size"))
+    if (!LoadConfigU32(&config->rx_message_buffer_size, "rx_message_buffer_size"))
     {
         return false;
     }
-    config->rx_message_buffer_size = (uint32_t)tmp;
-
-    bool tmp_bool = false;
-    if (!LoadConfigBool(&tmp_bool, "apply_config_change"))
+    if (!LoadConfigBool(&config->apply_config_change, "apply_config_change"))
     {
         return false;
     }
-    config->apply_config_change = tmp_bool;
-
-    if (!LoadConfigBool(&tmp_bool, "remote_fault_clear"))
+    if (!LoadConfigBool(&config->remote_fault_clear, "remote_fault_clear"))
     {
         return false;
     }
-    config->remote_fault_clear = tmp_bool;
-
     return true;
+}
+
+static inline int get_door_idx_from_id(const AirlockConfig *config, uint32_t device_id)
+{
+    if (device_id == config->inside_door_id)
+        return INNER_DOOR_IDX;
+    if (device_id == config->outside_door_id)
+        return OUTER_DOOR_IDX;
+    return -1;
 }
 
 static void HandleHeartBeat(const void *message_data, size_t msg_len, void *context)
@@ -225,12 +251,7 @@ static void HandleHeartBeat(const void *message_data, size_t msg_len, void *cont
     if (msg_len >= sizeof(SDNHeartBeatMessage))
     {
         const SDNHeartBeatMessage *hb = (const SDNHeartBeatMessage *)message_data;
-        uint32_t src_id = hb->msg_header.device_id;
-        int idx = -1;
-        if (src_id == state->config.inside_door_id)
-            idx = INNER_DOOR_IDX;
-        else if (src_id == state->config.outside_door_id)
-            idx = OUTER_DOOR_IDX;
+        int idx = get_door_idx_from_id(&state->config, hb->msg_header.device_id);
         if (idx >= 0)
         {
             state->door_status[idx].heartbeat = *hb;
@@ -248,12 +269,7 @@ static void HandleSensorPressure(const void *message_data, size_t msg_len, void 
     if (msg_len >= sizeof(SDNPressureMessage))
     {
         const SDNPressureMessage *pm = (const SDNPressureMessage *)message_data;
-        uint32_t src_id = pm->msg_header.device_id;
-        int idx = -1;
-        if (src_id == state->config.inside_door_id)
-            idx = INNER_DOOR_IDX;
-        else if (src_id == state->config.outside_door_id)
-            idx = OUTER_DOOR_IDX;
+        int idx = get_door_idx_from_id(&state->config, pm->msg_header.device_id);
         if (idx >= 0)
         {
             int side_idx = -1;
@@ -297,8 +313,7 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
     {
         if (!ControlDoor(state->config.device_id, state->config.outside_door_id, false) || !ControlDoor(state->config.device_id, state->config.inside_door_id, false))
         {
-            /* fatal control error; keep behavior consistent with previous main */
-            exit(4);
+            exit_with_error(EXIT_CODE_CONTROL_CMD_FAILED);
         }
 
         if (state->airlock_state == AIRLOCK_INTERIOR_OPEN)
@@ -321,7 +336,7 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
         case AIRLOCK_CLOSED_PRESSURIZED:
             if (!ControlDoor(state->config.device_id, state->config.inside_door_id, true))
             {
-                exit(4);
+                exit_with_error(EXIT_CODE_CONTROL_CMD_FAILED);
             }
             state->airlock_state = AIRLOCK_INTERIOR_OPEN;
             sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_INTERIOR_OPEN");
@@ -331,11 +346,11 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
         case AIRLOCK_DEPRESSURIZING:
             if (!ControlDoor(state->config.device_id, state->config.outside_door_id, false))
             {
-                exit(4);
+                exit_with_error(EXIT_CODE_CONTROL_CMD_FAILED);
             }
             if (!ControlPressure(state->config.device_id, state->config.pressure_ctrl_id, true, &state->pressure_change_time))
             {
-                exit(4);
+                exit_with_error(EXIT_CODE_CONTROL_CMD_FAILED);
             }
             state->airlock_state = AIRLOCK_PRESSURIZING;
             sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_PRESSURIZING");
@@ -352,7 +367,8 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
         {
         case SDN_RESPONSE_GOOD:
         {
-            const size_t num_occupants = (occupancy_resp - sizeof(SDNOccupancyMessage)) / sizeof(SDNOccupancyInfo);
+            const size_t num_occupants = (occupancy_msg_buffer->msg_header.msg_length - sizeof(SDNOccupancyMessage)) /
+                                         sizeof(SDNOccupancyInfo);
 
             if (num_occupants > MAX_NUM_OCCUPANTS)
             {
@@ -379,7 +395,7 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
         break;
 
         default:
-            exit(5);
+            exit_with_error(EXIT_CODE_MESSAGE_ERROR);
         }
 
         if (safe_to_open)
@@ -391,7 +407,7 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
             case AIRLOCK_CLOSED_DEPRESSURIZED:
                 if (!ControlDoor(state->config.device_id, state->config.outside_door_id, true))
                 {
-                    exit(4);
+                    exit_with_error(EXIT_CODE_CONTROL_CMD_FAILED);
                 }
                 state->airlock_state = AIRLOCK_EXTERIOR_OPEN;
                 sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_EXTERIOR_OPEN");
@@ -401,11 +417,11 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, void 
             case AIRLOCK_PRESSURIZING:
                 if (!ControlDoor(state->config.device_id, state->config.inside_door_id, false))
                 {
-                    exit(4);
+                    exit_with_error(EXIT_CODE_CONTROL_CMD_FAILED);
                 }
                 if (!ControlPressure(state->config.device_id, state->config.pressure_ctrl_id, false, &state->pressure_change_time))
                 {
-                    exit(4);
+                    exit_with_error(EXIT_CODE_CONTROL_CMD_FAILED);
                 }
                 state->airlock_state = AIRLOCK_DEPRESSURIZING;
                 sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_DEPRESSURIZING");
@@ -472,18 +488,18 @@ static void HandleDebugWriteConfigInt(const void *message_data, size_t msg_len, 
     AirlockState *state = context;
     if (msg_len >= sizeof(SDNDebugWriteConfigInt))
     {
-        uint32_t cmd_response = 0x001;
+        SDNResponseStatus cmd_response = SDN_RESPONSE_CMD_ERROR_3; // Default to error
         SDNDebugWriteConfigInt *cf = (SDNDebugWriteConfigInt *)message_data;
         cf->key[sizeof(cf->key) - 1] = 0;
-        state->fault_bits &= FAULT_DEBUGGER;
-        if (WriteConfigInt(cf->key, cf->value) || WriteConfigBool(cf->key, (bool)cf->value))
+        state->fault_bits |= FAULT_DEBUGGER;
+        if (WriteConfigU32(cf->key, (uint32_t)cf->value) || WriteConfigBool(cf->key, (bool)cf->value))
         {
             cmd_response = SDN_RESPONSE_GOOD;
         }
 
         if (state->config.apply_config_change && cmd_response == SDN_RESPONSE_GOOD && !LoadConfig(&state->config))
         {
-            exit(1);
+            exit_with_error(EXIT_CODE_CONFIG_LOAD_FAILED);
         }
         SendCmdResponse(cmd_response);
     }
@@ -536,7 +552,7 @@ int main()
 
     if (!LoadConfig(&state.config))
     {
-        return 1;
+        exit_with_error(EXIT_CODE_CONFIG_LOAD_FAILED);
     }
 
     memset(state.door_status, 0, sizeof(state.door_status));
@@ -548,9 +564,6 @@ int main()
         state.door_status[i].pressure[0].msg_header.timestamp = start_time;
         state.door_status[i].pressure[1].msg_header.timestamp = start_time;
     }
-
-    state.airlock_state = AIRLOCK_PRESSURIZING;
-    sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_PRESSURIZING");
 
     state.station_pressure = &state.door_status[INNER_DOOR_IDX].pressure[INNER_DOOR_STATION_SIDE_IDX].pressure_pa;
     *state.station_pressure = NAN;
@@ -565,13 +578,13 @@ int main()
 
     if (!InitializeSDN(&state.config))
     {
-        return 2;
+        exit_with_error(EXIT_CODE_SDN_INIT_FAILED);
     }
 
     rx_message_buffer = malloc(state.config.rx_message_buffer_size);
     if (rx_message_buffer == NULL)
     {
-        return 3;
+        exit_with_error(EXIT_CODE_MEMORY_ALLOC_FAILED);
     }
 
     size_t num_message_handlers = MIN_NUM_MESSAGE_HANDLERS;
@@ -585,42 +598,47 @@ int main()
     message_handlers = malloc(sizeof(SDNHandler) * num_message_handlers);
     if (message_handlers == NULL)
     {
-        return 3;
+        exit_with_error(EXIT_CODE_MEMORY_ALLOC_FAILED);
     }
-    num_message_handlers = 0;
-    message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_SET_SUIT_OCCUPANT,
-                                                            .callback = HandleSetSuitOccupant};
-    message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_HEARTBEAT,
-                                                            .callback = HandleHeartBeat};
-    message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_SENSOR_PRESSURE,
-                                                            .callback = HandleSensorPressure};
-    message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_SET_AIRLOCK_OPEN,
-                                                            .callback = HandleSetAirlockOpen};
-    if (state.config.remote_fault_clear)
+    else
     {
-        message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_CLEAR_FAULTS,
-                                                                .callback = HandleClearFaults};
-    }
+        num_message_handlers = 0;
+        message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_SET_SUIT_OCCUPANT,
+                                                                .callback = HandleSetSuitOccupant};
+        message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_HEARTBEAT,
+                                                                .callback = HandleHeartBeat};
+        message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_SENSOR_PRESSURE,
+                                                                .callback = HandleSensorPressure};
+        message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_SET_AIRLOCK_OPEN,
+                                                                .callback = HandleSetAirlockOpen};
+        if (state.config.remote_fault_clear)
+        {
+            message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_CLEAR_FAULTS,
+                                                                    .callback = HandleClearFaults};
+        }
 #if APP_DEBUG_BUILD
-    message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_DEBUG_WRITE_CONFIG_INT,
-                                                            .callback = HandleDebugWriteConfigInt};
+        message_handlers[num_message_handlers++] = (SDNHandler){.type = SDN_MSG_TYPE_DEBUG_WRITE_CONFIG_INT,
+                                                                .callback = HandleDebugWriteConfigInt};
 #endif
+    }
 
     if (!ControlDoor(state.config.device_id, state.config.outside_door_id, false) || !ControlDoor(state.config.device_id, state.config.inside_door_id, false))
     {
-        return 4;
+        exit_with_error(EXIT_CODE_CONTROL_CMD_FAILED);
     }
 
     if (!ControlPressure(state.config.device_id, state.config.pressure_ctrl_id, true, &state.pressure_change_time))
     {
-        return 4;
+        exit_with_error(EXIT_CODE_CONTROL_CMD_FAILED);
     }
+    state.airlock_state = AIRLOCK_PRESSURIZING;
+    sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_PRESSURIZING");
 
     while (true)
     {
         if (ProcessMessageData(message_handlers, num_message_handlers, rx_message_buffer, state.config.rx_message_buffer_size, &state) < 0)
         {
-            return 5;
+            exit_with_error(EXIT_CODE_MESSAGE_ERROR);
         }
 
         sdn_timestamp_t now = GetCurrentTimestampMS();

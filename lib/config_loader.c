@@ -28,7 +28,7 @@ static bool remote_fault_clear = false;
         return true;                   \
     }
 
-bool LoadConfigInt(int *out_value, const char *key)
+bool LoadConfigU32(uint32_t *out_value, const char *key)
 {
     if (out_value == NULL || key == NULL)
     {
@@ -48,7 +48,7 @@ bool LoadConfigInt(int *out_value, const char *key)
     return false;
 }
 
-bool WriteConfigInt(const char *key, int value)
+bool WriteConfigU32(const char *key, uint32_t value)
 {
     if (key == NULL)
     {
