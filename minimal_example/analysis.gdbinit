@@ -8,7 +8,7 @@ define xbt
   end
 end
 
-break main.c:609
+break main.c:807
 break SendAttackCmd
 break SendFailureCmd
 #break sdn_interface.c:453
@@ -22,4 +22,4 @@ print rx_message_buffer
 print (void*)state->message_serialization_buffer
 print message_handlers
 print(sizeof(SDNHandler))
-print *(sdn_msg_callback_t*)((char*)message_handlers + 12 * 0 + 4)
+print *(sdn_msg_callback_t*)((char*)message_handlers + 16 * 0 + 8)
