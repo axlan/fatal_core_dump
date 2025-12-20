@@ -8,7 +8,6 @@ define xbt
   end
 end
 
-break main.c:807
 break SendAttackCmd
 break SendFailureCmd
 #break sdn_interface.c:453

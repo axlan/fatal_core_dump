@@ -26,12 +26,16 @@ base_re =  r" = .*?0x([0-9a-fA-F]+)"
 # $4 = (SDNHandler *) 0x55555555a7c0
 m = re.search(r"\$1" + base_re, lines)
 ORIGINAL_FUNCTION_ADDRESS = int(m.group(1), 16)
+print(f'ORIGINAL_FUNCTION_ADDRESS: {hex(ORIGINAL_FUNCTION_ADDRESS)}')
 m = re.search(r"\$2" + base_re, lines)
 INJECT_FUNCTION_ADDRESS = int(m.group(1), 16)
+print(f'INJECT_FUNCTION_ADDRESS: {hex(INJECT_FUNCTION_ADDRESS)}')
 m = re.search(r"\$3" + base_re, lines)
 BUFFER_STACK_ADDRESS = int(m.group(1), 16)
+print(f'BUFFER_STACK_ADDRESS: {hex(BUFFER_STACK_ADDRESS)}')
 m = re.search(r"\$4" + base_re, lines)
 HANDLERS_ADDRESS = int(m.group(1), 16)
+print(f'HANDLERS_ADDRESS: {hex(HANDLERS_ADDRESS)}')
 
 
 
