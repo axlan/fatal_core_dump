@@ -42,6 +42,7 @@ enum SDNMsgType
     SDN_MSG_TYPE_CLEAR_FAULTS = 8,           ///< Command to clear fault conditions
     SDN_MSG_TYPE_LOG = 9,                    ///< Log message with severity level
     SDN_MSG_TYPE_SET_SUIT_OCCUPANT = 10,     ///< Configure suit for specific occupant
+    SDN_MSG_TYPE_CMD_RESPONSE = 11,          ///< Command response message
 };
 
 /**
@@ -316,6 +317,18 @@ struct SDNLogMessage
     uint8_t severity;        ///< 0=CRITICAL, 1=ERROR, 2=WARNING, higher=less severe
     // variable length payload follows; use msg_header.msg_length to determine size
     char message_str[]; ///< Log message text (flexible array, null-terminated)
+};
+
+/**
+ * @brief Command response message
+ *
+ * Sent in response to a command message to indicate execution status.
+ */
+typedef struct SDNResponseMessage SDNResponseMessage;
+struct SDNResponseMessage
+{
+    SDNMsgHeader msg_header; ///< Standard message header
+    uint8_t response_code;  ///< Response status code (see SDNResponseStatus)
 };
 
 /** Measurement ID for door pressure sensor on side 1 */

@@ -4,24 +4,28 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "log.h"
 #include "sdn_interface.h"
 
 #include "shellcode.h"
 
-static const uint64_t YEAR_IN_MS = 365 * 24 * 60 * 60 * 1000ull;
+#define YEAR_IN_MS (365 * 24 * 60 * 60 * 1000.0)
 
 #define STATION_PRESSURE_PA 101325
 
-static const sdn_timestamp_t START_TIMESTAMP = YEAR_IN_MS * 1.989438645;
+static const sdn_timestamp_t START_TIMESTAMP = (sdn_timestamp_t)(YEAR_IN_MS * 1.989438645);
 
+static uint32_t AIRLOCK_DEVICE_ID = 0xae215d67;
 static const uint32_t SDN_DEVICE_ID_DOOR_INNER = 0xae215e12;
 static const uint32_t SDN_DEVICE_ID_DOOR_OUTER = 0xae215e13;
 static const uint32_t SDN_DEVICE_ID_PRESSURE_CTRL = 0xae215e14;
 static const uint32_t SDN_DEVICE_ID_OCCUPANCY_SENSOR = 0xae215e15;
 static const uint32_t PATSY_USER_ID = 0xd481aa99;
 static const uint32_t TARGET_USER_ID = 0x488504f4;
+static const uint32_t REMOTE_DEVICE_1_ID = 0x2017dc71;
+static const uint32_t REMOTE_DEVICE_2_ID = 0x3d97134b;
 
 static const uint32_t SDN_DEVICE_ID_CONTROL_PANEL_STATION = 0xae215e16;
 static const uint32_t SDN_DEVICE_ID_CONTROL_PANEL_AIRLOCK = 0xae215e17;
@@ -33,6 +37,166 @@ static const uint8_t INNER_PRESSURE_ZONE = 0;
 static const uint8_t OUTER_PRESSURE_ZONE = 1;
 
 #define SMALL_BUFFER_SIZE 256
+
+const char *SDNMsgTypeToString(SDNMsgType type)
+{
+    switch (type)
+    {
+    case SDN_MSG_TYPE_INVALID:
+        return "SDN_MSG_TYPE_INVALID";
+    case SDN_MSG_TYPE_HEARTBEAT:
+        return "SDN_MSG_TYPE_HEARTBEAT";
+    case SDN_MSG_TYPE_SENSOR_PRESSURE:
+        return "SDN_MSG_TYPE_SENSOR_PRESSURE";
+    case SDN_MSG_TYPE_SET_PRESSURE_ZONE:
+        return "SDN_MSG_TYPE_SET_PRESSURE_ZONE";
+    case SDN_MSG_TYPE_SET_OPEN:
+        return "SDN_MSG_TYPE_SET_OPEN";
+    case SDN_MSG_TYPE_SET_AIRLOCK_OPEN:
+        return "SDN_MSG_TYPE_SET_AIRLOCK_OPEN";
+    case SDN_MSG_TYPE_SENSOR_OCCUPANCY:
+        return "SDN_MSG_TYPE_SENSOR_OCCUPANCY";
+    case SDN_MSG_TYPE_DEBUG_WRITE_CONFIG_INT:
+        return "SDN_MSG_TYPE_DEBUG_WRITE_CONFIG_INT";
+    case SDN_MSG_TYPE_CLEAR_FAULTS:
+        return "SDN_MSG_TYPE_CLEAR_FAULTS";
+    case SDN_MSG_TYPE_LOG:
+        return "SDN_MSG_TYPE_LOG";
+    case SDN_MSG_TYPE_SET_SUIT_OCCUPANT:
+        return "SDN_MSG_TYPE_SET_SUIT_OCCUPANT";
+    case SDN_MSG_TYPE_CMD_RESPONSE:
+        return "SDN_MSG_TYPE_CMD_RESPONSE";
+    }
+
+    return "UNKNOWN";
+}
+
+static bool LogSDNMessage(char *buffer, size_t buffer_size, const void *msg_buffer)
+{
+    if (buffer == NULL || buffer_size == 0 || msg_buffer == NULL)
+    {
+        return false;
+    }
+    const SDNMsgHeader *header = (const SDNMsgHeader *)msg_buffer;
+
+    char *p = buffer;
+    size_t rem = buffer_size;
+    int n;
+
+    n = snprintf(p, rem, "%-40s Len: %3u, Dev: 0x%08x, Time: %" PRIu64,
+                 SDNMsgTypeToString(header->msg_type), header->msg_length, header->device_id, header->timestamp);
+    if (n < 0 || (size_t)n >= rem)
+        return false;
+    p += n;
+    rem -= n;
+
+    switch ((SDNMsgType)header->msg_type)
+    {
+    case SDN_MSG_TYPE_HEARTBEAT:
+    {
+        const SDNHeartBeatMessage *msg = (const SDNHeartBeatMessage *)msg_buffer;
+        (void)snprintf(p, rem, ", Health: 0x%x", msg->health);
+        return false;
+    }
+    case SDN_MSG_TYPE_SENSOR_PRESSURE:
+    {
+        const SDNPressureMessage *msg = (const SDNPressureMessage *)msg_buffer;
+        (void)snprintf(p, rem, ", ID: %u, Pressure: %.2f Pa", msg->measurement_id, (double)msg->pressure_pa);
+        return false;
+    }
+    case SDN_MSG_TYPE_SET_PRESSURE_ZONE:
+    {
+        const SDNSetPressureZoneMessage *msg = (const SDNSetPressureZoneMessage *)msg_buffer;
+        (void)snprintf(p, rem, ", Zone: %u", msg->zone_id);
+        return true;
+    }
+    case SDN_MSG_TYPE_SET_OPEN:
+    {
+        const SDNSetOpenMessage *msg = (const SDNSetOpenMessage *)msg_buffer;
+        (void)snprintf(p, rem, ", Open: %u", msg->open);
+        return true;
+    }
+    case SDN_MSG_TYPE_SET_AIRLOCK_OPEN:
+    {
+        const SDNSetAirlockOpenMessage *msg = (const SDNSetAirlockOpenMessage *)msg_buffer;
+        (void)snprintf(p, rem, ", Airlock State: %u", msg->open);
+        return true;
+    }
+    case SDN_MSG_TYPE_SENSOR_OCCUPANCY:
+    {
+        const SDNOccupancyMessage *msg = (const SDNOccupancyMessage *)msg_buffer;
+        n = snprintf(p, rem, ", Sensor ID: %u", msg->measurement_id);
+        if (n < 0 || (size_t)n >= rem)
+            break;
+        p += n;
+        rem -= n;
+
+        if (header->msg_length >= sizeof(SDNOccupancyMessage))
+        {
+            size_t num_occupants = (header->msg_length - sizeof(SDNOccupancyMessage)) / sizeof(SDNOccupancyInfo);
+            for (size_t i = 0; i < num_occupants; i++)
+            {
+                n = snprintf(p, rem, ", User: 0x%x, Suit: %u", msg->occupants[i].user_id, msg->occupants[i].suit_status);
+                if (n < 0 || (size_t)n >= rem)
+                    break;
+                p += n;
+                rem -= n;
+            }
+        }
+        return true;
+    }
+    case SDN_MSG_TYPE_DEBUG_WRITE_CONFIG_INT:
+    {
+        const SDNDebugWriteConfigInt *msg = (const SDNDebugWriteConfigInt *)msg_buffer;
+        char key_safe[33];
+        memcpy(key_safe, msg->key, 32);
+        key_safe[32] = '\0';
+        (void)snprintf(p, rem, ", Key: %s, Value: %d", key_safe, msg->value);
+        return true;
+    }
+    case SDN_MSG_TYPE_CLEAR_FAULTS:
+    {
+        const SDNClearFaultsMessage *msg = (const SDNClearFaultsMessage *)msg_buffer;
+        (void)snprintf(p, rem, ", Fault Mask: 0x%x", msg->fault_mask);
+        return true;
+    }
+    case SDN_MSG_TYPE_LOG:
+    {
+        const SDNLogMessage *msg = (const SDNLogMessage *)msg_buffer;
+        if (header->msg_length >= sizeof(SDNLogMessage))
+        {
+            int str_len = header->msg_length - sizeof(SDNLogMessage);
+            (void)snprintf(p, rem, ", Severity: %u, Msg: %.*s", msg->severity, str_len, msg->message_str);
+        }
+        return true;
+    }
+    case SDN_MSG_TYPE_SET_SUIT_OCCUPANT:
+    {
+        const SDNSetSuitOccupantMessage *msg = (const SDNSetSuitOccupantMessage *)msg_buffer;
+        n = snprintf(p, rem, ", User: 0x%x", msg->user_id);
+        if (n < 0 || (size_t)n >= rem)
+            break;
+        p += n;
+        rem -= n;
+
+        if (header->msg_length >= sizeof(SDNSetSuitOccupantMessage))
+        {
+            size_t pref_len = header->msg_length - sizeof(SDNSetSuitOccupantMessage);
+            (void)snprintf(p, rem, ", Preferences Len: %zu", pref_len);
+        }
+        return true;
+    }
+    case SDN_MSG_TYPE_CMD_RESPONSE:
+    {
+        const SDNResponseMessage *msg = (const SDNResponseMessage *)msg_buffer;
+        (void)snprintf(p, rem, ", Response Code: %u", msg->response_code);
+        return true;
+    }
+    case SDN_MSG_TYPE_INVALID:
+        return false;
+    }
+    return false;
+}
 
 // DUMMY IMPLEMENTATIONS FOR GAME DATA GENERATION
 bool RegisterDevice(uint32_t device_id, SDNDeviceType device_type)
@@ -91,7 +255,6 @@ static size_t SendPressure(void *msg_buffer, size_t buffer_size_bytes,
 static size_t SendPressureInt1(void *msg_buffer, size_t buffer_size_bytes,
                                sdn_timestamp_t *next_time_ms)
 {
-    sdn_log(SDN_DEBUG, "SendPressureInt1");
     return SendPressure(msg_buffer, buffer_size_bytes, SDN_DEVICE_ID_DOOR_INNER,
                         SDN_MEASUREMENT_ID_DOOR_PRESSURE_SIDE_1,
                         STATION_PRESSURE_PA, next_time_ms);
@@ -100,7 +263,6 @@ static size_t SendPressureInt1(void *msg_buffer, size_t buffer_size_bytes,
 static size_t SendPressureInt2(void *msg_buffer, size_t buffer_size_bytes,
                                sdn_timestamp_t *next_time_ms)
 {
-    sdn_log(SDN_DEBUG, "SendPressureInt2");
     return SendPressure(msg_buffer, buffer_size_bytes, SDN_DEVICE_ID_DOOR_INNER,
                         SDN_MEASUREMENT_ID_DOOR_PRESSURE_SIDE_2, airlock_pressure,
                         next_time_ms);
@@ -109,7 +271,6 @@ static size_t SendPressureInt2(void *msg_buffer, size_t buffer_size_bytes,
 static size_t SendPressureExt1(void *msg_buffer, size_t buffer_size_bytes,
                                sdn_timestamp_t *next_time_ms)
 {
-    sdn_log(SDN_DEBUG, "SendPressureExt1");
     return SendPressure(msg_buffer, buffer_size_bytes, SDN_DEVICE_ID_DOOR_OUTER,
                         SDN_MEASUREMENT_ID_DOOR_PRESSURE_SIDE_1, 0, next_time_ms);
 }
@@ -117,7 +278,6 @@ static size_t SendPressureExt1(void *msg_buffer, size_t buffer_size_bytes,
 static size_t SendPressureExt2(void *msg_buffer, size_t buffer_size_bytes,
                                sdn_timestamp_t *next_time_ms)
 {
-    sdn_log(SDN_DEBUG, "SendPressureExt2");
     return SendPressure(msg_buffer, buffer_size_bytes, SDN_DEVICE_ID_DOOR_OUTER,
                         SDN_MEASUREMENT_ID_DOOR_PRESSURE_SIDE_2, airlock_pressure,
                         next_time_ms);
@@ -147,7 +307,6 @@ static size_t SendHeartBeat(void *msg_buffer, size_t buffer_size_bytes,
 static size_t SendHeartBeatInt(void *msg_buffer, size_t buffer_size_bytes,
                                sdn_timestamp_t *next_time_ms)
 {
-    sdn_log(SDN_DEBUG, "SendHeartBeatInt");
     return SendHeartBeat(msg_buffer, buffer_size_bytes, SDN_DEVICE_ID_DOOR_INNER,
                          next_time_ms);
 }
@@ -155,7 +314,6 @@ static size_t SendHeartBeatInt(void *msg_buffer, size_t buffer_size_bytes,
 static size_t SendHeartBeatExt(void *msg_buffer, size_t buffer_size_bytes,
                                sdn_timestamp_t *next_time_ms)
 {
-    sdn_log(SDN_DEBUG, "SendHeartBeatExt");
     return SendHeartBeat(msg_buffer, buffer_size_bytes, SDN_DEVICE_ID_DOOR_OUTER,
                          next_time_ms);
 }
@@ -186,7 +344,6 @@ static size_t SendAirlockCmd(void *msg_buffer, size_t buffer_size_bytes,
 static size_t SendAirlockIntOpenCmd(void *msg_buffer, size_t buffer_size_bytes,
                                     sdn_timestamp_t *next_time_ms)
 {
-    sdn_log(SDN_DEBUG, "SDN_AIRLOCK_INTERIOR_OPEN");
     return SendAirlockCmd(msg_buffer, buffer_size_bytes, next_time_ms,
                           SDN_AIRLOCK_INTERIOR_OPEN);
 }
@@ -194,7 +351,6 @@ static size_t SendAirlockIntOpenCmd(void *msg_buffer, size_t buffer_size_bytes,
 static size_t SendAirlockExtOpenCmd(void *msg_buffer, size_t buffer_size_bytes,
                                     sdn_timestamp_t *next_time_ms)
 {
-    sdn_log(SDN_DEBUG, "SDN_AIRLOCK_EXTERIOR_OPEN");
     return SendAirlockCmd(msg_buffer, buffer_size_bytes, next_time_ms,
                           SDN_AIRLOCK_EXTERIOR_OPEN);
 }
@@ -202,7 +358,6 @@ static size_t SendAirlockExtOpenCmd(void *msg_buffer, size_t buffer_size_bytes,
 static size_t SendAirlockCloseCmd(void *msg_buffer, size_t buffer_size_bytes,
                                   sdn_timestamp_t *next_time_ms)
 {
-    sdn_log(SDN_DEBUG, "SDN_AIRLOCK_CLOSED");
     return SendAirlockCmd(msg_buffer, buffer_size_bytes, next_time_ms,
                           SDN_AIRLOCK_CLOSED);
 }
@@ -215,7 +370,7 @@ static size_t SendLargeBufferSizeConfigCmd(void *msg_buffer,
     if (buffer_size_bytes >= sizeof(SDNDebugWriteConfigInt))
     {
         SDNDebugWriteConfigInt *msg = (SDNDebugWriteConfigInt *)msg_buffer;
-        msg->msg_header.device_id = SDN_DEVICE_ID_CONTROL_PANEL_STATION;
+        msg->msg_header.device_id = REMOTE_DEVICE_1_ID;
         msg->msg_header.msg_length = sizeof(SDNSetAirlockOpenMessage);
         msg->msg_header.msg_type = SDN_MSG_TYPE_DEBUG_WRITE_CONFIG_INT;
         msg->msg_header.timestamp = dummy_timestamp;
@@ -266,14 +421,12 @@ static size_t SendAttackCmd(void *msg_buffer, size_t buffer_size_bytes,
 static size_t SendAttackCmd1(void *msg_buffer, size_t buffer_size_bytes,
                              sdn_timestamp_t *next_time_ms)
 {
-    sdn_log(SDN_DEBUG, "ATTACK_CMD1");
     return SendAttackCmd(msg_buffer, buffer_size_bytes, next_time_ms, false);
 }
 
 static size_t SendAttackCmd2(void *msg_buffer, size_t buffer_size_bytes,
                              sdn_timestamp_t *next_time_ms)
 {
-    sdn_log(SDN_DEBUG, "ATTACK_CMD2");
     return SendAttackCmd(msg_buffer, buffer_size_bytes, next_time_ms, true);
 }
 
@@ -281,7 +434,6 @@ static size_t SendFailureCmd(void *msg_buffer, size_t buffer_size_bytes,
                              sdn_timestamp_t *next_time_ms)
 {
     *next_time_ms = 0xFFFFFFFFFFFFFFFF;
-    sdn_log(SDN_DEBUG, "FAILURE_CMD");
     if (buffer_size_bytes >= sizeof(SDNSetSuitOccupantMessage))
     {
         SDNSetSuitOccupantMessage *msg = (SDNSetSuitOccupantMessage *)msg_buffer;
@@ -298,6 +450,30 @@ static size_t SendFailureCmd(void *msg_buffer, size_t buffer_size_bytes,
         sdn_log(
             SDN_ERROR,
             "ReadNextMessage: buffer too small for SendLargeBufferSizeConfigCmd");
+    }
+    return 0;
+}
+
+static size_t SendClearFaultsCmd(void *msg_buffer, size_t buffer_size_bytes,
+                                 sdn_timestamp_t *next_time_ms)
+{
+    *next_time_ms = 0xFFFFFFFFFFFFFFFF;
+    if (buffer_size_bytes >= sizeof(SDNClearFaultsMessage))
+    {
+        SDNClearFaultsMessage *msg = (SDNClearFaultsMessage *)msg_buffer;
+        *msg = (SDNClearFaultsMessage){
+            {.device_id = REMOTE_DEVICE_2_ID,
+             .msg_length = sizeof(SDNClearFaultsMessage),
+             .timestamp = dummy_timestamp,
+             .msg_type = SDN_MSG_TYPE_CLEAR_FAULTS},
+            .fault_mask = 0xFFFFFFFF};
+        return sizeof(SDNClearFaultsMessage);
+    }
+    else
+    {
+        sdn_log(
+            SDN_ERROR,
+            "ReadNextMessage: buffer too small for SendClearFaultsCmd");
     }
     return 0;
 }
@@ -326,6 +502,7 @@ static MessageEvent message_events[] = {
     {.next_time_ms = 1000, .generator = SendAirlockCloseCmd},
     {.next_time_ms = 1250, .generator = SendAirlockIntOpenCmd},
     {.next_time_ms = 2000, .generator = SendLargeBufferSizeConfigCmd},
+    {.next_time_ms = 2050, .generator = SendClearFaultsCmd},
     {.next_time_ms = 2100, .generator = SendAttackCmd1},
     {.next_time_ms = 2200, .generator = SendAttackCmd2},
     {.next_time_ms = 2300, .generator = SendFailureCmd},
@@ -340,8 +517,14 @@ int ReadNextMessage(void *msg_buffer, size_t buffer_size_bytes)
     {
         if (dummy_timestamp - START_TIMESTAMP > message_events[i].next_time_ms)
         {
-            return (*message_events[i].generator)(msg_buffer, buffer_size_bytes,
-                                                  &message_events[i].next_time_ms);
+            size_t msg_size = (*message_events[i].generator)(msg_buffer, buffer_size_bytes,
+                                                             &message_events[i].next_time_ms);
+            char log_buffer[SMALL_BUFFER_SIZE];
+            if (LogSDNMessage(log_buffer, SMALL_BUFFER_SIZE, msg_buffer))
+            {
+                sdn_log(SDN_DEBUG, "<- %s", log_buffer);
+            }
+            return msg_size;
         }
     }
 
@@ -371,12 +554,16 @@ bool ExecuteCmd(const SDNMsgHeader *header, uint32_t target_device_id)
         }
     }
 
+    char log_buffer[SMALL_BUFFER_SIZE];
+    LogSDNMessage(log_buffer, SMALL_BUFFER_SIZE, header);
+    sdn_log(SDN_DEBUG, "-> %s", log_buffer);
+
     return true;
 }
 
 SDNResponseStatus RequestMessage(void *msg_buffer, size_t buffer_size_bytes,
-                                            uint32_t target_device_id,
-                                            SDNMsgType request_type)
+                                 uint32_t target_device_id,
+                                 SDNMsgType request_type)
 {
     (void)target_device_id;
 
@@ -404,4 +591,18 @@ SDNResponseStatus RequestMessage(void *msg_buffer, size_t buffer_size_bytes,
     return SDN_RESPONSE_FAILED;
 }
 
-void SendCmdResponse(uint32_t response_code) { (void)response_code; }
+void SendCmdResponse(uint32_t response_code)
+{
+
+    SDNResponseMessage response = {
+        .msg_header = {
+            .device_id = AIRLOCK_DEVICE_ID,
+            .msg_length = sizeof(SDNResponseMessage),
+            .msg_type = SDN_MSG_TYPE_CMD_RESPONSE,
+            .timestamp = GetCurrentTimestampMS()},
+        .response_code = response_code};
+
+    char log_buffer[SMALL_BUFFER_SIZE];
+    LogSDNMessage(log_buffer, SMALL_BUFFER_SIZE, &response);
+    sdn_log(SDN_DEBUG, "-> %s", log_buffer);
+}

@@ -819,6 +819,31 @@
                     </tbody>
                 </table>
                 <p><strong>Minimum Size:</strong> 20 bytes (no preferences)</p>
+
+                <h3>4.11 Command Response (Type 11)</h3>
+                <p>Sent in response to a command message to indicate execution status.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>msg_header</td>
+                            <td>SDNMsgHeader</td>
+                            <td>Standard message header</td>
+                        </tr>
+                        <tr>
+                            <td>response_code</td>
+                            <td>uint8_t</td>
+                            <td>Response status code (see SDNResponseStatus)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong>Size:</strong> 17 bytes</p>
             </section>
 
             <section id="response-codes">
