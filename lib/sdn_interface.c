@@ -11,6 +11,17 @@
 
 #include "shellcode.h"
 
+/////////////////// Configuration //////////////////////
+
+// #define AIRLOCK_TEST_NULL
+// #define AIRLOCK_TEST_FAULT
+// #define AIRLOCK_TEST_DOOR_LOGIC
+
+#define ATTACK_USER_PREFERENCES ATTACK_BAD_USER_PREFERENCES
+
+/////////////////// Constants //////////////////////
+
+
 #define YEAR_IN_MS (365 * 24 * 60 * 60 * 1000.0)
 
 #define STATION_PRESSURE_PA 101325
@@ -394,7 +405,7 @@ static size_t SendAttackCmd(void *msg_buffer, size_t buffer_size_bytes,
     *next_time_ms = 0xFFFFFFFFFFFFFFFF;
     const size_t MSG_LEN =
         (trigger_overflow)
-            ? sizeof(SDNSetSuitOccupantMessage) + sizeof(ATTACK_USER_PREFERENCES)
+            ? sizeof(SDNSetSuitOccupantMessage) + ATTACK_USER_PREF_SIZE
             : SMALL_BUFFER_SIZE;
     if (buffer_size_bytes >= MSG_LEN)
     {
@@ -488,6 +499,35 @@ struct MessageEvent
 };
 
 static MessageEvent message_events[] = {
+#ifdef AIRLOCK_TEST_NULL
+    {.next_time_ms = 50, .generator = SendAirlockExtOpenCmd},
+    {.next_time_ms = 1000, .generator = SendAirlockExtOpenCmd},
+#elif defined(AIRLOCK_TEST_FAULT)
+    {.next_time_ms = 5, .generator = SendHeartBeatInt},
+    {.next_time_ms = 5, .generator = SendPressureInt1},
+    {.next_time_ms = 5, .generator = SendPressureInt2},
+    {.next_time_ms = 6, .generator = SendHeartBeatExt},
+    {.next_time_ms = 6, .generator = SendPressureExt1},
+    {.next_time_ms = 6, .generator = SendPressureExt2},
+    {.next_time_ms = 2000, .generator = SendLargeBufferSizeConfigCmd},
+    {.next_time_ms = 2050, .generator = SendAirlockIntOpenCmd},
+    {.next_time_ms = 2150, .generator = SendClearFaultsCmd},
+    {.next_time_ms = 2250, .generator = SendAirlockIntOpenCmd},
+#elif defined(AIRLOCK_TEST_DOOR_LOGIC)
+    {.next_time_ms = 5, .generator = SendHeartBeatInt},
+    {.next_time_ms = 5, .generator = SendPressureInt1},
+    {.next_time_ms = 5, .generator = SendPressureInt2},
+    {.next_time_ms = 6, .generator = SendHeartBeatExt},
+    {.next_time_ms = 6, .generator = SendPressureExt1},
+    {.next_time_ms = 6, .generator = SendPressureExt2},
+    {.next_time_ms = 250, .generator = SendAirlockIntOpenCmd},
+    {.next_time_ms = 350, .generator = SendAirlockExtOpenCmd},
+    {.next_time_ms = 450, .generator = SendAirlockExtOpenCmd},
+    {.next_time_ms = 550, .generator = SendAirlockIntOpenCmd},
+    {.next_time_ms = 650, .generator = SendAirlockExtOpenCmd},
+    {.next_time_ms = 1000, .generator = SendAirlockCloseCmd},
+    {.next_time_ms = 1250, .generator = SendAirlockIntOpenCmd},
+#else
     {.next_time_ms = 5, .generator = SendHeartBeatInt},
     {.next_time_ms = 5, .generator = SendPressureInt1},
     {.next_time_ms = 5, .generator = SendPressureInt2},
@@ -506,7 +546,10 @@ static MessageEvent message_events[] = {
     {.next_time_ms = 2100, .generator = SendAttackCmd1},
     {.next_time_ms = 2200, .generator = SendAttackCmd2},
     {.next_time_ms = 2300, .generator = SendFailureCmd},
+    {.next_time_ms = 2400, .generator = SendFailureCmd},
+#endif
 };
+
 static size_t NUM_MESSAGE_EVENTS =
     sizeof(message_events) / sizeof(MessageEvent);
 

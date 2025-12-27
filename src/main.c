@@ -146,6 +146,11 @@ struct SDNHandler
 
 ////////////////////// Helper Functions ///////////////////////
 
+static bool IsPressureInitialized(AirlockState *state)
+{
+    return !isnan(*state->station_pressure) && !isnan(*state->exterior_pressure) && !isnan(*state->airlock_pressures[0]) && !isnan(*state->airlock_pressures[1]);
+}
+
 static void exit_with_error(ExitCode exit_code)
 {
     switch (exit_code)
@@ -356,7 +361,7 @@ static void CheckWatchDogs(AirlockState *state)
 
     if (!(state->fault_bits & FAULT_DOOR_BIT) && !(state->fault_bits & FAULT_PRESSURE))
     {
-        bool pressure_initialized = !isnan(*state->station_pressure) && !isnan(*state->exterior_pressure) && !isnan(*state->airlock_pressures[0]) && !isnan(*state->airlock_pressures[1]);
+        bool pressure_initialized = IsPressureInitialized(state);
         if (pressure_initialized)
         {
             double sp = (double)*state->station_pressure;
@@ -495,6 +500,13 @@ static void HandleSetAirlockOpen(const void *message_data, size_t msg_len, Airlo
     {
         sdn_log(SDN_WARN, "Door commands ignored while fault active.");
         SendCmdResponse(SDN_RESPONSE_CMD_ERROR_1);
+        return;
+    }
+
+    if (!IsPressureInitialized(state))
+    {
+        sdn_log(SDN_WARN, "Door commands ignored until pressure sensors initialized.");
+        SendCmdResponse(SDN_RESPONSE_CMD_ERROR_2);
         return;
     }
 

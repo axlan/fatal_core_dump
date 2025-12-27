@@ -6,58 +6,54 @@ This script reads a binary file and generates a C header file containing
 a uint8_t array with the binary data.
 
 Usage:
-    python bin_to_array.py <input_binary_file> <output_c_file>
+    python bin_to_array.py <input_binary_file_good> <input_binary_file_bad> <output_c_file>
 
 Example:
-    python bin_to_array.py myfile.bin myfile.h
+    python bin_to_array.py myfile_good.bin myfile_bad.bin myfile.h
 """
 
 import sys
-import os
-
 
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python bin_to_array.py <input_binary_file> <output_c_file>")
+    if len(sys.argv) != 4:
+        print("Usage: python bin_to_array.py <input_binary_file_good> <input_binary_file_bad> <output_c_file>")
         sys.exit(1)
 
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
-
-    # Check if input file exists
-    if not os.path.isfile(input_file):
-        print(f"Error: Input file '{input_file}' does not exist.")
-        sys.exit(1)
+    input_file_good = sys.argv[1]
+    input_file_bad = sys.argv[2]
+    output_file = sys.argv[3]
 
     # Read binary data
-    try:
-        with open(input_file, 'rb') as f:
-            data = f.read()
-    except IOError as e:
-        print(f"Error reading input file: {e}")
+    with open(input_file_good, 'rb') as f:
+        data_good = f.read()
+
+    with open(input_file_bad, 'rb') as f:
+        data_bad = f.read()
+
+    if len(data_good) != len(data_bad):
+        print("Error: Input files must be of the same length.")
         sys.exit(1)
 
     # Generate C array
-    # Write array declaration
-    array_name = os.path.splitext(os.path.basename(input_file))[0].replace('-', '_').replace('.', '_')
+    with open(output_file, 'w') as f:
 
-    try:
-        with open(output_file, 'w') as f:
-            f.write(f'''\
-// Generated Shellcode.
-// See ./scripts/generate_hack.sh for details.
-#define ATTACK_USER_PREF_SIZE {len(data)}
-static const uint8_t ATTACK_USER_PREFERENCES[ATTACK_USER_PREF_SIZE] = {{
-''')
-
+        def write_data(data):
+            ret = ''
             # Write data in hex format, 16 bytes per line
             for i in range(0, len(data), 16):
-                f.write('  ' + ''.join([f"0x{byte:02x}," for byte in data[i:i+16]]) + '\n')
+                ret += '  ' + ''.join([f"0x{byte:02x}," for byte in data[i:i+16]]) + '\n'
+            return ret
 
-            f.write("};\n")
-    except IOError as e:
-        print(f"Error writing output file: {e}")
-        sys.exit(1)
+        f.write(f'''\
+// Generated Shellcode.
+// See ./scripts/generate_hack.sh for details.
+#define ATTACK_USER_PREF_SIZE {len(data_good)}
+static const uint8_t ATTACK_BAD_USER_PREFERENCES[ATTACK_USER_PREF_SIZE] = {{
+{write_data(data_bad)}}};
+
+static const uint8_t ATTACK_GOOD_USER_PREFERENCES[ATTACK_USER_PREF_SIZE] = {{
+{write_data(data_good)}}};
+''')
 
 
 if __name__ == "__main__":

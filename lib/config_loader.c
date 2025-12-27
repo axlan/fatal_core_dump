@@ -12,7 +12,7 @@ static uint32_t occupancy_sensor_id = 0xae215e15;
 static uint32_t suit_locker_id = 0xae215e16;
 static uint32_t rx_message_buffer_size = 256;
 static bool apply_config_change = true;
-static bool remote_fault_clear = false;
+static bool remote_fault_clear = true;
 
 #define CL_LOAD_KEY(target_key)        \
     if (strcmp(key, #target_key) == 0) \
