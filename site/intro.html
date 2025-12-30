@@ -198,7 +198,7 @@
     <section>
       <h2>2. Executive Summary</h2>
         <p class="note">
-        At approximately 07:46 Z on May 25, 2216, a fatal incident occurred at A382 Mining Station when an internal airlock control sequence permitted the exterior hatch to open while an employee was present at the interior doorway and prior to donning a certified extravehicular suit. The employee was exposed to the exterior environment and did not survive. This report documents the facts collected, preliminary findings, identified causes, and recommended corrective actions to prevent recurrence.
+        At approximately 07:42 Z on May 25, 2216, a fatal incident occurred at A382 Mining Station when an internal airlock exterior hatch to opened while an employee was present at the interior doorway and prior to donning a certified extravehicular suit. The employee was exposed to the exterior environment and did not survive.
       </p>
     </section>
 
@@ -231,23 +231,29 @@
     <section>
       <h2>4. Timeline (Collected from shift logs, CCTV & automated telemetry)</h2>
       <div class="timeline">
-        07:30 — Technician Alex Mercer signs out for scheduled maintenance.<br/>
-        07:37 — Technician arrives at Forward External Airlock #3, interior side. Communication with maintenance lead indicates work to proceed after suit gear check.<br/>
-        07:40 — Airlock control panel reports "interlock check in progress"; suit locker status shows no suit removed from locker A3-SLK-2.<br/>
-        07:44 — Maintenance lead authorizes pre-EVA preparation; technician is observed performing visual inspection of exterior hatch area through interior airlock viewport.<br/>
-        07:45:55 — Airlock PLC reports "Cycle Start" and begins depressurization sequence (unexpected — no explicit EVA authorization logged).<br/>
-        07:46:02 — Interior speakers announce "External Hatch Opening". Interior hatch remains closed. Exterior hatch begins to open while interior pressure is still within safe limits.<br/>
-        07:46:07 — Technician moves toward interior hatch but does not have a suited seal in place; CCTV shows technician exposed at the inner doorway when exterior hatch reaches full open.<br/>
-        07:46:20 — Emergency stop command issued by on-shift operator but exterior hatch remains open; external environment rapidly depressurizes adjacent compartment; immediate medical and rescue attempt initiated.<br/>
-        07:54 — Emergency response team arrives; evacuation and emergency measures performed. Technician pronounced deceased at scene by station medical officer at 08:02.<br/>
+        07:30:32 — Technician Alex Mercer signs out for scheduled maintenance.<br/>
+        07:37:12 — Technician arrives at Forward External Airlock #3, interior side. Communication with maintenance lead indicates work to proceed after suit gear check.<br/>
+        07:40:50 — Technician interacts with exterior airlock control panel 3A1C3.<br/>
+        07:41:10 — Airlock control reports "airlock_state -> AIRLOCK_INTERIOR_OPEN".<br/>
+        07:41:20 — Technician is observed entering airlock.<br/>
+        07:41:50 — Technician interacts with interior airlock control panel 3A1C4.<br/>
+        07:42:15 — Airlock control reports "airlock_state -> AIRLOCK_CLOSED_PRESSURIZED".<br/>
+        07:44:52 — Technician makes second interaction with control panel 3A1C4.<br/>
+        07:44:52 — Airlock control reports "Handling SET_SUIT_OCCUPANT message.".<br/>
+        07:44:55 — Without expected logging or notifications, the external door opens causing rapid depressurization.<br/>
+        07:44:56 — Airlock control application terminates with "illegal hardware instruction (core dumped)".<br/>
+        07:45:19 — Technician is observed being thrown back by rapid decompression.<br/>
+        07:46:30 — Airlock control application restarts automatically sealing and repressurizing airlock.<br/>
+        07:47:21 — The control software fault notifies maintenance who initiate medical and rescue attempt.<br/>
+        07:54:24 — Emergency response team arrives; Technician pronounced deceased at scene by station medical officer at 08:02.<br/>
       </div>
     </section>
 
     <section>
       <h2>5. Witness Statements (summarized, names redacted where requested)</h2>
-      <p><strong>Maintenance Lead (on-shift):</strong> Confirms technician arrived and was to perform standard inspection. States no authorization to commence EVA was given at 07:45 — believed technician would don suit before sequence start.</p>
-      <p><strong>Airlock Operator:</strong> States no manual open command was issued from console. Logs show an automated sequence started. Emergency stop was attempted immediately upon noticing exterior hatch movement.</p>
-      <p><strong>Nearby Crew:</strong> Reported hearing the airlock sequence and seeing technician at the hatch without suit. Attempted to assist but were impeded by rapid change in pressure and safety systems.</p>
+      <p><strong>Maintenance Lead (on-shift):</strong> Confirms technician arrived and was to perform standard inspection.</p>
+      <p><strong>Senior Technician (last to perform airlock inspection):</strong> No anomalies reported during last routine maintenance check.</p>
+      <p><strong>Remote Operations:</strong> States no local or remote open command was issued. Logs show the command to open and close interior door and set suit occupant, but nothing else.</p>
     </section>
 
     <section>
@@ -258,112 +264,36 @@
         <li>Suits and suit locker telemetry (locked/unlocked timestamps).</li>
         <li>Operator console logs and maintenance scheduling records.</li>
         <li>Physical inspection of exterior hatch actuator and interlock hardware (post-incident, safe-mode inspection).</li>
+        <li>Airlock computer storage snapshot including core dump.</li>
       </ul>
     </section>
 
     <section>
-      <h2>7. Preliminary Findings</h2>
-      <ol>
-        <li><strong>Unauthorized Airlock Cycle:</strong> System telemetry indicates the airlock entered a ‟Cycle Start” state and proceeded through depressurization/opening without an explicit authorized EVA command recorded by the operator console.</li>
-        <li><strong>Interlock Failure or Bypass:</strong> The interior mechanical interlock (designed to prevent exterior hatch opening unless interior hatch sealed and suit lock engaged) did not prevent exterior hatch actuation. Physical inspection suggests an electrical interlock signal was present but the hatch actuator responded despite interlock state.</li>
-        <li><strong>Human Factors:</strong> The technician was positioned at the interior doorway without full suit seal. Communication indicates assumptions were made by both technician and lead that the other would confirm suit readiness prior to cycle start.</li>
-        <li><strong>Software/Control Anomaly:</strong> Airlock PLC shows a transient fault and a restart event 2 minutes prior to the cycle start; sequence timestamps overlap with automated maintenance scheduling task that should not have authority to actuate hatch without manual confirmation.</li>
-      </ol>
-    </section>
-
-    <section>
-      <h2>8. Root Cause Analysis (Preliminary)</h2>
-      <p class="note"><strong>Root Causes Identified:</strong></p>
-      <ul>
-        <li><strong>Control System Deficiency:</strong> A software/configuration error permitted an automated maintenance task to initiate a full airlock cycle without satisfying interlock condition checks at the PLC level.</li>
-        <li><strong>Mechanical/Electrical Vulnerability:</strong> The hatch actuator responded to a control signal despite an interlock assertion — likely due to insufficient hardwired fail-safe separation between actuator power and interlock sensor circuits.</li>
-        <li><strong>Procedural and Human Factors:</strong> Inadequate procedural enforcement (pre-EVA checklist not physically verified), and a breakdown in cross-check behavior between technician and lead.</li>
-      </ul>
-    </section>
-
-    <section>
-      <h2>9. Immediate Corrective Actions (Already Implemented)</h2>
+      <h2>7. Immediate Corrective Actions (Already Implemented)</h2>
       <div class="actions">
         <ul>
           <li>All external airlock cycles at A382 suspended until formal clearance.</li>
           <li>Isolation of Forward External Airlock #3 actuator power; hatch locked in safe position.</li>
           <li>Temporary manual interlock override disabled; hard lockout installed pending repairs.</li>
-          <li>Emergency stand-down and mandatory safety briefing for all station personnel (completed 09:30 Z, May 25, 2216).</li>
           <li>Full forensic capture of PLC and console logs; chain-of-custody preserved for electronics and controller modules.</li>
+          <li>In compliance with the software responsibility act, Arbitration Authority contacted; external investigation team assigned.</li>
         </ul>
       </div>
     </section>
 
     <section>
-      <h2>10. Recommended Corrective Actions (For Implementation)</h2>
-      <ol>
-        <li><strong>Technical Remediations (High Priority):</strong>
-          <ul>
-            <li>Perform immediate software rollback or patch at PLC that enforces <em>hard</em> interlock checks prior to exterior hatch actuation.</li>
-            <li>Re-design hatch actuator wiring to ensure mechanical power cannot be applied when interlock sensors indicate unsafe conditions (introduce separate safety-rated contactors).</li>
-            <li>Install redundant, independent interlock verification channels (diverse sensors) on all external airlocks.</li>
-          </ul>
-        </li>
-        <li><strong>Procedural & Administrative:</strong>
-          <ul>
-            <li>Revise EVA authorization procedures to require two-person signed confirmation (technician + lead) on a physical checklist before any airlock cycle.</li>
-            <li>Implement a mandatory "suit-on, seal-verified" confirmation step with a visual confirmation protocol (camera/indicator) recorded in the log before cycle initiation.</li>
-            <li>Update maintenance scheduling system to remove any automated tasks that can actuate safety-critical hardware without a manual final authorization.</li>
-          </ul>
-        </li>
-        <li><strong>Training & Culture:</strong>
-          <ul>
-            <li>Conduct ASAP retraining for all maintenance and operations personnel on new procedures and on human-factors awareness to avoid assumption-based actions.</li>
-            <li>Introduce periodic emergency drills for airlock depressurization and rescue procedures.</li>
-          </ul>
-        </li>
-        <li><strong>Investigation & Reporting:</strong>
-          <ul>
-            <li>Complete full root cause report within 30 days, including hardware failure analysis and software code review.</li>
-            <li>Coordinate with corporate safety and legal to report to regulatory bodies as required and to conduct an independent third-party audit of airlock systems across the fleet.</li>
-          </ul>
-        </li>
-      </ol>
+      <h2>8. Post Audit Follow on Actions</h2>
+      <div class="actions">
+        <ul>
+          <li>Implement recommended hardware and software changes.</li>
+          <li>If liability is determined, initiate appropriate legal and regulatory actions.</li>
+          <li>Determine if any issues jeopardize continued station operations.</li>
+        </ul>
+      </div>
     </section>
 
     <section>
-      <h2>11. Long-Term Recommendations</h2>
-      <p class="note">Consider a station-wide program to upgrade legacy interlock hardware to modern safety-rated relays and implement centralized monitoring of safety-critical system health. Evaluate personnel scheduling and shift overlap to ensure supervision on all external work windows.</p>
-    </section>
-
-    <section>
-      <h2>12. Actions Required of Responsible Parties</h2>
-      <table>
-        <tr>
-          <th>Responsible</th>
-          <th>Action</th>
-          <th>Due</th>
-        </tr>
-        <tr>
-          <td>Station Engineering Lead</td>
-          <td>Isolate and repair Forward External Airlock #3 actuator and implement hardware fail-safes.</td>
-          <td>Immediate (isolation); Repair plan within 5 days.</td>
-        </tr>
-        <tr>
-          <td>Operations Manager</td>
-          <td>Enforce temporary suspension of all unsanctioned airlock cycles; implement two-person authorization checklist.</td>
-          <td>Within 24 hours.</td>
-        </tr>
-        <tr>
-          <td>Corporate Safety</td>
-          <td>Initiate independent review and audit; report to regulatory authority per corporate legal counsel.</td>
-          <td>Independent review initiated within 48 hours; report within 30 days.</td>
-        </tr>
-      </table>
-    </section>
-
-    <section>
-      <h2>13. Conclusions</h2>
-      <p class="note">This incident is a fatal workplace event resulting from a combination of technical failures and procedural shortcomings. Archon LLC treats the loss of life with the highest gravity. Immediate containment actions have been taken, and the investigation is ongoing. The recommendations above are intended to eliminate the identified vulnerabilities and to strengthen human-system processes to prevent recurrence.</p>
-    </section>
-
-    <section>
-      <h2>14. Distribution</h2>
+      <h2>9. Distribution</h2>
       <p class="note">This document is classified as <span class="red">Internal — Confidential</span>. Distribution limited to Station Command, Corporate Safety, Corporate Legal, and Investigation Team members. Public release requires corporate approval and redaction of personal identifiers.</p>
     </section>
 
