@@ -1,5 +1,5 @@
 /**
- * @file main.c
+ * @file airlock_ctrl.c
  * @brief Main application logic for the Airlock Controller.
  *
  * This file contains the core state machine, message handling, and fault detection

@@ -52,11 +52,11 @@ $(LIB_OUT_DIR)/lib%.so: $(LIB_DIR)/%.c
 	@mkdir -p $(LIB_OUT_DIR)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(LIB_DIR)/$*.c
 
-$(MAIN_BIN): src/main.c $(LIB_SOS)
+$(MAIN_BIN): src/airlock_ctrl.c $(LIB_SOS)
 	@mkdir -p $(BIN_DIR)
 	# Link against the library placed inside $(LIB_OUT_DIR) and set rpath
 	# so the loader will search the executable's directory at runtime.
-	$(CC) $(CFLAGS) -I$(LIB_DIR) -o $@ src/main.c -L$(LIB_OUT_DIR) $(foreach L,$(LIB_NAMES),-l$(L)) -Wl,-rpath,'$$ORIGIN'
+	$(CC) $(CFLAGS) -I$(LIB_DIR) -o $@ src/airlock_ctrl.c -L$(LIB_OUT_DIR) $(foreach L,$(LIB_NAMES),-l$(L)) -Wl,-rpath,'$$ORIGIN'
 
 $(POC_BIN): minimal_example/min_poc.c $(LIB_SOS)
 	@mkdir -p $(BIN_DIR)
