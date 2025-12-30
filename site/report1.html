@@ -119,12 +119,13 @@
 
             if (isCorrect) {
                 resultMessage.className = 'result-message success';
-                resultMessage.innerHTML = `<p>✓ Correct! Your investigation is just getting started.</p>
+                resultMessage.innerHTML = `<p>Well if this is insufficient, you're going to need to dig into the software.</p>
                 <br>
                 <a href="directory.html">Continue Investigation</a>`;
             } else {
                 resultMessage.className = 'result-message error';
-                resultMessage.textContent = '✗ Incorrect conclusion. Review the evidence and try again.';
+                resultMessage.innerHTML = `<p>The evidence seems a bit thin, but if you're sure?</p>
+                <a href="end1.html">Close the Case</a>`;
             }
         }
     </script>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fatal Core Dump</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+</head>
+<style>
+    .autocomplete {
+        /*the container must be positioned relative:*/
+        position: relative;
+        display: block;
+        width: 100%;
+    }
+
+    .autocomplete-items {
+        position: absolute;
+        border: 1px solid #d4d4d4;
+        border-bottom: none;
+        border-top: none;
+        z-index: 99;
+        /*position the autocomplete items to be the same width as the container:*/
+        top: 100%;
+        left: 0;
+        right: 0;
+    }
+
+    .autocomplete-items div {
+        padding: 10px;
+        cursor: pointer;
+        background-color: #fff;
+        border-bottom: 1px solid #d4d4d4;
+        color: #333;
+    }
+
+    .autocomplete-items div:hover {
+        background-color: #e9e9e9;
+    }
+
+    .autocomplete-active {
+        /*when navigating through the items using the arrow keys:*/
+        background-color: DodgerBlue !important;
+        color: #ffffff;
+    }
+</style>
+
+<body>
+    <!-- Main Content -->
+    <div class="container">
+        <section class="explanation">
+            <h1 style="color: #ff6b6b; margin-bottom: 24px;">Investigation Report 2</h1>
+            <form id="investigationForm">
+
+                <div class="form-group">
+                    <h2>1. Why did the airlock_ctrl process crash?</h2>
+                    <div class="autocomplete">
+                        <input id="crash-cause-input" type="text" name="crashCause" placeholder="Enter answer here..." required>
+                    </div>
+                    <h2>2. What was unusual about the processes execution at this point?</h2>
+                    <div class="autocomplete">
+                        <input id="door-open-input" type="text" name="doorOpenCause" placeholder="Enter answer here..." required>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div style="text-align: center; margin-top: 32px;">
+                    <button type="submit" class="submit-btn">Submit Report</button>
+                </div>
+
+                <!-- Result Message -->
+                <div id="resultMessage" class="result-message"></div>
+            </form>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Fatal Core Dump | <a href="https://www.robopenguins.com/">https://www.robopenguins.com/</a></p>
+    </footer>
+
+    <script>
+        function autocomplete(inp, arr) {
+            var currentFocus;
+            inp.addEventListener("input", function (e) {
+                var a, b, i, val = this.value;
+                closeAllLists();
+                if (!val) { return false; }
+                currentFocus = -1;
+                a = document.createElement("DIV");
+                a.setAttribute("id", this.id + "autocomplete-list");
+                a.setAttribute("class", "autocomplete-items");
+                this.parentNode.appendChild(a);
+                for (i = 0; i < arr.length; i++) {
+                    var matchIndex = arr[i].toUpperCase().indexOf(val.toUpperCase());
+                    if (matchIndex > -1) {
+                        b = document.createElement("DIV");
+                        b.innerHTML = arr[i].substr(0, matchIndex);
+                        b.innerHTML += "<strong>" + arr[i].substr(matchIndex, val.length) + "</strong>";
+                        b.innerHTML += arr[i].substr(matchIndex + val.length);
+                        b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+                        b.addEventListener("click", function (e) {
+                            inp.value = this.getElementsByTagName("input")[0].value;
+                            closeAllLists();
+                        });
+                        a.appendChild(b);
+                    }
+                }
+            });
+            inp.addEventListener("keydown", function (e) {
+                var x = document.getElementById(this.id + "autocomplete-list");
+                if (x) x = x.getElementsByTagName("div");
+                if (e.keyCode == 40) { // Arrow DOWN
+                    currentFocus++;
+                    addActive(x);
+                } else if (e.keyCode == 38) { // Arrow UP
+                    currentFocus--;
+                    addActive(x);
+                } else if (e.keyCode == 13) { // Enter
+                    e.preventDefault();
+                    if (currentFocus > -1) {
+                        if (x) x[currentFocus].click();
+                    }
+                }
+            });
+            function addActive(x) {
+                if (!x) return false;
+                removeActive(x);
+                if (currentFocus >= x.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = (x.length - 1);
+                x[currentFocus].classList.add("autocomplete-active");
+            }
+            function removeActive(x) {
+                for (var i = 0; i < x.length; i++) {
+                    x[i].classList.remove("autocomplete-active");
+                }
+            }
+            function closeAllLists(elmnt) {
+                var x = document.getElementsByClassName("autocomplete-items");
+                for (var i = 0; i < x.length; i++) {
+                    if (elmnt != x[i] && elmnt != inp) {
+                        x[i].parentNode.removeChild(x[i]);
+                    }
+                }
+            }
+            document.addEventListener("click", function (e) {
+                closeAllLists(e.target);
+            });
+        }
+
+        // --- Autocomplete Initialization ---
+        var possibleAnswers = [
+            "invalid instruction",
+            "illegal instruction",
+            "access violation",
+            "buffer overflow",
+            "watchdog timer",
+            "stack overflow",
+            "segmentation fault",
+            "null pointer dereference",
+            "race condition in thread synchronization",
+            "executing instructions from the stack",
+            "cosmic ray bit flip",
+            "heap corruption",
+            "integer overflow",
+            "divide by zero",
+            "use after free",
+            "double free",
+            "memory leak",
+            "deadlock",
+            "infinite loop",
+            "unhandled exception",
+        ];
+
+        autocomplete(document.getElementById("crash-cause-input"), possibleAnswers);
+
+        // --- Form Submission Logic (placeholder) ---
+        const form = document.getElementById('investigationForm');
+        const resultMessage = document.getElementById('resultMessage');
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const answer = document.getElementById('crash-cause-input').value;
+            resultMessage.className = 'result-message info';
+            resultMessage.textContent = `Report submitted with answer: "${answer}"`;
+        });
+    </script>
+
+
+</body>
+
+</html>
