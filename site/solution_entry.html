@@ -50,49 +50,28 @@
     }
 </style>
 
-<!--
-
-!Q: How did the airlock door open
-A: There was a call to the ControlDoor right before the crash.
-
-================================================================================
-
-!Q: Where did the code that opened the airlock come from?
-A: It came from an the user_preferences data of a SDNSetSuitOccupantMessage message stored in state->message_serialization_buffer.
-
-================================================================================
-
-!Q: How did the handlers entry end up pointing to the stack?
-A: Buffer overflow in rx_message_buffer
-
-================================================================================
-
-
-!Q: Where did the code that opened the airlock come from?
-A: It came from an the user_preferences data of a SDNSetSuitOccupantMessage message.
-
-================================================================================
-
-!Q: Why didn't the bounds check on rx_message_buffer work?
-A: It was made inconsistent by a SDNDebugWriteConfigInt message to rx_message_buffer_size
-
--->
-
 <body>
     <!-- Main Content -->
     <div class="container">
         <section class="explanation" id="section1">
-            <h1 style="color: #ff6b6b; margin-bottom: 24px;">Proximate Cause</h1>
+            <h1 style="color: #ff6b6b; margin-bottom: 24px;">How did it happen?</h1>
             <form id="form1">
-
                 <div class="form-group">
-                    <h2>1. Why did the airlock_ctrl process crash?</h2>
-                    <div class="autocomplete">
-                        <input id="crash-cause-input1" type="text" name="crashCause" placeholder="Enter answer here..." required>
-                    </div>
-                    <h2>2. What was unusual about the processes execution at this point?</h2>
-                    <div class="autocomplete">
-                        <input id="door-open-input1" type="text" name="doorOpenCause" placeholder="Enter answer here..." required>
+                    <h2>How did the airlock door open?</h2>
+                    <div style="font-size: 1.2rem; line-height: 2.5;">
+                        The
+                        <div class="autocomplete" style="display: inline-block; width: 200px; vertical-align: middle;">
+                            <input id="blank1" type="text" placeholder="..." required>
+                        </div>
+                        to call
+                        <div class="autocomplete" style="display: inline-block; width: 200px; vertical-align: middle;">
+                            <input id="blank2" type="text" placeholder="..." required>
+                        </div>
+                        was run from the
+                        <div class="autocomplete" style="display: inline-block; width: 200px; vertical-align: middle;">
+                            <input id="blank3" type="text" placeholder="..." required>
+                        </div>
+                        .
                     </div>
                 </div>
 
@@ -106,18 +85,25 @@ A: It was made inconsistent by a SDNDebugWriteConfigInt message to rx_message_bu
             </form>
         </section>
 
-        <section class="explanation" id="section2" style="display: none;">
-            <h1 style="color: #ff6b6b; margin-bottom: 24px;">Section2</h1>
+        <section class="explanation" id="section2"
+            style="display: none; margin-top: 24px; border-top: 1px solid #ccc; padding-top: 24px;">
             <form id="form2">
-
                 <div class="form-group">
-                    <h2>1. Why did the airlock_ctrl process crash?</h2>
-                    <div class="autocomplete">
-                        <input id="crash-cause-input2" type="text" name="crashCause" placeholder="Enter answer here..." required>
-                    </div>
-                    <h2>2. What was unusual about the processes execution at this point?</h2>
-                    <div class="autocomplete">
-                        <input id="door-open-input2" type="text" name="doorOpenCause" placeholder="Enter answer here..." required>
+                    <h2>Where did the code that opened the airlock come from?</h2>
+                    <div style="font-size: 1.2rem; line-height: 2.5;">
+                        It came from the
+                        <div class="autocomplete" style="display: inline-block; width: 250px; vertical-align: middle;">
+                            <input id="blank4" type="text" placeholder="..." required>
+                        </div>
+                        of a(n)
+                        <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
+                            <input id="blank5" type="text" placeholder="..." required>
+                        </div>
+                        stored in
+                        <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
+                            <input id="blank6" type="text" placeholder="..." required>
+                        </div>
+                        .
                     </div>
                 </div>
 
@@ -131,18 +117,25 @@ A: It was made inconsistent by a SDNDebugWriteConfigInt message to rx_message_bu
             </form>
         </section>
 
-        <section class="explanation" id="section3" style="display: none;">
-            <h1 style="color: #ff6b6b; margin-bottom: 24px;">Section3</h1>
+        <section class="explanation" id="section3"
+            style="display: none; margin-top: 24px; border-top: 1px solid #ccc; padding-top: 24px;">
             <form id="form3">
-
                 <div class="form-group">
-                    <h2>1. Why did the airlock_ctrl process crash?</h2>
-                    <div class="autocomplete">
-                        <input id="crash-cause-input3" type="text" name="crashCause" placeholder="Enter answer here..." required>
-                    </div>
-                    <h2>2. What was unusual about the processes execution at this point?</h2>
-                    <div class="autocomplete">
-                        <input id="door-open-input3" type="text" name="doorOpenCause" placeholder="Enter answer here..." required>
+                    <h2>How did the process end up executing code on the stack?</h2>
+                    <div style="font-size: 1.2rem; line-height: 2.5;">
+                        A(n)
+                        <div class="autocomplete" style="display: inline-block; width: 200px; vertical-align: middle;">
+                            <input id="blank7" type="text" placeholder="..." required>
+                        </div>
+                        in
+                        <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
+                            <input id="blank8" type="text" placeholder="..." required>
+                        </div>
+                        changed
+                        <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
+                            <input id="blank9" type="text" placeholder="..." required>
+                        </div>
+                        .
                     </div>
                 </div>
 
@@ -155,174 +148,224 @@ A: It was made inconsistent by a SDNDebugWriteConfigInt message to rx_message_bu
                 <div class="result-message"></div>
             </form>
         </section>
-    </div>
 
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2025 Fatal Core Dump | <a href="https://www.robopenguins.com/">https://www.robopenguins.com/</a></p>
-    </footer>
+        <section class="explanation" id="section4"
+            style="display: none; margin-top: 24px; border-top: 1px solid #ccc; padding-top: 24px;">
+            <form id="form4">
+                <div class="form-group">
+                    <h2>Why didn't the bounds check on rx_message_buffer work?</h2>
+                    <div style="font-size: 1.2rem; line-height: 2.5;">
+                        A(n)
+                        <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
+                            <input id="blank10" type="text" placeholder="..." required>
+                        </div>
+                        changed
+                        <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
+                            <input id="blank11" type="text" placeholder="..." required>
+                        </div>
+                        .
+                    </div>
+                </div>
 
-    <script>
-        function autocomplete(inp, arr) {
-            var currentFocus;
-            inp.addEventListener("input", function (e) {
-                var a, b, i, val = this.value;
-                closeAllLists();
-                if (!val) { return false; }
-                currentFocus = -1;
-                a = document.createElement("DIV");
-                a.setAttribute("id", this.id + "autocomplete-list");
-                a.setAttribute("class", "autocomplete-items");
-                this.parentNode.appendChild(a);
-                for (i = 0; i < arr.length; i++) {
-                    var matchIndex = arr[i].toUpperCase().indexOf(val.toUpperCase());
-                    if (matchIndex > -1) {
-                        b = document.createElement("DIV");
-                        b.innerHTML = arr[i].substr(0, matchIndex);
-                        b.innerHTML += "<strong>" + arr[i].substr(matchIndex, val.length) + "</strong>";
-                        b.innerHTML += arr[i].substr(matchIndex + val.length);
-                        b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
-                        b.addEventListener("click", function (e) {
-                            inp.value = this.getElementsByTagName("input")[0].value;
-                            closeAllLists();
-                        });
-                        a.appendChild(b);
+                <!-- Submit Button -->
+                <div style="text-align: center; margin-top: 32px;">
+                    <button type="submit" class="submit-btn">Submit Report</button>
+                </div>
+
+                <!-- Result Message -->
+                <div class="result-message"></div>
+            </form>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>&copy; 2025 Fatal Core Dump | <a href="https://www.robopenguins.com/">https://www.robopenguins.com/</a>
+            </p>
+        </footer>
+
+        <script>
+            function autocomplete(inp, arr) {
+                var currentFocus;
+                inp.addEventListener("input", function (e) {
+                    var a, b, i, val = this.value;
+                    closeAllLists();
+                    if (!val) { return false; }
+                    currentFocus = -1;
+                    a = document.createElement("DIV");
+                    a.setAttribute("id", this.id + "autocomplete-list");
+                    a.setAttribute("class", "autocomplete-items");
+                    this.parentNode.appendChild(a);
+                    for (i = 0; i < arr.length; i++) {
+                        var matchIndex = arr[i].toUpperCase().indexOf(val.toUpperCase());
+                        if (matchIndex > -1) {
+                            b = document.createElement("DIV");
+                            b.innerHTML = arr[i].substr(0, matchIndex);
+                            b.innerHTML += "<strong>" + arr[i].substr(matchIndex, val.length) + "</strong>";
+                            b.innerHTML += arr[i].substr(matchIndex + val.length);
+                            b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+                            b.addEventListener("click", function (e) {
+                                inp.value = this.getElementsByTagName("input")[0].value;
+                                closeAllLists();
+                            });
+                            a.appendChild(b);
+                        }
+                    }
+                });
+                inp.addEventListener("keydown", function (e) {
+                    var x = document.getElementById(this.id + "autocomplete-list");
+                    if (x) x = x.getElementsByTagName("div");
+                    if (e.keyCode == 40) {
+                        currentFocus++;
+                        addActive(x);
+                    } else if (e.keyCode == 38) {
+                        currentFocus--;
+                        addActive(x);
+                    } else if (e.keyCode == 13) {
+                        e.preventDefault();
+                        if (currentFocus > -1) {
+                            if (x) x[currentFocus].click();
+                        }
+                    }
+                });
+                function addActive(x) {
+                    if (!x) return false;
+                    removeActive(x);
+                    if (currentFocus >= x.length) currentFocus = 0;
+                    if (currentFocus < 0) currentFocus = (x.length - 1);
+                    x[currentFocus].classList.add("autocomplete-active");
+                }
+                function removeActive(x) {
+                    for (var i = 0; i < x.length; i++) {
+                        x[i].classList.remove("autocomplete-active");
                     }
                 }
-            });
-            inp.addEventListener("keydown", function (e) {
-                var x = document.getElementById(this.id + "autocomplete-list");
-                if (x) x = x.getElementsByTagName("div");
-                if (e.keyCode == 40) { // Arrow DOWN
-                    currentFocus++;
-                    addActive(x);
-                } else if (e.keyCode == 38) { // Arrow UP
-                    currentFocus--;
-                    addActive(x);
-                } else if (e.keyCode == 13) { // Enter
-                    e.preventDefault();
-                    if (currentFocus > -1) {
-                        if (x) x[currentFocus].click();
+                function closeAllLists(elmnt) {
+                    var x = document.getElementsByClassName("autocomplete-items");
+                    for (var i = 0; i < x.length; i++) {
+                        if (elmnt != x[i] && elmnt != inp) {
+                            x[i].parentNode.removeChild(x[i]);
+                        }
                     }
                 }
-            });
-            function addActive(x) {
-                if (!x) return false;
-                removeActive(x);
-                if (currentFocus >= x.length) currentFocus = 0;
-                if (currentFocus < 0) currentFocus = (x.length - 1);
-                x[currentFocus].classList.add("autocomplete-active");
+                document.addEventListener("click", function (e) {
+                    closeAllLists(e.target);
+                });
             }
-            function removeActive(x) {
-                for (var i = 0; i < x.length; i++) {
-                    x[i].classList.remove("autocomplete-active");
-                }
-            }
-            function closeAllLists(elmnt) {
-                var x = document.getElementsByClassName("autocomplete-items");
-                for (var i = 0; i < x.length; i++) {
-                    if (elmnt != x[i] && elmnt != inp) {
-                        x[i].parentNode.removeChild(x[i]);
-                    }
-                }
-            }
-            document.addEventListener("click", function (e) {
-                closeAllLists(e.target);
-            });
-        }
 
-        // --- Autocomplete Initialization ---
-        var possibleAnswers1 = [
-            "invalid instruction",
-            "illegal instruction",
-            "access violation",
-            "buffer overflow",
-            "watchdog timer",
-            "stack overflow",
-            "segmentation fault",
-            "null pointer dereference",
-            "race condition in thread synchronization",
-            "executing instructions from the stack",
-            "cosmic ray bit flip",
-            "heap corruption",
-            "integer overflow",
-            "divide by zero",
-            "use after free",
-            "double free",
-            "memory leak",
-            "deadlock",
-            "infinite loop",
-            "unhandled exception",
-        ];
+            var dictionary = [
+                'num_handlers', 'assert', 'x86_64', 'HandleSetAirlockOpen', 'instruction', 'main', 'SDN', 'send_ptr',
+                'binary', 'open', 'suit_status', 'header', 'read', 'msg_type', 'payload', 'side_idx', 'heap', 'faults',
+                'health', 'stack', 'jump', 'opcode', 'length', 'type', 'good', 'airlock', 'clear', 'core',
+                'door_device_id', 'airlock_pressures', 'disk', 'variable', 'int', 'function', 'strcpy', 'register',
+                'message', 'response', 'station_pressure', 'flash', 'printf', 'snprintf', 'assembly', 'inside_door_id',
+                'msg_header', 'error', 'debug', 'handlers', 'configuration', 'pressure_device_id', 'airlock_req',
+                'state', 'heartbeat', 'message_data', 'suit_locker_id', 'pointer', 'pressure_cmd',
+                'message_serialization_buffer', 'occupancy_sensor_id', 'memset', 'InitializeSDN', 'RAM',
+                'num_message_handlers', 'occupancy_msg_buffer', 'call', 'apply_config_change', 'callback', 'start_time',
+                'door', 'buffer', 'pressure', 'zone', 'segmentation', 'fault_mask', 'occupants', 'log', 'status',
+                'HandleDebugWriteConfigInt', 'user_preferences', 'config', 'sprintf', 'id', 'fault_bits',
+                'safe_to_open', 'door_fault', 'executable', 'exit_code', 'msg_buffer', 'ControlDoor',
+                'use_internal_pressure', 'memcpy', 'remote_fault_clear', 'is_open', 'pressure_change_time', 'device_id',
+                'idx', 'command', 'packet', 'measurement_id', 'thread', 'check', 'occupancy_resp', 'source',
+                'outside_door_id', 'overflow', 'ControlPressure', 'rx_message_buffer', 'strncpy', 'code', 'dump',
+                'segment', 'buffer_size_bytes', 'pressure_fault', 'LoadConfig', 'bounds', 'CheckWatchDogs', 'key',
+                'msg_len', 'program', 'write', 'value', 'kernel', 'timestamp', 'handler', 'door_cmd', 'door_status',
+                'process', 'HandleSetSuitOccupant', 'cmd_response', 'device', 'pressure_initialized', 'close',
+                'msg_length', 'signal', 'ProcessMessageData', 'exterior_pressure', 'free', 'HandleHeartBeat', 'system',
+                'invalid', 'file', 'return', 'malloc', 'HandleClearFaults', 'pressure_ctrl_id', 'interrupt', 'suit',
+                'occupant', 'linux', 'now', 'airlock_state', 'memory', 'size', 'pressure_pa', 'address',
+                'HandleSensorPressure', 'fault', 'zone_id', 'execute', 'sensor', 'library', 'num_occupants',
+                'message_handlers', 'rx_message_buffer_size', 'failed', "SDNPressureMessage", "SDNOccupancyMessage",
+                "SDNSetSuitOccupantMessage", "SDNHeartBeatMessage", "SDNSetPressureZoneMessage", "SDNSetOpenMessage",
+                "SDNSetAirlockOpenMessage", "SDNClearFaultsMessage", "SDNLogMessage", "SDNResponseMessage",
+                "AirlockConfig", "AirlockState", "SDNDebugWriteConfigInt"
+            ];
 
-        autocomplete(document.getElementById("crash-cause-input1"), possibleAnswers1);
-        autocomplete(document.getElementById("door-open-input1"), possibleAnswers1);
+            autocomplete(document.getElementById("blank1"), dictionary);
+            autocomplete(document.getElementById("blank2"), dictionary);
+            autocomplete(document.getElementById("blank3"), dictionary);
+            autocomplete(document.getElementById("blank4"), dictionary);
+            autocomplete(document.getElementById("blank5"), dictionary);
+            autocomplete(document.getElementById("blank6"), dictionary);
+            autocomplete(document.getElementById("blank7"), dictionary);
+            autocomplete(document.getElementById("blank8"), dictionary);
+            autocomplete(document.getElementById("blank9"), dictionary);
+            autocomplete(document.getElementById("blank10"), dictionary);
+            autocomplete(document.getElementById("blank11"), dictionary);
 
-        autocomplete(document.getElementById("crash-cause-input2"), possibleAnswers1);
-        autocomplete(document.getElementById("door-open-input2"), possibleAnswers1);
-
-        autocomplete(document.getElementById("crash-cause-input3"), possibleAnswers1);
-        autocomplete(document.getElementById("door-open-input3"), possibleAnswers1);
-
-        // --- Form Submission Logic (placeholder) ---
-        // Define correct answers (lowercase for comparison)
-        const correctAnswers = {
-            1: {
-                crash: ["illegal instruction", "segmentation fault", "invalid instruction"],
-                door: ["executing instructions from the stack", "buffer overflow"]
-            },
-            2: {
-                crash: ["segmentation fault"], // Placeholder
-                door: ["segmentation fault"]   // Placeholder
-            },
-            3: {
-                crash: ["segmentation fault"], // Placeholder
-                door: ["segmentation fault"]   // Placeholder
-            }
-        };
-
-        function setupForm(sectionNum, nextSectionNum) {
-            const form = document.getElementById('form' + sectionNum);
-            const resultMessage = form.querySelector('.result-message');
-
-            form.addEventListener('submit', function (e) {
+            document.getElementById("form1").addEventListener("submit", function (e) {
                 e.preventDefault();
-                const crashInput = document.getElementById('crash-cause-input' + sectionNum);
-                const doorInput = document.getElementById('door-open-input' + sectionNum);
+                var v1 = document.getElementById("blank1").value.trim().toLowerCase();
+                var v2 = document.getElementById("blank2").value.trim();
+                var v3 = document.getElementById("blank3").value.trim().toLowerCase();
 
-                const crashVal = crashInput.value.toLowerCase();
-                const doorVal = doorInput.value.toLowerCase();
+                var msg = document.querySelector(".result-message");
 
-                // Check if input contains any of the correct answers
-                const isCrashCorrect = correctAnswers[sectionNum].crash.some(ans => crashVal.includes(ans));
-                const isDoorCorrect = correctAnswers[sectionNum].door.some(ans => doorVal.includes(ans));
-
-                if (isCrashCorrect && isDoorCorrect) {
-                    resultMessage.className = 'result-message success';
-                    resultMessage.textContent = 'Correct findings recorded.';
-
-                    // Disable current section
-                    crashInput.disabled = true;
-                    doorInput.disabled = true;
-                    form.querySelector('button').disabled = true;
-
-                    // Show next section
-                    if (nextSectionNum) {
-                        document.getElementById('section' + nextSectionNum).style.display = 'block';
-                    }
+                if (["instruction", "opcode", "command"].includes(v1) && v2 === "ControlDoor" && v3 === "stack") {
+                    msg.className = "result-message success";
+                    msg.textContent = "Correct. The execution flow was redirected to the stack where a payload called ControlDoor.";
+                    document.querySelector("#form1 button[type='submit']").style.display = "none";
+                    document.getElementById("section2").style.display = "block";
                 } else {
-                    resultMessage.className = 'result-message error';
-                    resultMessage.textContent = 'Incorrect findings. Please review the evidence.';
+                    msg.className = "result-message error";
+                    msg.textContent = "Incorrect. Please review the debugging evidence.";
                 }
             });
-        }
 
-        setupForm(1, 2);
-        setupForm(2, 3);
-        setupForm(3, null);
-    </script>
+            document.getElementById("form2").addEventListener("submit", function (e) {
+                e.preventDefault();
+                var v4 = document.getElementById("blank4").value.trim().toLowerCase();
+                var v5 = document.getElementById("blank5").value.trim();
+                var v6 = document.getElementById("blank6").value.trim().toLowerCase();
 
+                var msg = document.querySelector("#form2 .result-message");
 
+                if (v4 === "user_preferences" && v5 === "SDNSetSuitOccupantMessage" && v6 === "message_serialization_buffer") {
+                    msg.className = "result-message success";
+                    msg.textContent = "Correct. The user_preferences field is variable length and was large enough to overflow the buffer.";
+                    document.querySelector("#form2 button[type='submit']").style.display = "none";
+                    document.getElementById("section3").style.display = "block";
+                } else {
+                    msg.className = "result-message error";
+                    msg.textContent = "Incorrect. Please review the debugging evidence.";
+                }
+            });
+
+            document.getElementById("form3").addEventListener("submit", function (e) {
+                e.preventDefault();
+                var v7 = document.getElementById("blank7").value.trim().toLowerCase();
+                var v8 = document.getElementById("blank8").value.trim().toLowerCase();
+                var v9 = document.getElementById("blank9").value.trim().toLowerCase();
+
+                var msg = document.querySelector("#form3 .result-message");
+
+                if (v7 === "overflow" && v8 === "rx_message_buffer" && ["message_handlers", "handlers"].includes(v9)) {
+                    msg.className = "result-message success";
+                    msg.textContent = "Correct. The buffer overflow overwrote the function pointers.";
+                    document.querySelector("#form3 button[type='submit']").style.display = "none";
+                    document.getElementById("section4").style.display = "block";
+                } else {
+                    msg.className = "result-message error";
+                    msg.textContent = "Incorrect. Please review the debugging evidence.";
+                }
+            });
+
+            document.getElementById("form4").addEventListener("submit", function (e) {
+                e.preventDefault();
+                var v10 = document.getElementById("blank10").value.trim();
+                var v11 = document.getElementById("blank11").value.trim().toLowerCase();
+
+                var msg = document.querySelector("#form4 .result-message");
+
+                if (v10 === "SDNDebugWriteConfigInt" && v11 === "rx_message_buffer_size") {
+                    msg.className = "result-message success";
+                    msg.textContent = "Correct. The debug message allowed overwriting the buffer size variable.";
+                } else {
+                    msg.className = "result-message error";
+                    msg.textContent = "Incorrect. Please review the debugging evidence.";
+                }
+            });
+        </script>
 </body>
 
 </html>
