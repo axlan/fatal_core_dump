@@ -52,28 +52,34 @@
 
 <!--
 
-!Q: How did the airlock door open
-A: There was a call to the ControlDoor right before the crash.
+Q: What was the immediate cause of the process crash?
+A: invalid instruction
+
+Q: What was unusual about the processes execution at this point?
+A: executing stack memory
 
 ================================================================================
 
-!Q: Where did the code that opened the airlock come from?
-A: It came from an the user_preferences data of a SDNSetSuitOccupantMessage message stored in state->message_serialization_buffer.
+Q: What was the last line of airlock.c to execute before jumping into stack memory?
+A: 328
+
+Q: What variable covered the memory region that was executed?
+A: message_serialization_buffer
+
+Q: How did the airlock door open
+A: call to ControlDoor in stack memory
 
 ================================================================================
 
-!Q: How did the handlers entry end up pointing to the stack?
+Q: How did the handlers entry end up pointing to the stack?
 A: Buffer overflow in rx_message_buffer
 
-================================================================================
-
-
-!Q: Where did the code that opened the airlock come from?
-A: It came from an the user_preferences data of a SDNSetSuitOccupantMessage message.
+Q: Where did the code that opened the airlock come from?
+A: user_preferences data of a SDNSetSuitOccupantMessage message
 
 ================================================================================
 
-!Q: Why didn't the bounds check on rx_message_buffer work?
+Q: Why didn't the bounds check on rx_message_buffer work?
 A: It was made inconsistent by a SDNDebugWriteConfigInt message to rx_message_buffer_size
 
 -->
