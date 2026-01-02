@@ -412,6 +412,12 @@ static void CheckWatchDogs(AirlockState *state)
                 {
                     state->airlock_state = AIRLOCK_CLOSED_PRESSURIZED;
                     sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_CLOSED_PRESSURIZED");
+                    if (!ControlDoor(state->config.device_id, state->config.inside_door_id, true))
+                    {
+                        exit_with_error(EXIT_CODE_CONTROL_CMD_FAILED);
+                    }
+                    state->airlock_state = AIRLOCK_INTERIOR_OPEN;
+                    sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_INTERIOR_OPEN");
                 }
                 break;
             case AIRLOCK_DEPRESSURIZING:
@@ -420,6 +426,12 @@ static void CheckWatchDogs(AirlockState *state)
                 {
                     state->airlock_state = AIRLOCK_CLOSED_DEPRESSURIZED;
                     sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_CLOSED_DEPRESSURIZED");
+                    if (!ControlDoor(state->config.device_id, state->config.outside_door_id, true))
+                    {
+                        exit_with_error(EXIT_CODE_CONTROL_CMD_FAILED);
+                    }
+                    state->airlock_state = AIRLOCK_EXTERIOR_OPEN;
+                    sdn_log(SDN_INFO, "airlock_state -> AIRLOCK_EXTERIOR_OPEN");
                 }
                 break;
             default:

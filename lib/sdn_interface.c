@@ -21,8 +21,9 @@
 
 /////////////////// Constants //////////////////////
 
+#define DAY_IN_MS (24 * 60 * 60 * 1000.0)
 
-#define YEAR_IN_MS (365 * 24 * 60 * 60 * 1000.0)
+#define YEAR_IN_MS (365 * DAY_IN_MS)
 
 #define STATION_PRESSURE_PA 101325
 
@@ -33,11 +34,12 @@ static const uint32_t SDN_DEVICE_ID_DOOR_INNER = 0xae215e12;
 static const uint32_t SDN_DEVICE_ID_DOOR_OUTER = 0xae215e13;
 static const uint32_t SDN_DEVICE_ID_PRESSURE_CTRL = 0xae215e14;
 static const uint32_t SDN_DEVICE_ID_OCCUPANCY_SENSOR = 0xae215e15;
+// Rolf Ivo
 static const uint32_t PATSY_USER_ID = 0xd481aa99;
+// Alex Mercer
 static const uint32_t TARGET_USER_ID = 0x488504f4;
+// Controlled by Helena Efrem
 static const uint32_t REMOTE_DEVICE_1_ID = 0x2017dc71;
-static const uint32_t REMOTE_DEVICE_2_ID = 0x3d97134b;
-
 static const uint32_t SDN_DEVICE_ID_CONTROL_PANEL_STATION = 0xae215e16;
 static const uint32_t SDN_DEVICE_ID_CONTROL_PANEL_AIRLOCK = 0xae215e17;
 
@@ -94,8 +96,8 @@ static bool LogSDNMessage(char *buffer, size_t buffer_size, const void *msg_buff
     size_t rem = buffer_size;
     int n;
 
-    n = snprintf(p, rem, "%-40s Len: %3u, Dev: 0x%08x, Time: %" PRIu64,
-                 SDNMsgTypeToString(header->msg_type), header->msg_length, header->device_id, header->timestamp);
+    n = snprintf(p, rem, "%-40s Len: %3u, Dev: 0x%08x",
+                 SDNMsgTypeToString(header->msg_type), header->msg_length, header->device_id);
     if (n < 0 || (size_t)n >= rem)
         return false;
     p += n;
@@ -331,13 +333,14 @@ static size_t SendHeartBeatExt(void *msg_buffer, size_t buffer_size_bytes,
 
 static size_t SendAirlockCmd(void *msg_buffer, size_t buffer_size_bytes,
                              sdn_timestamp_t *next_time_ms,
-                             SDNAirlockOpen open_state)
+                             SDNAirlockOpen open_state,
+                             uint32_t panel)
 {
     *next_time_ms = 0xFFFFFFFFFFFFFFFF;
     if (buffer_size_bytes >= sizeof(SDNSetAirlockOpenMessage))
     {
         SDNSetAirlockOpenMessage *msg = (SDNSetAirlockOpenMessage *)msg_buffer;
-        msg->msg_header.device_id = SDN_DEVICE_ID_CONTROL_PANEL_STATION;
+        msg->msg_header.device_id = panel;
         msg->msg_header.msg_length = sizeof(SDNSetAirlockOpenMessage);
         msg->msg_header.msg_type = SDN_MSG_TYPE_SET_AIRLOCK_OPEN;
         msg->msg_header.timestamp = dummy_timestamp;
@@ -352,25 +355,39 @@ static size_t SendAirlockCmd(void *msg_buffer, size_t buffer_size_bytes,
     return 0;
 }
 
-static size_t SendAirlockIntOpenCmd(void *msg_buffer, size_t buffer_size_bytes,
+static size_t SendAirlockIntOpenCmdEntering(void *msg_buffer, size_t buffer_size_bytes,
                                     sdn_timestamp_t *next_time_ms)
 {
     return SendAirlockCmd(msg_buffer, buffer_size_bytes, next_time_ms,
-                          SDN_AIRLOCK_INTERIOR_OPEN);
+                          SDN_AIRLOCK_INTERIOR_OPEN, SDN_DEVICE_ID_CONTROL_PANEL_STATION);
+}
+
+static size_t SendAirlockIntOpenCmdExiting(void *msg_buffer, size_t buffer_size_bytes,
+                                    sdn_timestamp_t *next_time_ms)
+{
+    return SendAirlockCmd(msg_buffer, buffer_size_bytes, next_time_ms,
+                          SDN_AIRLOCK_INTERIOR_OPEN, SDN_DEVICE_ID_CONTROL_PANEL_AIRLOCK);
 }
 
 static size_t SendAirlockExtOpenCmd(void *msg_buffer, size_t buffer_size_bytes,
                                     sdn_timestamp_t *next_time_ms)
 {
     return SendAirlockCmd(msg_buffer, buffer_size_bytes, next_time_ms,
-                          SDN_AIRLOCK_EXTERIOR_OPEN);
+                          SDN_AIRLOCK_EXTERIOR_OPEN, SDN_DEVICE_ID_CONTROL_PANEL_AIRLOCK);
 }
 
-static size_t SendAirlockCloseCmd(void *msg_buffer, size_t buffer_size_bytes,
+static size_t SendAirlockCloseCmdInside(void *msg_buffer, size_t buffer_size_bytes,
                                   sdn_timestamp_t *next_time_ms)
 {
     return SendAirlockCmd(msg_buffer, buffer_size_bytes, next_time_ms,
-                          SDN_AIRLOCK_CLOSED);
+                          SDN_AIRLOCK_CLOSED, SDN_DEVICE_ID_CONTROL_PANEL_AIRLOCK);
+}
+
+static size_t SendAirlockCloseCmdOutside(void *msg_buffer, size_t buffer_size_bytes,
+                                  sdn_timestamp_t *next_time_ms)
+{
+    return SendAirlockCmd(msg_buffer, buffer_size_bytes, next_time_ms,
+                          SDN_AIRLOCK_CLOSED, SDN_DEVICE_ID_CONTROL_PANEL_STATION);
 }
 
 static size_t SendLargeBufferSizeConfigCmd(void *msg_buffer,
@@ -473,7 +490,7 @@ static size_t SendClearFaultsCmd(void *msg_buffer, size_t buffer_size_bytes,
     {
         SDNClearFaultsMessage *msg = (SDNClearFaultsMessage *)msg_buffer;
         *msg = (SDNClearFaultsMessage){
-            {.device_id = REMOTE_DEVICE_2_ID,
+            {.device_id = REMOTE_DEVICE_1_ID,
              .msg_length = sizeof(SDNClearFaultsMessage),
              .timestamp = dummy_timestamp,
              .msg_type = SDN_MSG_TYPE_CLEAR_FAULTS},
@@ -497,6 +514,11 @@ struct MessageEvent
     sdn_timestamp_t next_time_ms;
     MessageGenerator generator;
 };
+
+#define TECH_VISIT1 4234
+#define TECH_VISIT2 651113
+#define VICTIM_VISIT TECH_VISIT2 + 940113 + 14234
+
 
 static MessageEvent message_events[] = {
 #ifdef AIRLOCK_TEST_NULL
@@ -534,19 +556,28 @@ static MessageEvent message_events[] = {
     {.next_time_ms = 6, .generator = SendHeartBeatExt},
     {.next_time_ms = 6, .generator = SendPressureExt1},
     {.next_time_ms = 6, .generator = SendPressureExt2},
-    {.next_time_ms = 250, .generator = SendAirlockIntOpenCmd},
-    {.next_time_ms = 350, .generator = SendAirlockExtOpenCmd},
-    {.next_time_ms = 450, .generator = SendAirlockExtOpenCmd},
-    {.next_time_ms = 550, .generator = SendAirlockIntOpenCmd},
-    {.next_time_ms = 650, .generator = SendAirlockExtOpenCmd},
-    {.next_time_ms = 1000, .generator = SendAirlockCloseCmd},
-    {.next_time_ms = 1250, .generator = SendAirlockIntOpenCmd},
-    {.next_time_ms = 2000, .generator = SendLargeBufferSizeConfigCmd},
-    {.next_time_ms = 2050, .generator = SendClearFaultsCmd},
-    {.next_time_ms = 2100, .generator = SendAttackCmd1},
-    {.next_time_ms = 2200, .generator = SendAttackCmd2},
-    {.next_time_ms = 2300, .generator = SendFailureCmd},
-    {.next_time_ms = 2400, .generator = SendFailureCmd},
+    {.next_time_ms = 2201, .generator = SendLargeBufferSizeConfigCmd},
+    {.next_time_ms = 3453, .generator = SendClearFaultsCmd},
+
+    {.next_time_ms = TECH_VISIT1 + 8422, .generator = SendAirlockCloseCmdInside},
+    {.next_time_ms = TECH_VISIT1 + 12100, .generator = SendAttackCmd1},
+    {.next_time_ms = TECH_VISIT1 + 82153, .generator = SendAirlockExtOpenCmd},
+    {.next_time_ms = TECH_VISIT1 + 632113, .generator = SendAirlockCloseCmdInside},
+    {.next_time_ms = TECH_VISIT1 + 636147, .generator = SendAirlockIntOpenCmdExiting},
+    {.next_time_ms = TECH_VISIT1 + 640113, .generator = SendAirlockCloseCmdOutside},
+
+    {.next_time_ms = TECH_VISIT2, .generator = SendAirlockIntOpenCmdEntering},
+    {.next_time_ms = TECH_VISIT2 + 8422, .generator = SendAirlockCloseCmdInside},
+    {.next_time_ms = TECH_VISIT2 + 12100, .generator = SendAttackCmd2},
+    {.next_time_ms = TECH_VISIT2 + 82153, .generator = SendAirlockExtOpenCmd},
+    {.next_time_ms = TECH_VISIT2 + 932113, .generator = SendAirlockCloseCmdInside},
+    {.next_time_ms = TECH_VISIT2 + 936147, .generator = SendAirlockIntOpenCmdExiting},
+    {.next_time_ms = TECH_VISIT2 + 940113, .generator = SendAirlockCloseCmdOutside},
+
+    {.next_time_ms = VICTIM_VISIT, .generator = SendAirlockIntOpenCmdEntering},
+    {.next_time_ms = VICTIM_VISIT + 8422, .generator = SendAirlockCloseCmdInside},
+    {.next_time_ms = VICTIM_VISIT + 12100, .generator = SendFailureCmd},
+    {.next_time_ms = VICTIM_VISIT + 14100, .generator = SendFailureCmd},
 #endif
 };
 
