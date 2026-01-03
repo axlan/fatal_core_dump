@@ -43,7 +43,7 @@ def main():
 
 
                     dt_object = datetime.datetime.fromtimestamp(timestamp_ms / 1000.0) + offset
-                    dt_str = dt_object.strftime('%Y-%m-%d %H:%M:%S')
+                    dt_str = dt_object.strftime('%Y-%m-%d_%H:%M:%S')
 
                     rest_of_line = parts[1] if len(parts) > 1 else ""
                     updated_lines.append(f"{dt_str} {rest_of_line}")

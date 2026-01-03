@@ -85,3 +85,8 @@ info symbol  0x555555555e7e
 info symbol  0x555555555269
 info frame
 ```
+
+```
+sqlite3 :memory:
+sqlite> .read site/access_log.sql
+```

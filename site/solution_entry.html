@@ -91,11 +91,7 @@
                 <div class="form-group">
                     <h2>Where did the code that opened the airlock come from?</h2>
                     <div style="font-size: 1.2rem; line-height: 2.5;">
-                        It came from the
-                        <div class="autocomplete" style="display: inline-block; width: 250px; vertical-align: middle;">
-                            <input id="blank4" type="text" placeholder="..." required>
-                        </div>
-                        of a(n)
+                        It came from a(n)
                         <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
                             <input id="blank5" type="text" placeholder="..." required>
                         </div>
@@ -175,6 +171,9 @@
                 <!-- Result Message -->
                 <div class="result-message"></div>
             </form>
+            <div class="button-container" id="next-button" style="display: none; margin-top: 24px; text-align: center;">
+                <a href="directory2.html" class="get-started-btn">Figure Out Who Did It</a>
+            </div>
         </section>
 
         <!-- Footer -->
@@ -284,7 +283,6 @@
             autocomplete(document.getElementById("blank1"), dictionary);
             autocomplete(document.getElementById("blank2"), dictionary);
             autocomplete(document.getElementById("blank3"), dictionary);
-            autocomplete(document.getElementById("blank4"), dictionary);
             autocomplete(document.getElementById("blank5"), dictionary);
             autocomplete(document.getElementById("blank6"), dictionary);
             autocomplete(document.getElementById("blank7"), dictionary);
@@ -292,6 +290,62 @@
             autocomplete(document.getElementById("blank9"), dictionary);
             autocomplete(document.getElementById("blank10"), dictionary);
             autocomplete(document.getElementById("blank11"), dictionary);
+
+            function saveProgress(level) {
+                localStorage.setItem('solution_progress', level);
+            }
+
+            function loadProgress() {
+                var progress = parseInt(localStorage.getItem('solution_progress') || 0);
+
+                if (progress >= 1) {
+                    document.getElementById("blank1").value = "instruction";
+                    document.getElementById("blank2").value = "ControlDoor";
+                    document.getElementById("blank3").value = "stack";
+
+                    var msg = document.querySelector("#form1 .result-message");
+                    msg.className = "result-message success";
+                    msg.textContent = "Correct. The execution flow was redirected to the stack where a payload called ControlDoor.";
+                    document.querySelector("#form1 button[type='submit']").style.display = "none";
+                    document.getElementById("section2").style.display = "block";
+                }
+
+                if (progress >= 2) {
+                    document.getElementById("blank5").value = "SDNSetSuitOccupantMessage";
+                    document.getElementById("blank6").value = "message_serialization_buffer";
+
+                    var msg = document.querySelector("#form2 .result-message");
+                    msg.className = "result-message success";
+                    msg.textContent = "Correct. A SDNSetSuitOccupantMessage message was serialized with a payload that contained machine code to open the airlock.";
+                    document.querySelector("#form2 button[type='submit']").style.display = "none";
+                    document.getElementById("section3").style.display = "block";
+                }
+
+                if (progress >= 3) {
+                    document.getElementById("blank7").value = "overflow";
+                    document.getElementById("blank8").value = "rx_message_buffer";
+                    document.getElementById("blank9").value = "message_handlers";
+
+                    var msg = document.querySelector("#form3 .result-message");
+                    msg.className = "result-message success";
+                    msg.textContent = "Correct. The buffer overflow overwrote the function pointers.";
+                    document.querySelector("#form3 button[type='submit']").style.display = "none";
+                    document.getElementById("section4").style.display = "block";
+                }
+
+                if (progress >= 4) {
+                    document.getElementById("blank10").value = "SDNDebugWriteConfigInt";
+                    document.getElementById("blank11").value = "rx_message_buffer_size";
+
+                    var msg = document.querySelector("#form4 .result-message");
+                    msg.className = "result-message success";
+                    msg.textContent = "Correct. The debug message allowed overwriting the buffer size variable.";
+                    document.querySelector("#form4 button[type='submit']").style.display = "none";
+                    document.getElementById("next-button").style.display = "block";
+                }
+            }
+
+            loadProgress();
 
             document.getElementById("form1").addEventListener("submit", function (e) {
                 e.preventDefault();
@@ -306,6 +360,7 @@
                     msg.textContent = "Correct. The execution flow was redirected to the stack where a payload called ControlDoor.";
                     document.querySelector("#form1 button[type='submit']").style.display = "none";
                     document.getElementById("section2").style.display = "block";
+                    saveProgress(1);
                 } else {
                     msg.className = "result-message error";
                     msg.textContent = "Incorrect. Please review the debugging evidence.";
@@ -314,17 +369,17 @@
 
             document.getElementById("form2").addEventListener("submit", function (e) {
                 e.preventDefault();
-                var v4 = document.getElementById("blank4").value.trim().toLowerCase();
                 var v5 = document.getElementById("blank5").value.trim();
                 var v6 = document.getElementById("blank6").value.trim().toLowerCase();
 
                 var msg = document.querySelector("#form2 .result-message");
 
-                if (v4 === "user_preferences" && v5 === "SDNSetSuitOccupantMessage" && v6 === "message_serialization_buffer") {
+                if (v5 === "SDNSetSuitOccupantMessage" && v6 === "message_serialization_buffer") {
                     msg.className = "result-message success";
-                    msg.textContent = "Correct. The user_preferences field is variable length and was large enough to overflow the buffer.";
+                    msg.textContent = "Correct. A SDNSetSuitOccupantMessage message was serialized with a payload that contained machine code to open the airlock.";
                     document.querySelector("#form2 button[type='submit']").style.display = "none";
                     document.getElementById("section3").style.display = "block";
+                    saveProgress(2);
                 } else {
                     msg.className = "result-message error";
                     msg.textContent = "Incorrect. Please review the debugging evidence.";
@@ -344,6 +399,7 @@
                     msg.textContent = "Correct. The buffer overflow overwrote the function pointers.";
                     document.querySelector("#form3 button[type='submit']").style.display = "none";
                     document.getElementById("section4").style.display = "block";
+                    saveProgress(3);
                 } else {
                     msg.className = "result-message error";
                     msg.textContent = "Incorrect. Please review the debugging evidence.";
@@ -360,6 +416,9 @@
                 if (v10 === "SDNDebugWriteConfigInt" && v11 === "rx_message_buffer_size") {
                     msg.className = "result-message success";
                     msg.textContent = "Correct. The debug message allowed overwriting the buffer size variable.";
+                    document.querySelector("#form4 button[type='submit']").style.display = "none";
+                    document.getElementById("next-button").style.display = "block";
+                    saveProgress(4);
                 } else {
                     msg.className = "result-message error";
                     msg.textContent = "Incorrect. Please review the debugging evidence.";
