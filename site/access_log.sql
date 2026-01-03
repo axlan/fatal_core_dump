@@ -8,7 +8,7 @@ INSERT INTO employees (id, name, role) VALUES
 (1216677108, 'Alex Mercer', 'Technician'),
 (1079892584, 'Helena Efrem', 'Maintenance Lead'),
 (3565267609, 'Rolf Ivo', 'Senior Technician'),
-(824890700, 'Alex Mercer', 'Remote Operations'),
+(824890700, 'Yann Vancho', 'Remote Operations'),
 (436398055, 'Marina Anjana', 'Communications');
 
 CREATE TABLE IF NOT EXISTS configuration_changes (

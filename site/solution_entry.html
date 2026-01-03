@@ -171,9 +171,29 @@
                 <!-- Result Message -->
                 <div class="result-message"></div>
             </form>
+        </section>
+
+        <section class="explanation" id="section5"
+            style="display: none; margin-top: 24px; border-top: 1px solid #ccc; padding-top: 24px;">
+            <form id="form5">
+                <div class="form-group">
+                    <h2>Who engineered the shellcode injection into the airlock?</h2>
+                    <div style="font-size: 1.2rem; line-height: 2.5;">
+                        <input id="blank12" type="text" placeholder="Name" required style="padding: 10px; width: 300px;">
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div style="text-align: center; margin-top: 32px;">
+                    <button type="submit" class="submit-btn">Submit Report</button>
+                </div>
+
+                <!-- Result Message -->
+                <div class="result-message"></div>
             <div class="button-container" id="next-button" style="display: none; margin-top: 24px; text-align: center;">
-                <a href="directory2.html" class="get-started-btn">Figure Out Who Did It</a>
+                <a href="finale.html" class="get-started-btn">Complete Report</a>
             </div>
+            </form>
         </section>
 
         <!-- Footer -->
@@ -341,6 +361,16 @@
                     msg.className = "result-message success";
                     msg.textContent = "Correct. The debug message allowed overwriting the buffer size variable.";
                     document.querySelector("#form4 button[type='submit']").style.display = "none";
+                    document.getElementById("section5").style.display = "block";
+                }
+
+                if (progress >= 5) {
+                    document.getElementById("blank12").value = "Helena Efrem";
+
+                    var msg = document.querySelector("#form5 .result-message");
+                    msg.className = "result-message success";
+                    msg.textContent = "Correct. Helena Efrem engineered the attack.";
+                    document.querySelector("#form5 button[type='submit']").style.display = "none";
                     document.getElementById("next-button").style.display = "block";
                 }
             }
@@ -417,11 +447,29 @@
                     msg.className = "result-message success";
                     msg.textContent = "Correct. The debug message allowed overwriting the buffer size variable.";
                     document.querySelector("#form4 button[type='submit']").style.display = "none";
-                    document.getElementById("next-button").style.display = "block";
+                    document.getElementById("section5").style.display = "block";
                     saveProgress(4);
                 } else {
                     msg.className = "result-message error";
                     msg.textContent = "Incorrect. Please review the debugging evidence.";
+                }
+            });
+
+            document.getElementById("form5").addEventListener("submit", function (e) {
+                e.preventDefault();
+                var v12 = document.getElementById("blank12").value.trim().toLowerCase();
+
+                var msg = document.querySelector("#form5 .result-message");
+
+                if (v12 === "helena" || v12 === "efrem" || v12 === "helena efrem") {
+                    msg.className = "result-message success";
+                    msg.textContent = "Correct. Helena Efrem engineered the injection.";
+                    document.querySelector("#form5 button[type='submit']").style.display = "none";
+                    document.getElementById("next-button").style.display = "block";
+                    saveProgress(5);
+                } else {
+                    msg.className = "result-message error";
+                    msg.textContent = "Incorrect. Please review the personnel records and access logs.";
                 }
             });
         </script>

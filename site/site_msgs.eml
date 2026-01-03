@@ -1,0 +1,249 @@
+From: helena.efrem@archon-llc.com
+To: alex.mercer.tech@archon-llc.com, rolf.ivo@archon-llc.com
+Date: Wed, 1 Jan 2216 08:15:32 +0000
+Subject: Q1 Maintenance Schedule
+
+Team,
+
+Happy New Year from A382. I've finalized our maintenance schedule for Q1. Priority items:
+
+- Weeks 1-2: Atmospheric processor full diagnostic
+- Week 3: Mining drill calibration (Sections 4-7)
+- Week 4: Emergency life support systems check
+
+Rolf, can you lead the drill calibration? Alex, you're on atmospheric. Let me know if you need additional support personnel.
+
+Best,
+Helena
+
+---
+
+From: rolf.ivo@archon-llc.com
+To: helena.efrem@archon-llc.com
+Cc: alex.mercer.tech@archon-llc.com
+Date: Wed, 1 Jan 2216 14:22:18 +0000
+Subject: RE: Q1 Maintenance Schedule
+
+Helena,
+
+Confirmed on drill calibration. I'll need Alex M. (Remote Ops) to coordinate shutdown windows with Earth-side command. Section 6 has been running hot lately - might need replacement bearings.
+
+I'll submit parts requisition by Friday.
+
+Rolf
+
+---
+
+From: marina.anjana@archon-llc.com
+To: helena.efrem@archon-llc.com, alex.mercer.tech@archon-llc.com, rolf.ivo@archon-llc.com, yann.vancho.remops@archon-llc.com
+Date: Mon, 13 Jan 2216 09:45:01 +0000
+Subject: Communications Array Upgrade - Scheduled Downtime
+
+All Personnel,
+
+We'll be upgrading the main communications array on January 18th, 0600-1200 station time. During this window:
+
+- No real-time Earth communications
+- Emergency beacon remains active
+- Local comms unaffected
+
+Please complete any urgent external communications before the 18th. I'll send confirmation once we're back online.
+
+Marina Anjana
+Communications Officer, A382
+
+---
+
+From: alex.mercer.tech@archon-llc.com
+To: helena.efrem@archon-llc.com
+Date: Sat, 25 Jan 2216 18:33:44 +0000
+Subject: Atmospheric Processor - Anomaly Detected
+
+Helena,
+
+During routine diagnostics I found elevated CO2 levels in Sector 3 residential. Scrubber unit 3B is underperforming - efficiency at 73%.
+
+I've increased ventilation as a temporary measure. We should replace the catalyst bed this week. It's not critical yet, but trending in the wrong direction.
+
+Can you approve emergency parts order? I've attached the specs.
+
+Alex Mercer (Tech)
+
+---
+
+From: helena.efrem@archon-llc.com
+To: alex.mercer.tech@archon-llc.com
+Cc: marina.anjana@archon-llc.com
+Date: Sat, 25 Jan 2216 20:12:55 +0000
+Subject: RE: Atmospheric Processor - Anomaly Detected
+
+Approved. Marina, please expedite this with supply chain - mark as Priority 2.
+
+Alex, monitor every 6 hours until parts arrive. If efficiency drops below 70%, we'll need to implement occupancy restrictions in Sector 3.
+
+Good catch.
+
+Helena
+
+---
+
+From: yann.vancho.remops@archon-llc.com
+To: rolf.ivo@archon-llc.com
+Date: Thu, 6 Feb 2216 11:28:17 +0000
+Subject: Drill Section 6 - Shutdown Window Confirmed
+
+Rolf,
+
+Earth-side approved shutdown window for Section 6:
+February 10-11, 0800-2000 station time each day.
+
+Production estimates the downtime will cost ~47 tons output, but they agree the bearing replacement can't wait. Remote telemetry shows vibration signature getting worse.
+
+I'll be monitoring from the control room. Let me know if you need the window extended.
+
+Yann Vancho (Remote Ops)
+
+---
+
+From: marina.anjana@archon-llc.com
+To: helena.efrem@archon-llc.com, alex.mercer.tech@archon-llc.com, rolf.ivo@archon-llc.com, yann.vancho.remops@archon-llc.com
+Date: Tue, 18 Feb 2216 16:44:29 +0000
+Subject: Supply Transport Arrival - March 3rd
+
+Team,
+
+Transport vessel Calypso will dock March 3rd at approximately 1400 hours. Manifest includes:
+
+- Atmospheric catalyst beds (for Alex M. Tech)
+- Drill bearings and hydraulic seals (for Rolf)
+- Standard consumables and spare parts
+- Personal packages
+
+Offloading will take 6-8 hours. All personnel must complete cargo bay safety briefing by March 1st.
+
+Marina
+
+---
+
+From: rolf.ivo@archon-llc.com
+To: helena.efrem@archon-llc.com
+Date: Thu, 27 Feb 2216 09:15:48 +0000
+Subject: Section 6 Repairs Complete
+
+Helena,
+
+Section 6 back online as of 0830 today. Replaced both primary bearings and found stress fractures in the mounting bracket - replaced that too.
+
+Everything's running smooth now. Vibration levels back to normal spec. Should be good for another 8-10 months minimum.
+
+Alex (Remote Ops) was a huge help coordinating everything. Couldn't have done it as cleanly without him.
+
+Rolf
+
+---
+
+From: marina.anjana@archon-llc.com
+To: helena.efrem@archon-llc.com, yann.vancho.remops@archon-llc.com
+Date: Wed, 5 Mar 2216 21:17:03 +0000
+Subject: Running an Airlock in Diagnostic Mode
+
+Heads up,
+
+Corporate wants diagnostic data from an airlock. They're putting the sector B, airlock #3 in debug mode.
+
+This shouldn't effect operations, but I may need some assistance configuring the changes and making sure everything is up and running.
+
+Marina Anjana
+Communications Officer, A382
+
+---
+
+From: alex.mercer.tech@archon-llc.com
+To: helena.efrem@archon-llc.com, marina.anjana@archon-llc.com
+Date: Sat, 15 Mar 2216 21:17:03 +0000
+Subject: Catalyst Bed Replacement - COMPLETE
+
+Helena,
+
+New catalyst bed installed in scrubber 3B. System efficiency back to 94%. CO2 levels in Sector 3 normalized within 2 hours of activation.
+
+I'm running a full atmospheric analysis tonight to confirm everything's stable. So far so good.
+
+Thanks Marina for fast-tracking those parts.
+
+Alex M. (Tech)
+
+---
+
+From: helena.efrem@archon-llc.com
+To: alex.mercer.tech@archon-llc.com, rolf.ivo@archon-llc.com, yann.vancho.remops@archon-llc.com, marina.anjana@archon-llc.com
+Date: Mon, 17 Mar 2216 10:30:25 +0000
+Subject: Q1 Review & Q2 Planning
+
+Team,
+
+Excellent work this quarter. All major maintenance items completed on schedule, and we handled the atmospheric issue quickly.
+
+Q2 priorities:
+- Exterior hull inspection (thermal shielding)
+- Water reclamation system overhaul
+- Communications array performance review
+
+Meeting scheduled for March 22nd, 1000 hours in Conference Room B. Please bring any concerns or equipment requests.
+
+We're running one of the best-maintained stations in the sector. Keep it up.
+
+Helena
+
+---
+
+From: marina.anjana@archon-llc.com
+To: helena.efrem@archon-llc.com
+Date: Fri, 28 Mar 2216 14:55:39 +0000
+Subject: Unusual Signal Detection
+
+Helena,
+
+During routine monitoring, I picked up an intermittent signal on an uncommon frequency - approximately 2.4 light-hours away. Not matching any known vessel or station signatures.
+
+Could be equipment malfunction, space debris with active electronics, or something else. I've logged it and forwarded data to Earth-side analysis. They'll have a look and get back to us.
+
+Nothing urgent, but wanted you aware.
+
+Marina
+
+---
+
+From: yann.vancho.remops@archon-llc.com
+To: helena.efrem@archon-llc.com, rolf.ivo@archon-llc.com, alex.mercer.tech@archon-llc.com, marina.anjana@archon-llc.com
+Date: Tue, 30 Apr 2216 08:00:14 +0000
+Subject: End of April Status Report
+
+All,
+
+Operations summary for April:
+- Production: 103% of target
+- All systems nominal
+- Zero safety incidents
+- Equipment uptime: 98.7%
+
+Earth-side management specifically commended our maintenance program. Helena, they mentioned you by name in the quarterly review.
+
+That signal Marina detected turned out to be a derelict survey probe from the 2190s. Mystery solved.
+
+Great work everyone. Let's keep this momentum going.
+
+Yann Vancho (Remote Operations)
+
+---
+
+From: rolf.ivo@archon-llc.com
+To: helena.efrem@archon-llc.com
+Date: Tue, 23 Apr 2216 11:54:28 +0000
+Subject: Figured Out Suit Preference Tool
+
+Helena,
+
+Don't worry about updating that user_preferences tool you set up for me. I figured out how adjust the bass on my own.
+
+Rolf
