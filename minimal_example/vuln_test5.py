@@ -4,14 +4,14 @@
 # for easy access
 from pwn import *
 
-EXE_PATH = '/home/jdiamond/src/fatal_core_dump/bin/min_poc'
+EXE_PATH = 'bin/min_poc'
 
 # HandleSetSuitOccupant
 ORIGINAL_FUNCTION_ADDRESS = 0x55555555526e
 # ControlDoor
 INJECT_FUNCTION_ADDRESS = 0x5555555551e9
 
-BUFFER_STACK_ADDRESS = 0x7fffffffebc0
+BUFFER_STACK_ADDRESS = 0x7fffffffebe0
 
 CALLBACK_HEAP_ADDRESS = 0x555555559330
 

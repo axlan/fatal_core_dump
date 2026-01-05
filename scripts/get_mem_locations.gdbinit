@@ -5,8 +5,8 @@ break ProcessMessageData
 set exec-wrapper env -i
 r
 
-print HandleSetSuitOccupant
-print ControlDoor
+print (void*)HandleSetSuitOccupant
+print (void*)ControlDoor
 print (void*)state->message_serialization_buffer
-print handlers
+print (void*)handlers
 q

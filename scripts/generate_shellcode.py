@@ -6,7 +6,7 @@ from pwn import *
 import math
 import re
 
-EXE_PATH = '/home/jdiamond/src/fatal_core_dump/bin/airlock_ctrl'
+EXE_PATH = 'bin/airlock_ctrl'
 context.binary = EXE_PATH
 
 # # HandleSetSuitOccupant

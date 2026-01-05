@@ -99,6 +99,7 @@ int main()
 // pwndbg> print check_ptr
 // $4 = (uint32_t *) 0x4052a0
 
-// minimal_example/vuln_test5.py
-
-// env -i setarch $(uname -m) -R /home/jdiamond/src/fatal_core_dump/bin/min_poc < bin/input5
+// make clean && make
+// python minimal_example/vuln_test5.py
+// 
+// env -i setarch $(uname -m) -R /home/jdiamond/src/fatal_core_dump/bin/min_poc

@@ -90,3 +90,15 @@ info frame
 sqlite3 :memory:
 sqlite> .read site/access_log.sql
 ```
+
+```sh
+docker build -f Dockerfile_build -t core_dump_build .
+docker run --rm --privileged -v "$PWD":/fatal_core_dump -w /fatal_core_dump core_dump_build sh ./scripts/generate_hack.sh
+
+# docker run --rm --privileged -it -v "$PWD":/fatal_core_dump -w /fatal_core_dump core_dump_build bash
+
+docker run --rm -it --privileged -v "$PWD":/fatal_core_dump -w /fatal_core_dump core_dump_build ./scripts/trigger_crash.sh
+
+sudo chmod 777 bin && sudo chmod -R +rw bin/
+
+```

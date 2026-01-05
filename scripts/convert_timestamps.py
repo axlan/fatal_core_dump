@@ -4,11 +4,12 @@ import datetime
 
 
 def main():
-    file_path = 'site/airlock_ctrl.log'
+    in_path = 'bin/crash_output.txt'
+    out_path = 'site/airlock_ctrl.log'
 
     # Check if file exists
-    if not os.path.exists(file_path):
-        print(f"Error: File '{file_path}' not found.")
+    if not os.path.exists(in_path):
+        print(f"Error: File '{in_path}' not found.")
         sys.exit(1)
 
     updated_lines = []
@@ -22,7 +23,7 @@ def main():
     visit_count = 0
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(in_path, 'r', encoding='utf-8') as f:
             for line in f:
                 # Split on the first whitespace to isolate the timestamp
                 parts = line.split(maxsplit=1)
@@ -48,11 +49,13 @@ def main():
                     rest_of_line = parts[1] if len(parts) > 1 else ""
                     updated_lines.append(f"{dt_str} {rest_of_line}")
                 else:
-                    updated_lines.append(line)
+                    print(f"Error: Invalid timestamp in line: {line.strip()}")
+                    sys.exit(1)
 
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(out_path, 'w', encoding='utf-8') as f:
             f.writelines(updated_lines)
-        print(f"Successfully processed '{file_path}'.")
+            f.write('Illegal instruction (core dumped)\n')
+        print(f"Successfully processed '{in_path}'.")
 
     except Exception as e:
         print(f"An error occurred: {e}")
