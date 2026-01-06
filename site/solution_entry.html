@@ -67,7 +67,7 @@
                         <div class="autocomplete" style="display: inline-block; width: 200px; vertical-align: middle;">
                             <input id="blank2" type="text" placeholder="..." required>
                         </div>
-                        was run from the
+                        was executed on the
                         <div class="autocomplete" style="display: inline-block; width: 200px; vertical-align: middle;">
                             <input id="blank3" type="text" placeholder="..." required>
                         </div>
@@ -91,7 +91,7 @@
                 <div class="form-group">
                     <h2>Where did the code that opened the airlock come from?</h2>
                     <div style="font-size: 1.2rem; line-height: 2.5;">
-                        It came from a(n)
+                        The shellcode was injected via the
                         <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
                             <input id="blank5" type="text" placeholder="..." required>
                         </div>
@@ -127,7 +127,7 @@
                         <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
                             <input id="blank8" type="text" placeholder="..." required>
                         </div>
-                        changed
+                        overwrote the
                         <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
                             <input id="blank9" type="text" placeholder="..." required>
                         </div>
@@ -191,7 +191,7 @@
                 <!-- Result Message -->
                 <div class="result-message"></div>
             <div class="button-container" id="next-button" style="display: none; margin-top: 24px; text-align: center;">
-                <a href="finale.html" class="get-started-btn">Complete Report</a>
+                <a href="epilogue.html" class="get-started-btn">Complete Report</a>
             </div>
             </form>
         </section>
@@ -380,12 +380,12 @@
             document.getElementById("form1").addEventListener("submit", function (e) {
                 e.preventDefault();
                 var v1 = document.getElementById("blank1").value.trim().toLowerCase();
-                var v2 = document.getElementById("blank2").value.trim();
+                var v2 = document.getElementById("blank2").value.trim().toLowerCase();
                 var v3 = document.getElementById("blank3").value.trim().toLowerCase();
 
                 var msg = document.querySelector(".result-message");
 
-                if (["instruction", "opcode", "command"].includes(v1) && v2 === "ControlDoor" && v3 === "stack") {
+                if (["instruction", "opcode", "command", "code"].includes(v1) && v2 === "ControlDoor" && v3 === "stack") {
                     msg.className = "result-message success";
                     msg.textContent = "Correct. The execution flow was redirected to the stack where a payload called ControlDoor.";
                     document.querySelector("#form1 button[type='submit']").style.display = "none";
@@ -399,12 +399,12 @@
 
             document.getElementById("form2").addEventListener("submit", function (e) {
                 e.preventDefault();
-                var v5 = document.getElementById("blank5").value.trim();
+                var v5 = document.getElementById("blank5").value.trim().toLowerCase();
                 var v6 = document.getElementById("blank6").value.trim().toLowerCase();
 
                 var msg = document.querySelector("#form2 .result-message");
 
-                if (v5 === "SDNSetSuitOccupantMessage" && v6 === "message_serialization_buffer") {
+                if (["SDNSetSuitOccupantMessage", "user_preferences"].includes(v5) && ["message_serialization_buffer", "rx_message_buffer"].includes(v6)) {
                     msg.className = "result-message success";
                     msg.textContent = "Correct. A SDNSetSuitOccupantMessage message was serialized with a payload that contained machine code to open the airlock.";
                     document.querySelector("#form2 button[type='submit']").style.display = "none";
@@ -424,7 +424,7 @@
 
                 var msg = document.querySelector("#form3 .result-message");
 
-                if (v7 === "overflow" && v8 === "rx_message_buffer" && ["message_handlers", "handlers"].includes(v9)) {
+                if (v7 === "overflow" && ["rx_message_buffer", "buffer"].includes(v8) && ["message_handlers", "handlers"].includes(v9)) {
                     msg.className = "result-message success";
                     msg.textContent = "Correct. The buffer overflow overwrote the function pointers.";
                     document.querySelector("#form3 button[type='submit']").style.display = "none";
@@ -438,7 +438,7 @@
 
             document.getElementById("form4").addEventListener("submit", function (e) {
                 e.preventDefault();
-                var v10 = document.getElementById("blank10").value.trim();
+                var v10 = document.getElementById("blank10").value.trim().toLowerCase();
                 var v11 = document.getElementById("blank11").value.trim().toLowerCase();
 
                 var msg = document.querySelector("#form4 .result-message");

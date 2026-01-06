@@ -158,6 +158,21 @@ Communications Officer, A382
 
 ---
 
+From: helena.efrem@archon-llc.com,
+To: marina.anjana@archon-llc.com, yann.vancho.remops@archon-llc.com
+Date: Fri, 7 Mar 2216 09:12:14 +0000
+Subject: Airlock Configuration Control
+
+Hey folks,
+
+Please don't abuse the configuration overrides added in debug mode.
+
+For now, I understand that we need to modify a buffer size for some messages. I'm reviewing the ticket to permanently increase the command buffer size through proper channels.
+
+Helena
+
+---
+
 From: alex.mercer.tech@archon-llc.com
 To: helena.efrem@archon-llc.com, marina.anjana@archon-llc.com
 Date: Sat, 15 Mar 2216 21:17:03 +0000
