@@ -5,7 +5,7 @@ import datetime
 
 def main():
     in_path = 'bin/crash_output.txt'
-    out_path = 'site/airlock_ctrl.log'
+    out_path = 'site/evidence/airlock_ctrl.log'
 
     # Check if file exists
     if not os.path.exists(in_path):

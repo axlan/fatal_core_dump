@@ -11,6 +11,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
 </head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <body>
     <!-- Main Content -->
@@ -18,20 +19,23 @@
         <section class="explanation">
             <h1>Evidence Directory</h1>
             <ul>
-                <li><a href="sdn_protocol_sheet.html">Station Device Network (SDN) Protocol Specification</a></li>
-                <li><a href="airlock_ctrl.c" download>Airlock Control Source File: airlock_ctrl.c</a></li>
-                <li><a href="airlock_ctrl" download>Airlock Control Binary File: airlock_ctrl</a></li>
-                <li><a href="core.dump" download>Core Dump of Process Crash: core.dump</a></li>
-                <li><a href="airlock_ctrl.log" download>Diagnostic Logs of airlock_ctrl Process: airlock_ctrl.log</a></li>
-                <li><a href="access_logs.sql" download>Database of Airlock Access: access_logs.sql</a></li>
-                <li><a href="site_msgs.eml" download>Site Email Archive: site_msgs.eml</a></li>
+                <li><a href="evidence/sdn_protocol_sheet.html">Station Device Network (SDN) Protocol Specification</a></li>
+                <li><a href="evidence/src/airlock_ctrl.c" download>Airlock Control Source File: airlock_ctrl.c</a></li>
+                <li><a href="evidence/airlock_ctrl" download>Airlock Control Binary File: airlock_ctrl</a></li>
+                <li><a href="evidence/core.dump" download>Core Dump of Process Crash: core.dump</a></li>
+                <li><a href="evidence/airlock_ctrl.log" download>Diagnostic Logs of airlock_ctrl Process: airlock_ctrl.log</a></li>
+                <li><a href="evidence/access_logs.sql" download>Database of Airlock Access: access_logs.sql</a></li>
+                <li><a href="evidence/site_msgs.eml" download>Site Email Archive: site_msgs.eml</a></li>
             </ul>
+            <div class="button-container">
+                <a href="#" class="get-started-btn" onclick="downloadAll(event)">Download All Evidence (.zip)</a>
+            </div>
             <div class="button-container">
                 <a href="solution_entry.html" class="get-started-btn">Report Findings</a>
             </div>
 
             <div class="button-container">
-                <a href="#" class="get-started-btn">Report Findings with Guidance [BETA] TBD</a>
+                <a href="#" class="get-started-btn">Request Assistance</a>
             </div>
         </section>
     </div>
@@ -41,6 +45,50 @@
         <p>&copy; 2025 Fatal Core Dump | <a href="https://www.robopenguins.com/">https://www.robopenguins.com/</a></p>
     </footer>
 
-</html></body></body>
+    <script>
+        async function downloadAll(e) {
+            if (e) e.preventDefault();
 
+            const button = e ? e.target : null;
+            const originalText = button ? button.innerText : '';
+            if (button) {
+                button.innerText = 'Compressing...';
+                button.style.pointerEvents = 'none';
+            }
+
+            const zip = new JSZip();
+            const files = [
+                'evidence/sdn_protocol_sheet.html',
+                'evidence/src/airlock_ctrl.c',
+                'evidence/airlock_ctrl',
+                'evidence/core.dump',
+                'evidence/airlock_ctrl.log',
+                'evidence/access_logs.sql',
+                'evidence/site_msgs.eml'
+            ];
+
+            try {
+                await Promise.all(files.map(async (filename) => {
+                    const response = await fetch(filename);
+                    const blob = await response.blob();
+                    zip.file(filename, blob);
+                }));
+
+                const content = await zip.generateAsync({ type: "blob" });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = "evidence.zip";
+                link.click();
+            } catch (err) {
+                console.error("Error zipping files:", err);
+                alert("Failed to create zip file.");
+            } finally {
+                if (button) {
+                    button.innerText = originalText;
+                    button.style.pointerEvents = 'auto';
+                }
+            }
+        }
+    </script>
+</body>
 </html>
