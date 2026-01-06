@@ -6,7 +6,6 @@
 Dockerfile*
 
 # Build outputs
-/bin/
 /rpg_maker_project/
 
 # Editor and OS files

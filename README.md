@@ -93,12 +93,31 @@ sqlite> .read site/access_log.sql
 
 ```sh
 docker build -f Dockerfile_build -t core_dump_build .
-docker run --rm --privileged -v "$PWD":/fatal_core_dump -w /fatal_core_dump core_dump_build sh ./scripts/generate_hack.sh
+docker run --rm --privileged -v "$PWD":/fatal_core_dump core_dump_build sh ./scripts/generate_hack.sh
 
 # docker run --rm --privileged -it -v "$PWD":/fatal_core_dump -w /fatal_core_dump core_dump_build bash
 
-docker run --rm -it --privileged -v "$PWD":/fatal_core_dump -w /fatal_core_dump core_dump_build ./scripts/trigger_crash.sh
+docker run --rm -it --privileged -v "$PWD":/fatal_core_dump core_dump_build ./scripts/trigger_crash.sh
 
-sudo chmod 777 bin && sudo chmod -R +rw bin/
+sudo chown -R $USER:$USER bin
 
 ```
+
+```sh
+docker build -f Dockerfile_debug -t core_dump_debug .
+
+docker run --rm -p 5000:5000 -it core_dump_debug bash
+
+
+
+docker run --rm core_dump_debug pwndbg --core=core.dump airlock_ctrl
+
+docker run --rm -p 5000:5000 core_dump_debug gdbgui -r --gdb-cmd "/usr/bin/gdb-multiarch --core=core.dump airlock_ctrl"
+```
+
+
+```
+disassemble $pc-64,$pc+16
+info symbol 0x55555555539c
+```
+
