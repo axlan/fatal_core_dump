@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Using GDB</title>
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #c9d1d9;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #0d1117;
+    }
+
+    h1,
+    h2,
+    h3 {
+      color: #c9d1d9;
+    }
+
+    code {
+      background-color: rgba(110, 118, 129, 0.4);
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      font-size: 0.9em;
+    }
+
+    pre {
+      background-color: #161b22;
+      padding: 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+
+    pre code {
+      background-color: transparent;
+      padding: 0;
+      font-size: 0.9em;
+    }
+
+    a {
+      color: #58a6ff;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .sticky-nav {
+      position: sticky;
+      top: 0;
+      background-color: #0d1117;
+      padding: 10px 0;
+      border-bottom: 1px solid #30363d;
+      text-align: right;
+      z-index: 100;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sticky-nav">
+    <a href="assistance_hints.html">Next: Hints</a>
+  </div>
+  <h1>Using GDB</h1>
+
+  <p>GDB is a complex and versatile program, so here I'm going to focus on the commands that are most applicable for analyzing this core dump.</p>
+  <ul>
+    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Backtrace.html#Backtrace">backtrace</a> - Print information about the call stack</li>
+    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Selection.html#Selection">frame</a> - Select the stack frame to examine. This lets you examine variables from caller functions</li>
+    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Symbols.html#Symbols:~:text=info%20symbol%20addr">info symbol</a> - Print info for any symbols that map near a memory address</li>
+    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Data.html#Data">print</a> - Print variable or data</li>
+    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Memory.html#Memory">examine memory</a> - Print out raw binary data at memory locations</li>
+    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Machine-Code.html#Machine-Code">disassemble</a> - Print memory as assembly instructions. For example, <code>disassemble $pc-64,$pc+64</code> will print the assembly for the instructions within 64 bytes of the current instruction pointer</li>
+  </ul>
+</body>
+
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hints</title>
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #c9d1d9;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #0d1117;
+    }
+
+    h1,
+    h2,
+    h3 {
+      color: #c9d1d9;
+    }
+
+    code {
+      background-color: rgba(110, 118, 129, 0.4);
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      font-size: 0.9em;
+    }
+
+    pre {
+      background-color: #161b22;
+      padding: 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+
+    pre code {
+      background-color: transparent;
+      padding: 0;
+      font-size: 0.9em;
+    }
+
+    a {
+      color: #58a6ff;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .sticky-nav {
+      position: sticky;
+      top: 0;
+      background-color: #0d1117;
+      padding: 10px 0;
+      border-bottom: 1px solid #30363d;
+      text-align: right;
+      z-index: 100;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sticky-nav">
+    <a href="assistance_walkthrough.html">Next: <b>SPOILERS</b> Walkthrough</a>
+  </div>
+  <h1>Hints</h1>
+
+  <h2>Corrupt Frames</h2>
+  <p>Some GDB commands have issues giving useful data when the program is in an unexpected state. Try using <code>backtrace</code> and <code>frame</code> to go up the callstack to frames with functional debug data.</p>
+
+  <p>Use <code>disassemble $pc-64,$pc+8</code> to examine the machine code sourounding the crash.</p>
+
+  <h2>Examine Variables</h2>
+  <p>Use <code>info args</code> and <code>info locals</code>, and the source file to find variables that you can examine with <code>print</code>.</p>
+
+  <p>Use <code>info symbols MEMORY_ADDRESS</code> to examine addresses to see if corresponds with functions or variables.</p>
+
+  <h2>Memory</h2>
+  <p>It is important to understand what memory ranges map to what parts of the address space (program memory, heap, stack, etc). Vanilla GDB doesn't have great commands for doing this, but you can look at the addresses of variables from the code to get the general layout.</p>
+
+  <h2>Other Context</h2>
+  <p><a href="evidence/airlock_ctrl.log" download>airlock_ctrl.log</a> and <a href="evidence/access_logs.sql" download>access_logs.sql</a> can provide some additional context for the series of events that occurred. The <a href="evidence/sdn_protocol_sheet.html">Station Device Network (SDN) Protocol Specification</a> can also give more information on the type of commands the airlock handles.</p>
+
+
+</body>
+
+</html>

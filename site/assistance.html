@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setting up your environment</title>
+
+  <!-- Prism CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css"
+    rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css"
+    rel="stylesheet" />
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      color: #c9d1d9;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #0d1117;
+    }
+
+    h1,
+    h2,
+    h3 {
+      color: #c9d1d9;
+    }
+
+    code {
+      background-color: rgba(110, 118, 129, 0.4);
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      font-size: 0.9em;
+    }
+
+    pre {
+      background-color: #161b22;
+      padding: 16px;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+
+    pre code {
+      background-color: transparent;
+      padding: 0;
+      font-size: 0.9em;
+    }
+
+    a {
+      color: #58a6ff;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+
+    .code-block {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      margin-bottom: 24px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+    }
+
+    .filename {
+      font-size: 14px;
+      font-weight: 600;
+      color: #c9d1d9;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #c9d1d9;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .action-btn:hover {
+      background: #30363d;
+      border-color: #8b949e;
+    }
+
+    .action-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    /* Prism customization */
+    div.code-toolbar {
+      margin: 0;
+    }
+
+    div.code-toolbar>.toolbar {
+      display: none !important;
+    }
+
+    pre[class*="language-"] {
+      margin: 0;
+      padding: 16px;
+      background: #161b22;
+      border-radius: 0;
+      font-size: 13px;
+    }
+
+    code[class*="language-"] {
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      text-shadow: none !important;
+    }
+
+    .line-numbers .line-numbers-rows {
+      border-right: 0px solid #30363d;
+      padding-right: 8px;
+      margin-right: 12px;
+    }
+
+    .line-numbers-rows>span:before {
+      color: #6e7681;
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 16px;
+      background: #1f883d;
+      color: white;
+      border-radius: 6px;
+      font-size: 14px;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s;
+      pointer-events: none;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-top: 32px;
+      margin-bottom: 16px;
+      color: #c9d1d9;
+    }
+
+    .sticky-nav {
+      position: sticky;
+      top: 0;
+      background-color: #0d1117;
+      padding: 10px 0;
+      border-bottom: 1px solid #30363d;
+      text-align: right;
+      z-index: 100;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sticky-nav">
+    <a href="assistance_gdb.html">Next: Using GDB</a>
+  </div>
+  <h1>Setting up your environment</h1>
+
+  <h3>Table of Contents</h3>
+  <ul>
+    <li><a href="#downloading-the-files">Downloading the files</a></li>
+    <li><a href="#setting-up-the-debugger">Setting Up the Debugger</a>
+      <ul>
+        <li><a href="#native-linux">Native Linux</a>
+          <ul>
+            <li><a href="#native-linux">gdb</a></li>
+            <li><a href="#native-gdbgui">gdbgui</a></li>
+            <li><a href="#native-pwndbg">pwndbg</a></li>
+            <li><a href="#native-vscode">Visual Studio Code</a></li>
+          </ul>
+        </li>
+        <li><a href="#running-in-docker">Running in Docker</a>
+          <ul>
+            <li><a href="#running-in-docker">gdb</a></li>
+            <li><a href="#running-in-docker">pwndbg</a></li>
+            <li><a href="#docker-gdbgui">gdbgui</a></li>
+            <li><a href="#docker-vscode">Visual Studio Code</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+  <p>The first step to solving this puzzle is actually opening up the core dump.</p>
+
+  <h2 id="downloading-the-files">Downloading the files</h2>
+
+  <p>This guide will assume that the debug files are all downloaded to the working directory.</p>
+
+  <p>E.g.:</p>
+  <pre><code class="language-bash">URL=https://www.robopenguins.com/fatal_core_dump/evidence
+curl -O $URL/src/airlock_ctrl.c -O $URL/airlock_ctrl -O $URL/core.dump
+</code></pre>
+
+  <h2 id="setting-up-the-debugger">Setting Up the Debugger</h2>
+
+  <p>In the following sections I'll discuss getting a bunch of ways to get GDB to open the core dump. For each section I
+    include instructions for:</p>
+  <ul>
+    <li>gdb - This is the core tool for debugging. It is command line based and has a steep learning curve. All the
+      other tools are wrappers around GDB and they require you to enter raw GDB commands for less common use cases.</li>
+    <ul>
+      <li><a href="https://beej.us/guide/bggdb">https://beej.us/guide/bggdb</a></li>
+      <li><a href="https://developers.redhat.com/articles/the-gdb-developers-gnu-debugger-tutorial-part-1-getting-started-with-the-debugger">https://developers.redhat.com/articles/the-gdb-developers-gnu-debugger-tutorial-part-1-getting-started-with-the-debugger</a></li>
+      <li><a href="https://users.ece.utexas.edu/~adnan/gdb-refcard.pdf">https://users.ece.utexas.edu/~adnan/gdb-refcard.pdf</a></li>
+      <li><a href="https://www.sourceware.org/gdb/documentation/">https://www.sourceware.org/gdb/documentation/</a></li>
+    </ul>
+    <li><a href="https://github.com/pwndbg/pwndbg">pwndbg</a> - pwndbg adds some useful TUI and reverse engineering
+      features to GDB. </li>
+    <li><a href="https://www.gdbgui.com/">gdbgui</a> - This is a Python web server that wraps GDB. It makes accessing
+      GDB remotely a bit simpler and provides a basic GUI.</li>
+    <li>Visual Studio Code - While Visual Studio Code is a full IDE, its C/C++ extension provides one of the best GUI
+      wrappers for GDB.</li>
+  </ul>
+
+  If you're totally new, learning vanilla GDB is probably the most useful since understanding how it works will carry
+  over to the other tools. For more experienced debuggers, pwndbg has some nice quality of life features, and VSCode has
+  the best user interface.
+
+  <p><b>Note:</b> This binary was compiled as an AMD64 executable. While this means that x86_64 systems should be able
+    to use the default <code>gdb</code> binary, systems with other architectures would have issues. To be more general,
+    I'll be using <code>gdb-multiarch</code> in these guides. If you'd prefer the default gdb, just replace
+    <code>gdb-multiarch</code> -&gt; <code>gdb</code>.
+  </p>
+
+  <h3 id="native-linux">Native Linux</h3>
+
+  <p>To run natively on Linux, the simplest approach is to use the GDB CLI:</p>
+  <pre><code class="language-bash">gdb-multiarch --core=core.dump airlock_ctrl
+</code></pre>
+
+  <p>For some projects that build GDB that have some quality of life improvements, you can try:</p>
+
+  <h4 id="native-gdbgui"><a href="https://www.gdbgui.com/">https://www.gdbgui.com/</a></h4>
+
+  <pre><code class="language-bash">pip install gdbgui
+gdbgui --gdb-cmd "/usr/bin/gdb-multiarch --core=core.dump airlock_ctrl"
+# Note: you need to type a command like "backtrace" into the GDB prompt to get the "threads" to populate.
+# You also need to fetch the airlock_ctrl.c source file
+</code></pre>
+
+  <h4 id="native-pwndbg"><a href="https://github.com/pwndbg/pwndbg">https://github.com/pwndbg/pwndbg</a></h4>
+
+  <pre><code class="language-bash">curl -qsL 'https://install.pwndbg.re' | sh -s -- -t pwndbg-gdb
+pwndbg --core=core.dump airlock_ctrl
+</code></pre>
+
+  <h4 id="native-vscode"><a href="https://code.visualstudio.com/">Visual Studio Code</a></h4>
+
+  <p>Open the evidence directory in VS Code. Create the file:</p>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="filename">.vscode/launch.json</span>
+      <div class="header-actions">
+        <button class="action-btn" onclick="copyCode('code2')">
+          Copy
+        </button>
+        <button class="action-btn" onclick="downloadCode('code2', 'launch.json')">
+          Download
+        </button>
+      </div>
+    </div>
+    <pre class="line-numbers"><code id="code2" class="language-json">{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "GDB: Local Core Dump Analysis",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/airlock_ctrl",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb-multiarch",
+      "coreDumpPath": "${workspaceFolder}/core.dump",
+      "sourceFileMap": {
+        "/fatal_core_dump/src": "${workspaceFolder}"
+      },
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set disassembly flavor to Intel",
+          "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}
+</code></pre>
+  </div>
+  <p>Then press <code>F5</code> in Visual Studio Code</p>
+
+  <h3 id="running-in-docker">Running in Docker</h3>
+
+  <p>With Docker installed, you can run GDB on non-linux systems, or avoid polluting your local environment with these
+    tools.</p>
+
+  <p>With the basic example:</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="filename">Dockerfile</span>
+      <div class="header-actions">
+        <button class="action-btn" onclick="copyCode('code-docker-basic')">
+          Copy
+        </button>
+        <button class="action-btn" onclick="downloadCode('code-docker-basic', 'Dockerfile')">
+          Download
+        </button>
+      </div>
+    </div>
+    <pre class="line-numbers"><code id="code-docker-basic" class="language-Dockerfile">FROM ubuntu:22.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gdb-multiarch \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /fatal_core_dump
+
+COPY . .
+
+CMD [ "gdb-multiarch","--core=core.dump", "airlock_ctrl" ]
+</code></pre>
+  </div>
+
+  <p>Or <a href="https://github.com/pwndbg/pwndbg">https://github.com/pwndbg/pwndbg</a></p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="filename">Dockerfile</span>
+      <div class="header-actions">
+        <button class="action-btn" onclick="copyCode('code-docker-pwndbg')">
+          Copy
+        </button>
+        <button class="action-btn" onclick="downloadCode('code-docker-pwndbg', 'Dockerfile')">
+          Download
+        </button>
+      </div>
+    </div>
+    <pre class="line-numbers"><code id="code-docker-pwndbg" class="language-Dockerfile">FROM ubuntu:22.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    xz-utils \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -qsL 'https://install.pwndbg.re' | sh -s -- -t pwndbg-gdb
+
+WORKDIR /fatal_core_dump
+
+COPY . .
+
+CMD [ "pwndbg","--core=core.dump", "airlock_ctrl" ]
+</code></pre>
+  </div>
+
+  <p>Create the Dockerfile and run:</p>
+
+  <pre><code class="language-bash"># Create the Docker image
+docker build -t core_dump_debug .
+# Run the Docker image with a connected terminal
+docker run -it --rm core_dump_debug
+</code></pre>
+
+  <h4 id="docker-gdbgui"><a href="https://www.gdbgui.com/">https://www.gdbgui.com/</a></h4>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="filename">Dockerfile</span>
+      <div class="header-actions">
+        <button class="action-btn" onclick="copyCode('code-docker-gdbgui')">
+          Copy
+        </button>
+        <button class="action-btn" onclick="downloadCode('code-docker-gdbgui', 'Dockerfile')">
+          Download
+        </button>
+      </div>
+    </div>
+    <pre class="line-numbers"><code id="code-docker-gdbgui" class="language-Dockerfile">FROM ubuntu:22.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gdb-multiarch \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m pip install --no-cache-dir gdbgui
+
+WORKDIR /fatal_core_dump
+
+COPY . .
+
+CMD [ "gdbgui", "-r", "--gdb-cmd", "/usr/bin/gdb-multiarch --core=core.dump airlock_ctrl"]
+</code></pre>
+  </div>
+
+  <p>Create the Dockerfile and run:</p>
+
+  <pre><code class="language-bash"># Create the Docker image
+docker build -t core_dump_debug .
+docker run --rm -p 5000:5000 core_dump_debug
+</code></pre>
+
+  <p> After running, it should be accessible at <a href="http://127.0.0.1:5000">http://127.0.0.1:5000</a></p>
+
+  <h4 id="docker-vscode">Visual Studio Code</h4>
+
+  <p>Build the core_dump_debug image with just the basic GDB package.</p>
+
+  <p>Open the evidence directory in VS Code. Create the file:</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="filename">.vscode/launch.json</span>
+      <div class="header-actions">
+        <button class="action-btn" onclick="copyCode('code3')">
+          Copy
+        </button>
+        <button class="action-btn" onclick="downloadCode('code3', 'launch.json')">
+          Download
+        </button>
+      </div>
+    </div>
+    <pre class="line-numbers"><code id="code3" class="language-json">{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Docker: GDB Core Dump Analysis",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/fatal_core_dump/airlock_ctrl",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "/fatal_core_dump",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "coreDumpPath": "/fatal_core_dump/core.dump",
+      "pipeTransport": {
+        "pipeProgram": "docker",
+        "pipeArgs": [
+          "run",
+          "--rm",
+          "-i",
+          "core_dump_debug",
+          "/usr/bin/gdb-multiarch",
+          "--interpreter=mi"
+        ],
+        "pipeCwd": "${workspaceFolder}"
+      },
+      "sourceFileMap": {
+        "/fatal_core_dump": "${workspaceFolder}"
+      },
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set disassembly flavor to Intel",
+          "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        }
+      ]
+    }
+  ]
+}</code></pre>
+  </div>
+
+  <p>Then press <code>F5</code> in Visual Studio Code</p>
+
+  <div class="toast" id="toast">Copied to clipboard!</div>
+
+  <!-- Prism JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+
+  <script>
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+
+    function copyCode(codeId) {
+      const code = document.getElementById(codeId).textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        showToast('Copied to clipboard!');
+      }).catch(err => {
+        showToast('Failed to copy');
+        console.error('Copy failed:', err);
+      });
+    }
+
+    function downloadCode(codeId, filename) {
+      const code = document.getElementById(codeId).textContent;
+      const blob = new Blob([code], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Downloaded!');
+    }
+  </script>
+
+</body>
+
+</html>
