@@ -5,12 +5,148 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Walkthrough</title>
+  <!-- Prism CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css"
+    rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css"
+    rel="stylesheet" />
 
   <link rel="stylesheet" href="assistance.css">
 </head>
 
 <body>
-  <p><b>TBD</b></p>
+  <div class="sticky-nav">
+    <a href="directory.html">Return to Evidence</a>
+  </div>
+  <h1>Walkthrough</h1>
+
+  <h2>How did the airlock door open?</h2>
+
+  <p>The easiest way to start figuring this out is to first look at <a href="evidence/airlock_ctrl.log" download>airlock_ctrl.log</a>.</p>
+
+  <p>By examining the log you can start to understand the sequence of prints for the different sorts of events. Specifically that <code><-</code> indicates a recieved command and <code>-></code> is for a sent command.</p>
+
+  <p>The log ends with:</p>
+  <pre><code>2216-05-25_08:04:04 DEBUG: <- SDN_MSG_TYPE_SET_SUIT_OCCUPANT           Len:  20, Dev: 0xae215e17, User: 0x488504f4, Preferences Len: 0
+2216-05-25_08:04:04 INFO: Sending ControlDoor command to 0xae215e13, open=1
+2216-05-25_08:04:04 DEBUG: -> SDN_MSG_TYPE_SET_OPEN                    Len:  17, Dev: 0xae215d67, Open: 1
+Illegal instruction (core dumped)</code></pre>
+
+<p>We can compare that to the previous <code>SDN_MSG_TYPE_SET_SUIT_OCCUPANT</code> message:</p>
+
+  <pre><code>2216-05-11_15:00:10 DEBUG: <- SDN_MSG_TYPE_SET_SUIT_OCCUPANT           Len: 288, Dev: 0xae215e17, User: 0xd481aa99, Preferences Len: 268
+2216-05-11_15:00:10 INFO: Handling SET_SUIT_OCCUPANT message.
+2216-05-11_15:00:10 DEBUG: -> SDN_MSG_TYPE_SET_SUIT_OCCUPANT           Len: 288, Dev: 0xae215d67, User: 0xd481aa99, Preferences Len: 268
+2216-05-11_15:00:10 DEBUG: -> SDN_MSG_TYPE_CMD_RESPONSE                Len:  17, Dev: 0xae215d67, Response Code: 0</code></pre>
+
+<p>Searching for these log lines in <a href="evidence/src/airlock_ctrl.c" download>airlock_ctrl.c</a> we can see that only <code>Handling SET_SUIT_OCCUPANT message.</code> and <code>Sending ControlDoor command</code> are present. The other messages must happen in the unavailable libraries.</p>
+
+<p>Now if we look at the backtrace of where the process crashed in GDB:</p>
+<pre><code>(gdb) backtrace
+#0  0x00007fffffffe9ac in ?? ()
+#1  0x00007fffffffe790 in ?? ()
+#2  0x0000555555555936 in ProcessMessageData (handlers=0x55555555c7c0, num_handlers=6, msg_buffer=0x55555555c6b0, buffer_size_bytes=2048, state=0x7fffffffe7f0) at src/airlock_ctrl.c:328
+#3  0x000055555555702a in main () at src/airlock_ctrl.c:847</code></pre>
+<p>We see the process crashed in src/airlock_ctrl.c:328</p>
+<div class="code-block">
+    <pre><code class="language-c">/**
+ * @brief Reads and dispatches incoming SDN messages to registered handlers.
+ *
+ * This function enters a loop to read messages from the SDN network. For each
+ * valid message received, it iterates through the list of registered handlers
+ * and invokes the callback for the matching message type.
+ *
+ * @param handlers Array of message handlers.
+ * @param num_handlers Number of handlers in the array.
+ * @param msg_buffer Buffer to store incoming messages.
+ * @param buffer_size_bytes Size of the message buffer.
+ * @param state A pointer to the application state, passed to callbacks.
+ * @return Returns a negative value on a read error. The loop continues otherwise.
+ */
+static int ProcessMessageData(SDNHandler *handlers, size_t num_handlers,
+                              void *msg_buffer, size_t buffer_size_bytes, AirlockState *state)
+{
+    assert(handlers != NULL);
+    assert(state != NULL);
+    assert(buffer_size_bytes >= sizeof(SDNMsgHeader));
+    while (true)
+    {
+        int ret = ReadNextMessage(msg_buffer, buffer_size_bytes);
+        if (ret < 0)
+        {
+            return ret;
+        }
+        else if (ret == 0)
+        {
+            return 0;
+        }
+        else
+        {
+            SDNMsgHeader *msg_header = (SDNMsgHeader *)msg_buffer;
+            for (SDNHandler *handler = handlers; handler < handlers + num_handlers;
+                 handler++)
+            {
+                if (msg_header->msg_type == handler->type)
+                {
+                    // CRASH HAPPENED IN THIS FUNCTION CALL.
+                    handler->callback(msg_buffer, ret, state);
+                }
+            }
+        }
+    }
+}</code></pre>
+  </div>
+
+  <p>Looking at the register message handlers, we can see that this should have called <code>HandleSetSuitOccupant</code> which would have logged <code>Handling SET_SUIT_OCCUPANT message.</code>. So it seems like this callback was corrupted somehow and ran some non-code data.</p>
+
+  <p>We can see where the call was with:</p>
+
+  <pre><code>(gdb) frame 2
+#2  0x0000555555555936 in ProcessMessageData (handlers=0x55555555c7c0, num_handlers=6, msg_buffer=0x55555555c6b0, buffer_size_bytes=2048, state=0x7fffffffe7f0) at src/airlock_ctrl.c:328
+328                         handler->callback(msg_buffer, ret, state);
+(gdb) print handler->callback
+$1 = (sdn_msg_callback_t) 0x7fffffffe96c</code></pre>
+
+    <p>Since we know the crash was 0x7fffffffe9ac (frame 0's address), we can then see the instructions that this executed with:</p>
+
+    <pre><code>(gdb) disassemble 0x7fffffffe96c,0x7fffffffe9ac+8
+Dump of assembler code from 0x7fffffffe96c to 0x7fffffffe9b4:
+   0x00007fffffffe96c:  push   %rbp
+   0x00007fffffffe96d:  movabs $0x555555556816,%r15
+   0x00007fffffffe977:  mov    %rdi,%r12
+   0x00007fffffffe97a:  add    $0x10,%r12
+   0x00007fffffffe97e:  cmpl   $0x488504f4,(%r12)
+   0x00007fffffffe986:  jne    0x7fffffffe9c2
+   0x00007fffffffe988:  mov    %rdi,%r12
+   0x00007fffffffe98b:  mov    %rsi,%r13
+   0x00007fffffffe98e:  mov    %rdx,%r14
+   0x00007fffffffe991:  movabs $0x55555555539c,%rax
+   0x00007fffffffe99b:  mov    $0xae215d67,%edi
+   0x00007fffffffe9a0:  mov    $0xae215e13,%esi
+   0x00007fffffffe9a5:  mov    $0x1,%edx
+   0x00007fffffffe9aa:  call   *%rax
+=> 0x00007fffffffe9ac:  (bad)
+   0x00007fffffffe9ae:  jae    0x7fffffffea23
+   0x00007fffffffe9b0:  jbe    0x7fffffffea21
+   0x00007fffffffe9b2:  insb   (%dx),%es:(%rdi)
+   0x00007fffffffe9b3:  insl   (%dx),%es:(%rdi)</code></pre>
+
+  <p>Here we need to understand a little x64 assembly. <code>call   *%rax</code> is a function call to an address stored in <code>%rax</code>. With <code>movabs $0x55555555539c,%rax</code> we see that this was just set. We can run:</p>
+    <pre><code>(gdb) info symbol 0x55555555539c
+ControlDoor in section .text of /tmp/test/airlock_ctrl</code></pre>
+  <p>to see that this code does indeed call <code>ControlDoor</code>.</p>
+
+  <p>So what is 0x7fffffffe96c? If we look at the addresses for the variables in "frame 2" or run <code>frame info</code> you can observe that 0x7fffffffeXXX is part of the stack memory.</p>
+
+  <h2>Where did the code that opened the airlock come from?</h2>
+    <p>TBD</p>
+
+  <!-- Prism JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
 </body>
 
 </html>
