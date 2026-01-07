@@ -175,3 +175,16 @@ code[class*="language-"] {
   margin-bottom: 16px;
   color: #c9d1d9;
 }
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 30px;
+    color: #808080;
+    border-top: 2px solid #ff6b6b;
+    margin-top: 60px;
+}
+
+footer p {
+    font-size: 0.9rem;
+}
