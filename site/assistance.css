@@ -50,8 +50,10 @@ a:hover {
   background-color: #0d1117;
   padding: 10px 0;
   border-bottom: 1px solid #30363d;
-  text-align: right;
   z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .code-block {
