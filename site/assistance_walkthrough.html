@@ -137,7 +137,7 @@ Dump of assembler code from 0x7fffffffe96c to 0x7fffffffe9b4:
 ControlDoor in section .text of /tmp/test/airlock_ctrl</code></pre>
   <p>to see that this code does indeed call <code>ControlDoor</code>.</p>
 
-  <p>So what is 0x7fffffffe96c? If we look at the addresses for the variables in "frame 2" or run <code>frame info</code> you can observe that 0x7fffffffeXXX is part of the stack memory.</p>
+  <p>So what is 0x7fffffffe96c? We can look at the stack pointer register with <code>print $rsp</code>, look at the addresses for the variables in "frame 2" with <code>info locals</code> and <code>print &ret</code>, or run <code>frame info</code> to see that 0x7fffffffeXXX is part of the stack memory. <code>pwndbg</code> makes this much easier then regular <code>gdb</code> since it color codes stack memory and has the <code>vmap</code> command which lists its range.</p>
 
   <h2>Where did the code that opened the airlock come from?</h2>
     <p>TBD</p>
