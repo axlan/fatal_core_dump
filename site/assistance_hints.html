@@ -21,6 +21,9 @@
 
   <p>Use <code>disassemble $pc-64,$pc+8</code> to examine the machine code sourounding the crash.</p>
 
+  <h2>Understanding Assembly / Machine Code</h2>
+  <p>While a basic knowledge of assembly is useful, it is not really the focus of this puzzle. <a href="https://halb.it/posts/x64-introduction/">https://halb.it/posts/x64-introduction/</a> provides a pretty good introduction along with <a href="https://cs.brown.edu/courses/cs033/docs/guides/x64_cheatsheet.pdf">https://cs.brown.edu/courses/cs033/docs/guides/x64_cheatsheet.pdf</a>. Aside from understanding what happened during the memory corruption, you should be able to solve the puzzle by only looking at the C code.</p>
+
   <h2>Examine Variables</h2>
   <p>Use <code>info args</code> and <code>info locals</code>, and the source file to find variables that you can examine with <code>print</code>.</p>
 
