@@ -35,6 +35,7 @@
     <li><a href="#downloading-the-files">Downloading the files</a></li>
     <li><a href="#setting-up-the-debugger">Setting Up the Debugger</a>
       <ul>
+        <li><a href="#running-in-browser">Running in Browser</a>
         <li><a href="#native-linux">Native Linux</a>
           <ul>
             <li><a href="#native-linux">gdb</a></li>
@@ -96,6 +97,15 @@ curl -O $URL/src/airlock_ctrl.c -O $URL/airlock_ctrl -O $URL/core.dump
     I'll be using <code>gdb-multiarch</code> in these guides. If you'd prefer the default gdb, just replace
     <code>gdb-multiarch</code> -&gt; <code>gdb</code>.
   </p>
+
+  <h3 id="running-in-browser">Running in Browser</h3>
+
+  <p>If you want to try debugging the core dump without access to a computer that can run GDB, I set up a virtual machine that runs in the browser:</p>
+  <a href="https://axlan.github.io/webvm/">https://axlan.github.io/webvm/</a>
+
+  <p>This is the easiest way to get started, but I <b>do not recommend using this if you can run GDB natively, or can run it in Docker</b>. Since this is a full OS being emulated in the processor it is extremely slow and resource intensive. The image comes preloaded with the binary and source files since setting up networking is a pain.</p>
+
+  <p>This is a fork of <a href="https://github.com/leaningtech/webvm">https://github.com/leaningtech/webvm</a> with minor customizations.</p>
 
   <h3 id="native-linux">Native Linux</h3>
 

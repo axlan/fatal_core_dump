@@ -29,6 +29,14 @@
     <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Memory.html#Memory">examine memory</a> - Print out raw binary data at memory locations</li>
     <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Machine-Code.html#Machine-Code">disassemble</a> - Print memory as assembly instructions. For example, <code>disassemble $pc-64,$pc+64</code> will print the assembly for the instructions within 64 bytes of the current instruction pointer</li>
   </ul>
+
+  <p>The layout can also be customized. For instance, running:</p>
+
+  <pre><code>(gdb) frame 2
+(gdb) tui layout split</code></pre>
+
+  <p>Will show the source and assembly associated with where the coredump crashed. <code>tui focus</code> followd by cmd or asm or src then lets you select which window to interact with.</p>
+
   <footer>
       <p>&copy; 2026 Fatal Core Dump | @VERSION@ | <a href="https://www.robopenguins.com/">https://www.robopenguins.com/</a></p>
   </footer>
