@@ -10,3 +10,4 @@ docker run --rm --privileged -v "$PWD":/fatal_core_dump core_dump_build sh ./scr
 docker run --rm -it --privileged -v "$PWD":/fatal_core_dump core_dump_build ./scripts/trigger_crash.sh
 
 sudo chown -R $USER:$USER bin
+sudo chown -R $USER:$USER site

@@ -136,6 +136,64 @@
 2216-05-11_15:15:38 DEBUG: -> SDN_MSG_TYPE_SET_OPEN                    Len:  17, Dev: 0xae215d67, Open: 0
 2216-05-11_15:15:38 INFO: airlock_state -> AIRLOCK_CLOSED_PRESSURIZED
 2216-05-11_15:15:38 DEBUG: -> SDN_MSG_TYPE_CMD_RESPONSE                Len:  17, Dev: 0xae215d67, Response Code: 0
+2216-05-14_10:27:52 DEBUG: <- SDN_MSG_TYPE_SET_AIRLOCK_OPEN            Len:  17, Dev: 0xae215e16, Airlock State: 1
+2216-05-14_10:27:52 INFO: Handling SET_AIRLOCK_OPEN message.
+2216-05-14_10:27:52 INFO: Sending ControlDoor command to 0xae215e12, open=1
+2216-05-14_10:27:52 DEBUG: -> SDN_MSG_TYPE_SET_OPEN                    Len:  17, Dev: 0xae215d67, Open: 1
+2216-05-14_10:27:52 INFO: airlock_state -> AIRLOCK_INTERIOR_OPEN
+2216-05-14_10:27:52 DEBUG: -> SDN_MSG_TYPE_CMD_RESPONSE                Len:  17, Dev: 0xae215d67, Response Code: 0
+2216-05-14_10:28:00 DEBUG: <- SDN_MSG_TYPE_SET_AIRLOCK_OPEN            Len:  17, Dev: 0xae215e17, Airlock State: 0
+2216-05-14_10:28:00 INFO: Handling SET_AIRLOCK_OPEN message.
+2216-05-14_10:28:00 INFO: Sending ControlDoor command to 0xae215e13, open=0
+2216-05-14_10:28:00 DEBUG: -> SDN_MSG_TYPE_SET_OPEN                    Len:  17, Dev: 0xae215d67, Open: 0
+2216-05-14_10:28:00 INFO: Sending ControlDoor command to 0xae215e12, open=0
+2216-05-14_10:28:00 DEBUG: -> SDN_MSG_TYPE_SET_OPEN                    Len:  17, Dev: 0xae215d67, Open: 0
+2216-05-14_10:28:00 INFO: airlock_state -> AIRLOCK_CLOSED_PRESSURIZED
+2216-05-14_10:28:00 DEBUG: -> SDN_MSG_TYPE_CMD_RESPONSE                Len:  17, Dev: 0xae215d67, Response Code: 0
+2216-05-14_10:28:04 DEBUG: <- SDN_MSG_TYPE_SET_SUIT_OCCUPANT           Len:  20, Dev: 0xae215e17, User: 0x1a02e7e7, Preferences Len: 0
+2216-05-14_10:28:04 INFO: Handling SET_SUIT_OCCUPANT message.
+2216-05-14_10:28:04 DEBUG: -> SDN_MSG_TYPE_SET_SUIT_OCCUPANT           Len:  20, Dev: 0xae215d67, User: 0x1a02e7e7, Preferences Len: 0
+2216-05-14_10:28:04 DEBUG: -> SDN_MSG_TYPE_CMD_RESPONSE                Len:  17, Dev: 0xae215d67, Response Code: 0
+2216-05-14_10:29:14 DEBUG: <- SDN_MSG_TYPE_SET_AIRLOCK_OPEN            Len:  17, Dev: 0xae215e17, Airlock State: 2
+2216-05-14_10:29:14 INFO: Handling SET_AIRLOCK_OPEN message.
+2216-05-14_10:29:14 INFO: Sending ControlDoor command to 0xae215e12, open=0
+2216-05-14_10:29:14 DEBUG: -> SDN_MSG_TYPE_SET_OPEN                    Len:  17, Dev: 0xae215d67, Open: 0
+2216-05-14_10:29:14 INFO: Sending ControlPressure command to 0xae215e14, use_internal=0
+2216-05-14_10:29:14 DEBUG: -> SDN_MSG_TYPE_SET_PRESSURE_ZONE           Len:  17, Dev: 0xae215d67, Zone: 1
+2216-05-14_10:29:14 INFO: airlock_state -> AIRLOCK_DEPRESSURIZING
+2216-05-14_10:29:14 DEBUG: -> SDN_MSG_TYPE_CMD_RESPONSE                Len:  17, Dev: 0xae215d67, Response Code: 0
+2216-05-14_10:29:14 INFO: airlock_state -> AIRLOCK_CLOSED_DEPRESSURIZED
+2216-05-14_10:29:14 INFO: Sending ControlDoor command to 0xae215e13, open=1
+2216-05-14_10:29:14 DEBUG: -> SDN_MSG_TYPE_SET_OPEN                    Len:  17, Dev: 0xae215d67, Open: 1
+2216-05-14_10:29:14 INFO: airlock_state -> AIRLOCK_EXTERIOR_OPEN
+2216-05-14_10:43:24 DEBUG: <- SDN_MSG_TYPE_SET_AIRLOCK_OPEN            Len:  17, Dev: 0xae215e17, Airlock State: 0
+2216-05-14_10:43:24 INFO: Handling SET_AIRLOCK_OPEN message.
+2216-05-14_10:43:24 INFO: Sending ControlDoor command to 0xae215e13, open=0
+2216-05-14_10:43:24 DEBUG: -> SDN_MSG_TYPE_SET_OPEN                    Len:  17, Dev: 0xae215d67, Open: 0
+2216-05-14_10:43:24 INFO: Sending ControlDoor command to 0xae215e12, open=0
+2216-05-14_10:43:24 DEBUG: -> SDN_MSG_TYPE_SET_OPEN                    Len:  17, Dev: 0xae215d67, Open: 0
+2216-05-14_10:43:24 INFO: airlock_state -> AIRLOCK_CLOSED_DEPRESSURIZED
+2216-05-14_10:43:24 DEBUG: -> SDN_MSG_TYPE_CMD_RESPONSE                Len:  17, Dev: 0xae215d67, Response Code: 0
+2216-05-14_10:43:28 DEBUG: <- SDN_MSG_TYPE_SET_AIRLOCK_OPEN            Len:  17, Dev: 0xae215e17, Airlock State: 1
+2216-05-14_10:43:28 INFO: Handling SET_AIRLOCK_OPEN message.
+2216-05-14_10:43:28 INFO: Sending ControlDoor command to 0xae215e13, open=0
+2216-05-14_10:43:28 DEBUG: -> SDN_MSG_TYPE_SET_OPEN                    Len:  17, Dev: 0xae215d67, Open: 0
+2216-05-14_10:43:28 INFO: Sending ControlPressure command to 0xae215e14, use_internal=1
+2216-05-14_10:43:28 DEBUG: -> SDN_MSG_TYPE_SET_PRESSURE_ZONE           Len:  17, Dev: 0xae215d67, Zone: 0
+2216-05-14_10:43:28 INFO: airlock_state -> AIRLOCK_PRESSURIZING
+2216-05-14_10:43:28 DEBUG: -> SDN_MSG_TYPE_CMD_RESPONSE                Len:  17, Dev: 0xae215d67, Response Code: 0
+2216-05-14_10:43:28 INFO: airlock_state -> AIRLOCK_CLOSED_PRESSURIZED
+2216-05-14_10:43:28 INFO: Sending ControlDoor command to 0xae215e12, open=1
+2216-05-14_10:43:28 DEBUG: -> SDN_MSG_TYPE_SET_OPEN                    Len:  17, Dev: 0xae215d67, Open: 1
+2216-05-14_10:43:28 INFO: airlock_state -> AIRLOCK_INTERIOR_OPEN
+2216-05-14_10:43:32 DEBUG: <- SDN_MSG_TYPE_SET_AIRLOCK_OPEN            Len:  17, Dev: 0xae215e16, Airlock State: 0
+2216-05-14_10:43:32 INFO: Handling SET_AIRLOCK_OPEN message.
+2216-05-14_10:43:32 INFO: Sending ControlDoor command to 0xae215e13, open=0
+2216-05-14_10:43:32 DEBUG: -> SDN_MSG_TYPE_SET_OPEN                    Len:  17, Dev: 0xae215d67, Open: 0
+2216-05-14_10:43:32 INFO: Sending ControlDoor command to 0xae215e12, open=0
+2216-05-14_10:43:32 DEBUG: -> SDN_MSG_TYPE_SET_OPEN                    Len:  17, Dev: 0xae215d67, Open: 0
+2216-05-14_10:43:32 INFO: airlock_state -> AIRLOCK_CLOSED_PRESSURIZED
+2216-05-14_10:43:32 DEBUG: -> SDN_MSG_TYPE_CMD_RESPONSE                Len:  17, Dev: 0xae215d67, Response Code: 0
 2216-05-25_08:03:52 DEBUG: <- SDN_MSG_TYPE_SET_AIRLOCK_OPEN            Len:  17, Dev: 0xae215e16, Airlock State: 1
 2216-05-25_08:03:52 INFO: Handling SET_AIRLOCK_OPEN message.
 2216-05-25_08:03:52 INFO: Sending ControlDoor command to 0xae215e12, open=1

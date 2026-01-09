@@ -38,7 +38,9 @@ static const uint32_t SDN_DEVICE_ID_OCCUPANCY_SENSOR = 0xae215e15;
 static const uint32_t PATSY_USER_ID = 0xd481aa99;
 // Alex Mercer
 static const uint32_t TARGET_USER_ID = 0x488504f4;
-// Controlled by Helena Efrem
+// Marina Anjana
+static const uint32_t OTHER_USER_ID = 0x1a02e7e7;
+// Controlled by Yann Vancho
 static const uint32_t REMOTE_DEVICE_1_ID = 0x2017dc71;
 static const uint32_t SDN_DEVICE_ID_CONTROL_PANEL_STATION = 0xae215e16;
 static const uint32_t SDN_DEVICE_ID_CONTROL_PANEL_AIRLOCK = 0xae215e17;
@@ -415,33 +417,29 @@ static size_t SendLargeBufferSizeConfigCmd(void *msg_buffer,
     return 0;
 }
 
-static size_t SendAttackCmd(void *msg_buffer, size_t buffer_size_bytes,
-                            sdn_timestamp_t *next_time_ms,
-                            bool trigger_overflow)
+static size_t SendSetSuitCmd(void *msg_buffer, size_t buffer_size_bytes,
+                            sdn_timestamp_t *next_time_ms, uint32_t user_id,
+                            size_t msg_size)
 {
     *next_time_ms = 0xFFFFFFFFFFFFFFFF;
-    const size_t MSG_LEN =
-        (trigger_overflow)
-            ? sizeof(SDNSetSuitOccupantMessage) + ATTACK_USER_PREF_SIZE
-            : SMALL_BUFFER_SIZE;
-    if (buffer_size_bytes >= MSG_LEN)
+    if (buffer_size_bytes >= msg_size)
     {
         SDNSetSuitOccupantMessage *msg = (SDNSetSuitOccupantMessage *)msg_buffer;
         *msg = (SDNSetSuitOccupantMessage){
             {.device_id = SDN_DEVICE_ID_CONTROL_PANEL_AIRLOCK,
-             .msg_length = MSG_LEN,
+             .msg_length = msg_size,
              .timestamp = dummy_timestamp,
              .msg_type = SDN_MSG_TYPE_SET_SUIT_OCCUPANT},
-            .user_id = PATSY_USER_ID};
+            .user_id = user_id};
         memcpy(msg->user_preferences, ATTACK_USER_PREFERENCES,
-               MSG_LEN - sizeof(SDNSetSuitOccupantMessage));
-        return MSG_LEN;
+               msg_size - sizeof(SDNSetSuitOccupantMessage));
+        return msg_size;
     }
     else
     {
         sdn_log(
             SDN_ERROR,
-            "ReadNextMessage: buffer too small for SendLargeBufferSizeConfigCmd");
+            "ReadNextMessage: buffer too small for SendSetSuitCmd");
     }
     return 0;
 }
@@ -449,37 +447,25 @@ static size_t SendAttackCmd(void *msg_buffer, size_t buffer_size_bytes,
 static size_t SendAttackCmd1(void *msg_buffer, size_t buffer_size_bytes,
                              sdn_timestamp_t *next_time_ms)
 {
-    return SendAttackCmd(msg_buffer, buffer_size_bytes, next_time_ms, false);
+    return SendSetSuitCmd(msg_buffer, buffer_size_bytes, next_time_ms, PATSY_USER_ID, SMALL_BUFFER_SIZE);
 }
 
 static size_t SendAttackCmd2(void *msg_buffer, size_t buffer_size_bytes,
                              sdn_timestamp_t *next_time_ms)
 {
-    return SendAttackCmd(msg_buffer, buffer_size_bytes, next_time_ms, true);
+    return SendSetSuitCmd(msg_buffer, buffer_size_bytes, next_time_ms, PATSY_USER_ID, sizeof(SDNSetSuitOccupantMessage) + ATTACK_USER_PREF_SIZE);
+}
+
+static size_t SendSuitCheckCmd(void *msg_buffer, size_t buffer_size_bytes,
+                             sdn_timestamp_t *next_time_ms)
+{
+    return SendSetSuitCmd(msg_buffer, buffer_size_bytes, next_time_ms, OTHER_USER_ID, sizeof(SDNSetSuitOccupantMessage));
 }
 
 static size_t SendFailureCmd(void *msg_buffer, size_t buffer_size_bytes,
                              sdn_timestamp_t *next_time_ms)
 {
-    *next_time_ms = 0xFFFFFFFFFFFFFFFF;
-    if (buffer_size_bytes >= sizeof(SDNSetSuitOccupantMessage))
-    {
-        SDNSetSuitOccupantMessage *msg = (SDNSetSuitOccupantMessage *)msg_buffer;
-        *msg = (SDNSetSuitOccupantMessage){
-            {.device_id = SDN_DEVICE_ID_CONTROL_PANEL_AIRLOCK,
-             .msg_length = sizeof(SDNSetSuitOccupantMessage),
-             .timestamp = dummy_timestamp,
-             .msg_type = SDN_MSG_TYPE_SET_SUIT_OCCUPANT},
-            .user_id = TARGET_USER_ID};
-        return sizeof(SDNSetSuitOccupantMessage);
-    }
-    else
-    {
-        sdn_log(
-            SDN_ERROR,
-            "ReadNextMessage: buffer too small for SendLargeBufferSizeConfigCmd");
-    }
-    return 0;
+    return SendSetSuitCmd(msg_buffer, buffer_size_bytes, next_time_ms, TARGET_USER_ID, sizeof(SDNSetSuitOccupantMessage));
 }
 
 static size_t SendClearFaultsCmd(void *msg_buffer, size_t buffer_size_bytes,
@@ -517,7 +503,8 @@ struct MessageEvent
 
 #define TECH_VISIT1 4234
 #define TECH_VISIT2 651113
-#define VICTIM_VISIT TECH_VISIT2 + 940113 + 14234
+#define CHECK_VISIT TECH_VISIT2 + 940113 + 14234
+#define VICTIM_VISIT CHECK_VISIT + 940113 + 14234
 
 
 static MessageEvent message_events[] = {
@@ -573,6 +560,14 @@ static MessageEvent message_events[] = {
     {.next_time_ms = TECH_VISIT2 + 932113, .generator = SendAirlockCloseCmdInside},
     {.next_time_ms = TECH_VISIT2 + 936147, .generator = SendAirlockIntOpenCmdExiting},
     {.next_time_ms = TECH_VISIT2 + 940113, .generator = SendAirlockCloseCmdOutside},
+
+    {.next_time_ms = CHECK_VISIT, .generator = SendAirlockIntOpenCmdEntering},
+    {.next_time_ms = CHECK_VISIT + 8422, .generator = SendAirlockCloseCmdInside},
+    {.next_time_ms = CHECK_VISIT + 12100, .generator = SendSuitCheckCmd},
+    {.next_time_ms = CHECK_VISIT + 82153, .generator = SendAirlockExtOpenCmd},
+    {.next_time_ms = CHECK_VISIT + 932113, .generator = SendAirlockCloseCmdInside},
+    {.next_time_ms = CHECK_VISIT + 936147, .generator = SendAirlockIntOpenCmdExiting},
+    {.next_time_ms = CHECK_VISIT + 940113, .generator = SendAirlockCloseCmdOutside},
 
     {.next_time_ms = VICTIM_VISIT, .generator = SendAirlockIntOpenCmdEntering},
     {.next_time_ms = VICTIM_VISIT + 8422, .generator = SendAirlockCloseCmdInside},

@@ -20,6 +20,7 @@ def main():
     VISIT_1_START_MS = 62738949765
     VISIT_2_START_MS = 62739588222
     VISIT_3_START_MS = 62740542569
+    VISIT_4_START_MS = 62741496916
     visit_count = 0
 
     try:
@@ -39,7 +40,10 @@ def main():
                         offset += datetime.timedelta(days=1.1)
                         visit_count += 1
                     elif visit_count == 2 and timestamp_ms == VISIT_3_START_MS:
-                        offset += datetime.timedelta(days=13.7)
+                        offset += datetime.timedelta(days=2.8)
+                        visit_count += 1
+                    elif visit_count == 3 and timestamp_ms == VISIT_4_START_MS:
+                        offset += datetime.timedelta(days=10.88895)
                         visit_count += 1
 
 
