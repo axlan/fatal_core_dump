@@ -3,7 +3,7 @@ set -e
 
 sudo rm -rf bin/
 
-docker build -f Dockerfile_build -t core_dump_build .
+docker build -t core_dump_build .
 
 docker run --rm --privileged -v "$PWD":/fatal_core_dump core_dump_build sh ./scripts/generate_hack.sh
 

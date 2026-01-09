@@ -1,14 +1,3 @@
-# Version control
-.git
-.gitignore
-
-# Docker
-Dockerfile*
-
-# Build outputs
-/rpg_maker_project/
-
-# Editor and OS files
-.idea/
-.codechecker/
-.vscode/
+*
+!/src/
+!/bin/
