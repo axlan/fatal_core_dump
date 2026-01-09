@@ -22,12 +22,12 @@
 
   <p>GDB is a complex and versatile program, so here I'm going to focus on the commands that are most applicable for analyzing this core dump.</p>
   <ul>
-    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Backtrace.html#Backtrace">backtrace</a> - Print information about the call stack</li>
-    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Selection.html#Selection">frame</a> - Select the stack frame to examine. This lets you examine variables from caller functions</li>
-    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Symbols.html#Symbols:~:text=info%20symbol%20addr">info symbol</a> - Print info for any symbols that map near a memory address</li>
-    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Data.html#Data">print</a> - Print variable or data</li>
-    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Memory.html#Memory">examine memory</a> - Print out raw binary data at memory locations</li>
-    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Machine-Code.html#Machine-Code">disassemble</a> - Print memory as assembly instructions. For example, <code>disassemble $pc-64,$pc+64</code> will print the assembly for the instructions within 64 bytes of the current instruction pointer</li>
+    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Backtrace.html#Backtrace" target="_blank" rel="noopener noreferrer">backtrace</a> - Print information about the call stack</li>
+    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Selection.html#Selection" target="_blank" rel="noopener noreferrer">frame</a> - Select the stack frame to examine. This lets you examine variables from caller functions</li>
+    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Symbols.html#Symbols:~:text=info%20symbol%20addr" target="_blank" rel="noopener noreferrer">info symbol</a> - Print info for any symbols that map near a memory address</li>
+    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Data.html#Data" target="_blank" rel="noopener noreferrer">print</a> - Print variable or data</li>
+    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Memory.html#Memory" target="_blank" rel="noopener noreferrer">examine memory</a> - Print out raw binary data at memory locations</li>
+    <li><a href="https://sourceware.org/gdb/current/onlinedocs/gdb.html/Machine-Code.html#Machine-Code" target="_blank" rel="noopener noreferrer">disassemble</a> - Print memory as assembly instructions. For example, <code>disassemble $pc-64,$pc+64</code> will print the assembly for the instructions within 64 bytes of the current instruction pointer</li>
   </ul>
 
   <p>The layout can also be customized. For instance, running:</p>
@@ -38,7 +38,7 @@
   <p>Will show the source and assembly associated with where the coredump crashed. <code>tui focus</code> followd by cmd or asm or src then lets you select which window to interact with.</p>
 
   <footer>
-      <p>&copy; 2026 Fatal Core Dump | @VERSION@ | <a href="https://www.robopenguins.com/">https://www.robopenguins.com/</a></p>
+      <p>&copy; 2026 Fatal Core Dump | @VERSION@ | <a href="https://www.robopenguins.com/" target="_blank" rel="noopener noreferrer">https://www.robopenguins.com/</a></p>
   </footer>
 </body>
 

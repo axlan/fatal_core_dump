@@ -7,10 +7,10 @@
   <title>Setting up your environment</title>
 
   <!-- Prism CSS -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css"
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" target="_blank" rel="noopener noreferrer" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" target="_blank" rel="noopener noreferrer"
     rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css"
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" target="_blank" rel="noopener noreferrer"
     rel="stylesheet" />
 
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -28,7 +28,7 @@
   </div>
   <h1>Setting up your environment</h1>
 
-  The main piece of evidence for this puzzle is the <a href="https://en.wikipedia.org/wiki/Core_dump">core dump</a> file core.dump. This file is a snapshot of the process's entire state frozen in time. Using a debugger you can explore this state.
+  The main piece of evidence for this puzzle is the <a href="https://en.wikipedia.org/wiki/Core_dump" target="_blank" rel="noopener noreferrer">core dump</a> file core.dump. This file is a snapshot of the process's entire state frozen in time. Using a debugger you can explore this state.
 
   <h3>Table of Contents</h3>
   <ul>
@@ -75,14 +75,14 @@ curl -O $URL/src/airlock_ctrl.c -O $URL/airlock_ctrl -O $URL/core.dump
     <li>gdb - This is the core tool for debugging. It is command line based and has a steep learning curve. All the
       other tools are wrappers around GDB and they require you to enter raw GDB commands for less common use cases.</li>
     <ul>
-      <li><a href="https://beej.us/guide/bggdb">https://beej.us/guide/bggdb</a></li>
-      <li><a href="https://developers.redhat.com/articles/the-gdb-developers-gnu-debugger-tutorial-part-1-getting-started-with-the-debugger">https://developers.redhat.com/articles/the-gdb-developers-gnu-debugger-tutorial-part-1-getting-started-with-the-debugger</a></li>
-      <li><a href="https://users.ece.utexas.edu/~adnan/gdb-refcard.pdf">https://users.ece.utexas.edu/~adnan/gdb-refcard.pdf</a></li>
-      <li><a href="https://www.sourceware.org/gdb/documentation/">https://www.sourceware.org/gdb/documentation/</a></li>
+      <li><a href="https://beej.us/guide/bggdb" target="_blank" rel="noopener noreferrer" target="_blank" rel="noopener noreferrer">https://beej.us/guide/bggdb</a></li>
+      <li><a href="https://developers.redhat.com/articles/the-gdb-developers-gnu-debugger-tutorial-part-1-getting-started-with-the-debugger" target="_blank" rel="noopener noreferrer">https://developers.redhat.com/articles/the-gdb-developers-gnu-debugger-tutorial-part-1-getting-started-with-the-debugger</a></li>
+      <li><a href="https://users.ece.utexas.edu/~adnan/gdb-refcard.pdf" target="_blank" rel="noopener noreferrer">https://users.ece.utexas.edu/~adnan/gdb-refcard.pdf</a></li>
+      <li><a href="https://www.sourceware.org/gdb/documentation/" target="_blank" rel="noopener noreferrer">https://www.sourceware.org/gdb/documentation/</a></li>
     </ul>
-    <li><a href="https://github.com/pwndbg/pwndbg">pwndbg</a> - pwndbg adds some useful TUI and reverse engineering
+    <li><a href="https://github.com/pwndbg/pwndbg" target="_blank" rel="noopener noreferrer">pwndbg</a> - pwndbg adds some useful TUI and reverse engineering
       features to GDB. </li>
-    <li><a href="https://www.gdbgui.com/">gdbgui</a> - This is a Python web server that wraps GDB. It makes accessing
+    <li><a href="https://www.gdbgui.com/" target="_blank" rel="noopener noreferrer">gdbgui</a> - This is a Python web server that wraps GDB. It makes accessing
       GDB remotely a bit simpler and provides a basic GUI.</li>
     <li>Visual Studio Code - While Visual Studio Code is a full IDE, its C/C++ extension provides one of the best GUI
       wrappers for GDB.</li>
@@ -101,11 +101,11 @@ curl -O $URL/src/airlock_ctrl.c -O $URL/airlock_ctrl -O $URL/core.dump
   <h3 id="running-in-browser">Running in Browser</h3>
 
   <p>If you want to try debugging the core dump without access to a computer that can run GDB, I set up a virtual machine that runs in the browser:</p>
-  <a href="https://axlan.github.io/webvm/">https://axlan.github.io/webvm/</a>
+  <a href="https://axlan.github.io/webvm/" target="_blank" rel="noopener noreferrer">https://axlan.github.io/webvm/</a>
 
   <p>This is the easiest way to get started, but I <b>do not recommend using this if you can run GDB natively, or can run it in Docker</b>. Since this is a full OS being emulated in the processor it is extremely slow and resource intensive. The image comes preloaded with the binary and source files since setting up networking is a pain.</p>
 
-  <p>This is a fork of <a href="https://github.com/leaningtech/webvm">https://github.com/leaningtech/webvm</a> with minor customizations.</p>
+  <p>This is a fork of <a href="https://github.com/leaningtech/webvm" target="_blank" rel="noopener noreferrer">https://github.com/leaningtech/webvm</a> with minor customizations.</p>
 
   <h3 id="native-linux">Native Linux</h3>
 
@@ -115,7 +115,7 @@ curl -O $URL/src/airlock_ctrl.c -O $URL/airlock_ctrl -O $URL/core.dump
 
   <p>For some projects that build GDB that have some quality of life improvements, you can try:</p>
 
-  <h4 id="native-gdbgui"><a href="https://www.gdbgui.com/">https://www.gdbgui.com/</a></h4>
+  <h4 id="native-gdbgui"><a href="https://www.gdbgui.com/" target="_blank" rel="noopener noreferrer">https://www.gdbgui.com/</a></h4>
 
   <pre><code class="language-bash">pip install gdbgui
 gdbgui --gdb-cmd "/usr/bin/gdb-multiarch --core=core.dump airlock_ctrl"
@@ -123,13 +123,13 @@ gdbgui --gdb-cmd "/usr/bin/gdb-multiarch --core=core.dump airlock_ctrl"
 # You also need to fetch the airlock_ctrl.c source file
 </code></pre>
 
-  <h4 id="native-pwndbg"><a href="https://github.com/pwndbg/pwndbg">https://github.com/pwndbg/pwndbg</a></h4>
+  <h4 id="native-pwndbg"><a href="https://github.com/pwndbg/pwndbg" target="_blank" rel="noopener noreferrer">https://github.com/pwndbg/pwndbg</a></h4>
 
   <pre><code class="language-bash">curl -qsL 'https://install.pwndbg.re' | sh -s -- -t pwndbg-gdb
 pwndbg --core=core.dump airlock_ctrl
 </code></pre>
 
-  <h4 id="native-vscode"><a href="https://code.visualstudio.com/">Visual Studio Code</a></h4>
+  <h4 id="native-vscode"><a href="https://code.visualstudio.com/" target="_blank" rel="noopener noreferrer">Visual Studio Code</a></h4>
 
   <p>Open the evidence directory in VS Code. Create the file:</p>
   <div class="code-block">
@@ -215,7 +215,7 @@ CMD [ "gdb-multiarch","--core=core.dump", "airlock_ctrl" ]
 </code></pre>
   </div>
 
-  <p>Or <a href="https://github.com/pwndbg/pwndbg">https://github.com/pwndbg/pwndbg</a></p>
+  <p>Or <a href="https://github.com/pwndbg/pwndbg" target="_blank" rel="noopener noreferrer">https://github.com/pwndbg/pwndbg</a></p>
 
   <div class="code-block">
     <div class="code-header">
@@ -255,7 +255,7 @@ docker build -t core_dump_debug .
 docker run -it --rm core_dump_debug
 </code></pre>
 
-  <h4 id="docker-gdbgui"><a href="https://www.gdbgui.com/">https://www.gdbgui.com/</a></h4>
+  <h4 id="docker-gdbgui"><a href="https://www.gdbgui.com/" target="_blank" rel="noopener noreferrer">https://www.gdbgui.com/</a></h4>
 
   <div class="code-block">
     <div class="code-header">
@@ -406,7 +406,7 @@ docker run --rm -p 5000:5000 core_dump_debug
     }
   </script>
   <footer>
-      <p>&copy; 2026 Fatal Core Dump | @VERSION@ | <a href="https://www.robopenguins.com/">https://www.robopenguins.com/</a></p>
+      <p>&copy; 2026 Fatal Core Dump | @VERSION@ | <a href="https://www.robopenguins.com/" target="_blank" rel="noopener noreferrer">https://www.robopenguins.com/</a></p>
   </footer>
 </body>
 
