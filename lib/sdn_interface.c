@@ -459,7 +459,7 @@ static size_t SendAttackCmd2(void *msg_buffer, size_t buffer_size_bytes,
 static size_t SendSuitCheckCmd(void *msg_buffer, size_t buffer_size_bytes,
                              sdn_timestamp_t *next_time_ms)
 {
-    return SendSetSuitCmd(msg_buffer, buffer_size_bytes, next_time_ms, OTHER_USER_ID, sizeof(SDNSetSuitOccupantMessage));
+    return SendSetSuitCmd(msg_buffer, buffer_size_bytes, next_time_ms, OTHER_USER_ID, sizeof(SDNSetSuitOccupantMessage) + 32);
 }
 
 static size_t SendFailureCmd(void *msg_buffer, size_t buffer_size_bytes,

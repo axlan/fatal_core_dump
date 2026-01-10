@@ -158,21 +158,6 @@ Communications Officer, A382
 
 ---
 
-From: helena.efrem@archon-llc.com,
-To: marina.anjana@archon-llc.com, yann.vancho.remops@archon-llc.com
-Date: Fri, 7 Mar 2216 09:12:14 +0000
-Subject: Airlock Configuration Control
-
-Hey folks,
-
-Please don't abuse the configuration overrides added in debug mode.
-
-For now, I understand that we need to modify a buffer size for some messages. I'm reviewing the ticket to permanently increase the command buffer size through proper channels.
-
-Helena
-
----
-
 From: alex.mercer.tech@archon-llc.com
 To: helena.efrem@archon-llc.com, marina.anjana@archon-llc.com
 Date: Sat, 15 Mar 2216 21:17:03 +0000
@@ -229,6 +214,36 @@ Marina
 
 ---
 
+From: helena.efrem@archon-llc.com,
+To: marina.anjana@archon-llc.com, yann.vancho.remops@archon-llc.com
+Date: Thu, 18 April 2216 09:12:14 +0000
+Subject: Airlock Configuration Control
+
+Hey folks,
+
+Please don't abuse the configuration overrides added in debug mode.
+
+For now, I understand that we need to modify a buffer size for some messages. I'm reviewing the ticket to permanently increase the command buffer size through proper channels.
+
+Helena
+
+---
+
+From: rolf.ivo@archon-llc.com
+To: marina.anjana@archon-llc.com
+Date: Mon, 22 April 2216 16:45:00 +0000
+Subject: Suit Update?
+
+Marina,
+
+You mentioned you were going to run a test on the airlock comms soon. Any chance that "preference update" packet we talked about will be included?
+
+My suit's audio profile keeps resetting to default every time I dock, and the treble is killing me. I've got the config string ready if you need it.
+
+Rolf
+
+---
+
 From: yann.vancho.remops@archon-llc.com
 To: helena.efrem@archon-llc.com, rolf.ivo@archon-llc.com, alex.mercer.tech@archon-llc.com, marina.anjana@archon-llc.com
 Date: Tue, 30 Apr 2216 08:00:14 +0000
@@ -262,3 +277,62 @@ Helena,
 Don't worry about updating that user_preferences tool you set up for me. I figured out how adjust the bass on my own.
 
 Rolf
+
+---
+
+From: helena.efrem@archon-llc.com
+To: alex.mercer.tech@archon-llc.com
+Date: Thu, 2 May 2216 09:15:00 +0000
+Subject: Water Reclamation Schedule
+
+Alex,
+
+Just a reminder that we need to start the Water Reclamation System overhaul next week. Please ensure you have the replacement filters and pump seals ready.
+
+I don't want any surprises like we had with the atmospheric processor.
+
+Helena
+
+---
+
+From: marina.anjana@archon-llc.com
+To: helena.efrem@archon-llc.com, alex.mercer.tech@archon-llc.com, rolf.ivo@archon-llc.com, yann.vancho.remops@archon-llc.com
+Date: Fri, 14 May 2216 14:55:39 +0000
+Subject: Unusual Signal Detection
+
+All,
+
+I finally got to do my official run through the airlock. The preferences sent over fine. Hopefully that means we can get things updated back to production.
+Seems like they're going to stick with the 16-byte key + 16-byte value format.
+
+Marina
+
+---
+
+From: yann.vancho.remops@archon-llc.com
+To: marina.anjana@archon-llc.com
+Date: Mon, 17 May 2216 10:30:00 +0000
+Subject: RE: Unusual Signal Detection
+
+Marina,
+
+Reviewed the logs from your airlock run on the 14th. Telemetry looks clean. The preference payload injected correctly into the stream.
+
+Whatever you did with the key format worked. The system didn't flag it as an anomaly.
+
+Yann
+
+---
+
+From: helena.efrem@archon-llc.com
+To: all@archon-llc.com
+Date: Thu, 20 May 2216 08:00:00 +0000
+Subject: Monthly Safety Drill
+
+Team,
+
+Mandatory safety drill tomorrow at 0900. We will be simulating a hull breach in Sector 4.
+
+Please review emergency depressurization protocols. Rolf, ensure all mining equipment in the sector is powered down by 0845.
+
+Helena

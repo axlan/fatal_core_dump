@@ -150,9 +150,9 @@
 2216-05-14_10:28:00 DEBUG: -> SDN_MSG_TYPE_SET_OPEN                    Len:  17, Dev: 0xae215d67, Open: 0
 2216-05-14_10:28:00 INFO: airlock_state -> AIRLOCK_CLOSED_PRESSURIZED
 2216-05-14_10:28:00 DEBUG: -> SDN_MSG_TYPE_CMD_RESPONSE                Len:  17, Dev: 0xae215d67, Response Code: 0
-2216-05-14_10:28:04 DEBUG: <- SDN_MSG_TYPE_SET_SUIT_OCCUPANT           Len:  20, Dev: 0xae215e17, User: 0x1a02e7e7, Preferences Len: 0
+2216-05-14_10:28:04 DEBUG: <- SDN_MSG_TYPE_SET_SUIT_OCCUPANT           Len:  52, Dev: 0xae215e17, User: 0x1a02e7e7, Preferences Len: 32
 2216-05-14_10:28:04 INFO: Handling SET_SUIT_OCCUPANT message.
-2216-05-14_10:28:04 DEBUG: -> SDN_MSG_TYPE_SET_SUIT_OCCUPANT           Len:  20, Dev: 0xae215d67, User: 0x1a02e7e7, Preferences Len: 0
+2216-05-14_10:28:04 DEBUG: -> SDN_MSG_TYPE_SET_SUIT_OCCUPANT           Len:  52, Dev: 0xae215d67, User: 0x1a02e7e7, Preferences Len: 32
 2216-05-14_10:28:04 DEBUG: -> SDN_MSG_TYPE_CMD_RESPONSE                Len:  17, Dev: 0xae215d67, Response Code: 0
 2216-05-14_10:29:14 DEBUG: <- SDN_MSG_TYPE_SET_AIRLOCK_OPEN            Len:  17, Dev: 0xae215e17, Airlock State: 2
 2216-05-14_10:29:14 INFO: Handling SET_AIRLOCK_OPEN message.
