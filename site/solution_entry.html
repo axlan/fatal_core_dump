@@ -67,17 +67,13 @@
                 <div class="form-group">
                     <h2>How did the airlock door open?</h2>
                     <div style="font-size: 1.2rem; line-height: 2.5;">
-                        The
+                        The instruction to call
                         <div class="autocomplete" style="display: inline-block; width: 200px; vertical-align: middle;">
                             <input id="blank1" type="text" placeholder="..." required>
                         </div>
-                        to call
-                        <div class="autocomplete" style="display: inline-block; width: 200px; vertical-align: middle;">
-                            <input id="blank2" type="text" placeholder="..." required>
-                        </div>
                         was executed on the
                         <div class="autocomplete" style="display: inline-block; width: 200px; vertical-align: middle;">
-                            <input id="blank3" type="text" placeholder="..." required>
+                            <input id="blank2" type="text" placeholder="..." required>
                         </div>
                         .
                     </div>
@@ -97,15 +93,19 @@
             style="display: none; margin-top: 24px; border-top: 1px solid #ccc; padding-top: 24px;">
             <form id="form2">
                 <div class="form-group">
-                    <h2>Where did the code that opened the airlock come from?</h2>
+                    <h2>How did the process end up executing code on the stack?</h2>
                     <div style="font-size: 1.2rem; line-height: 2.5;">
-                        The shellcode was injected via the
+                        A(n)
+                        <div class="autocomplete" style="display: inline-block; width: 200px; vertical-align: middle;">
+                            <input id="blank3" type="text" placeholder="..." required>
+                        </div>
+                        occurred in the
+                        <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
+                            <input id="blank4" type="text" placeholder="..." required>
+                        </div>
+                        and changed the
                         <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
                             <input id="blank5" type="text" placeholder="..." required>
-                        </div>
-                        stored in
-                        <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
-                            <input id="blank6" type="text" placeholder="..." required>
                         </div>
                         .
                     </div>
@@ -125,21 +125,17 @@
             style="display: none; margin-top: 24px; border-top: 1px solid #ccc; padding-top: 24px;">
             <form id="form3">
                 <div class="form-group">
-                    <h2>How did the process end up executing code on the stack?</h2>
+                    <h2>Where did the code that opened the airlock come from?</h2>
                     <div style="font-size: 1.2rem; line-height: 2.5;">
-                        A(n)
-                        <div class="autocomplete" style="display: inline-block; width: 200px; vertical-align: middle;">
+                        The shellcode was injected via a(n)
+                        <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
+                            <input id="blank6" type="text" placeholder="..." required>
+                        </div>
+                        message stored in the
+                        <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
                             <input id="blank7" type="text" placeholder="..." required>
                         </div>
-                        in
-                        <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
-                            <input id="blank8" type="text" placeholder="..." required>
-                        </div>
-                        overwrote the
-                        <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
-                            <input id="blank9" type="text" placeholder="..." required>
-                        </div>
-                        .
+                        variable.
                     </div>
                 </div>
 
@@ -161,11 +157,11 @@
                     <div style="font-size: 1.2rem; line-height: 2.5;">
                         A(n)
                         <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
-                            <input id="blank10" type="text" placeholder="..." required>
+                            <input id="blank8" type="text" placeholder="..." required>
                         </div>
                         changed
                         <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
-                            <input id="blank11" type="text" placeholder="..." required>
+                            <input id="blank9" type="text" placeholder="..." required>
                         </div>
                         .
                     </div>
@@ -187,7 +183,7 @@
                 <div class="form-group">
                     <h2>Who engineered the shellcode injection into the airlock?</h2>
                     <div style="font-size: 1.2rem; line-height: 2.5;">
-                        <input id="blank12" type="text" placeholder="Name" required style="padding: 10px; width: 300px;">
+                        <input id="blank10" type="text" placeholder="Name" required style="padding: 10px; width: 300px;">
                     </div>
                 </div>
 
@@ -294,7 +290,7 @@
                 'safe_to_open', 'door_fault', 'executable', 'exit_code', 'msg_buffer', 'ControlDoor',
                 'use_internal_pressure', 'memcpy', 'remote_fault_clear', 'is_open', 'pressure_change_time', 'device_id',
                 'idx', 'command', 'packet', 'measurement_id', 'thread', 'check', 'occupancy_resp', 'source',
-                'outside_door_id', 'overflow', 'ControlPressure', 'rx_message_buffer', 'strncpy', 'code', 'dump',
+                'outside_door_id', 'overflow', 'buffer overflow', 'ControlPressure', 'rx_message_buffer', 'strncpy', 'code', 'dump',
                 'segment', 'buffer_size_bytes', 'pressure_fault', 'LoadConfig', 'bounds', 'CheckWatchDogs', 'key',
                 'msg_len', 'program', 'write', 'value', 'kernel', 'timestamp', 'handler', 'door_cmd', 'door_status',
                 'process', 'HandleSetSuitOccupant', 'cmd_response', 'device', 'pressure_initialized', 'close',
@@ -311,13 +307,12 @@
             autocomplete(document.getElementById("blank1"), dictionary);
             autocomplete(document.getElementById("blank2"), dictionary);
             autocomplete(document.getElementById("blank3"), dictionary);
+            autocomplete(document.getElementById("blank4"), dictionary);
             autocomplete(document.getElementById("blank5"), dictionary);
             autocomplete(document.getElementById("blank6"), dictionary);
             autocomplete(document.getElementById("blank7"), dictionary);
             autocomplete(document.getElementById("blank8"), dictionary);
             autocomplete(document.getElementById("blank9"), dictionary);
-            autocomplete(document.getElementById("blank10"), dictionary);
-            autocomplete(document.getElementById("blank11"), dictionary);
 
             function saveProgress(level) {
                 localStorage.setItem('solution_progress', level);
@@ -327,9 +322,8 @@
                 var progress = parseInt(localStorage.getItem('solution_progress') || 0);
 
                 if (progress >= 1) {
-                    document.getElementById("blank1").value = "instruction";
-                    document.getElementById("blank2").value = "ControlDoor";
-                    document.getElementById("blank3").value = "stack";
+                    document.getElementById("blank1").value = "ControlDoor";
+                    document.getElementById("blank2").value = "stack";
 
                     var msg = document.querySelector("#form1 .result-message");
                     msg.className = "result-message success";
@@ -339,31 +333,31 @@
                 }
 
                 if (progress >= 2) {
-                    document.getElementById("blank5").value = "SDNSetSuitOccupantMessage";
-                    document.getElementById("blank6").value = "message_serialization_buffer";
+                    document.getElementById("blank3").value = "overflow";
+                    document.getElementById("blank4").value = "rx_message_buffer";
+                    document.getElementById("blank5").value = "message_handlers";
 
                     var msg = document.querySelector("#form2 .result-message");
                     msg.className = "result-message success";
-                    msg.textContent = "Correct. A SDNSetSuitOccupantMessage message was serialized with a payload that contained machine code to open the airlock.";
+                    msg.textContent = "Correct. The buffer overflow overwrote the function pointers.";
                     document.querySelector("#form2 button[type='submit']").style.display = "none";
                     document.getElementById("section3").style.display = "block";
                 }
 
                 if (progress >= 3) {
-                    document.getElementById("blank7").value = "overflow";
-                    document.getElementById("blank8").value = "rx_message_buffer";
-                    document.getElementById("blank9").value = "message_handlers";
+                    document.getElementById("blank6").value = "SDNSetSuitOccupantMessage";
+                    document.getElementById("blank7").value = "message_serialization_buffer";
 
                     var msg = document.querySelector("#form3 .result-message");
                     msg.className = "result-message success";
-                    msg.textContent = "Correct. The buffer overflow overwrote the function pointers.";
+                    msg.textContent = "Correct. A SDNSetSuitOccupantMessage message was serialized with a payload that contained machine code to open the airlock.";
                     document.querySelector("#form3 button[type='submit']").style.display = "none";
                     document.getElementById("section4").style.display = "block";
                 }
 
                 if (progress >= 4) {
-                    document.getElementById("blank10").value = "SDNDebugWriteConfigInt";
-                    document.getElementById("blank11").value = "rx_message_buffer_size";
+                    document.getElementById("blank8").value = "SDNDebugWriteConfigInt";
+                    document.getElementById("blank9").value = "rx_message_buffer_size";
 
                     var msg = document.querySelector("#form4 .result-message");
                     msg.className = "result-message success";
@@ -373,7 +367,7 @@
                 }
 
                 if (progress >= 5) {
-                    document.getElementById("blank12").value = "Helena Efrem";
+                    document.getElementById("blank10").value = "Helena Efrem";
 
                     var msg = document.querySelector("#form5 .result-message");
                     msg.className = "result-message success";
@@ -389,11 +383,10 @@
                 e.preventDefault();
                 var v1 = document.getElementById("blank1").value.trim().toLowerCase();
                 var v2 = document.getElementById("blank2").value.trim().toLowerCase();
-                var v3 = document.getElementById("blank3").value.trim().toLowerCase();
 
                 var msg = document.querySelector(".result-message");
 
-                if (["instruction", "opcode", "command", "code"].includes(v1) && v2 === "ControlDoor" && v3 === "stack") {
+                if (v1 === "controldoor" && v2 === "stack") {
                     msg.className = "result-message success";
                     msg.textContent = "Correct. The execution flow was redirected to the stack where a payload called ControlDoor.";
                     document.querySelector("#form1 button[type='submit']").style.display = "none";
@@ -407,14 +400,15 @@
 
             document.getElementById("form2").addEventListener("submit", function (e) {
                 e.preventDefault();
+                var v3 = document.getElementById("blank3").value.trim().toLowerCase();
+                var v4 = document.getElementById("blank4").value.trim().toLowerCase();
                 var v5 = document.getElementById("blank5").value.trim().toLowerCase();
-                var v6 = document.getElementById("blank6").value.trim().toLowerCase();
 
                 var msg = document.querySelector("#form2 .result-message");
 
-                if (["SDNSetSuitOccupantMessage", "user_preferences"].includes(v5) && ["message_serialization_buffer", "rx_message_buffer"].includes(v6)) {
+                if (["overflow", "buffer overflow"].includes(v3) && ["rx_message_buffer", "buffer"].includes(v4) && ["message_handlers", "handlers"].includes(v5)) {
                     msg.className = "result-message success";
-                    msg.textContent = "Correct. A SDNSetSuitOccupantMessage message was serialized with a payload that contained machine code to open the airlock.";
+                    msg.textContent = "Correct. The buffer overflow overwrote the function pointers.";
                     document.querySelector("#form2 button[type='submit']").style.display = "none";
                     document.getElementById("section3").style.display = "block";
                     saveProgress(2);
@@ -426,15 +420,14 @@
 
             document.getElementById("form3").addEventListener("submit", function (e) {
                 e.preventDefault();
+                var v6 = document.getElementById("blank6").value.trim().toLowerCase();
                 var v7 = document.getElementById("blank7").value.trim().toLowerCase();
-                var v8 = document.getElementById("blank8").value.trim().toLowerCase();
-                var v9 = document.getElementById("blank9").value.trim().toLowerCase();
 
                 var msg = document.querySelector("#form3 .result-message");
 
-                if (v7 === "overflow" && ["rx_message_buffer", "buffer"].includes(v8) && ["message_handlers", "handlers"].includes(v9)) {
+                if (["sdnsetsuitoccupantmessage", "user_preferences"].includes(v6) && ["message_serialization_buffer", "rx_message_buffer"].includes(v7)) {
                     msg.className = "result-message success";
-                    msg.textContent = "Correct. The buffer overflow overwrote the function pointers.";
+                    msg.textContent = "Correct. A SDNSetSuitOccupantMessage message was serialized with a payload that contained machine code to open the airlock.";
                     document.querySelector("#form3 button[type='submit']").style.display = "none";
                     document.getElementById("section4").style.display = "block";
                     saveProgress(3);
@@ -446,12 +439,12 @@
 
             document.getElementById("form4").addEventListener("submit", function (e) {
                 e.preventDefault();
-                var v10 = document.getElementById("blank10").value.trim().toLowerCase();
-                var v11 = document.getElementById("blank11").value.trim().toLowerCase();
+                var v8 = document.getElementById("blank8").value.trim().toLowerCase();
+                var v9 = document.getElementById("blank9").value.trim().toLowerCase();
 
                 var msg = document.querySelector("#form4 .result-message");
 
-                if (v10 === "SDNDebugWriteConfigInt" && v11 === "rx_message_buffer_size") {
+                if (v8 === "sdndebugwriteconfigint" && v9 === "rx_message_buffer_size") {
                     msg.className = "result-message success";
                     msg.textContent = "Correct. The debug message allowed overwriting the buffer size variable.";
                     document.querySelector("#form4 button[type='submit']").style.display = "none";
@@ -465,11 +458,11 @@
 
             document.getElementById("form5").addEventListener("submit", function (e) {
                 e.preventDefault();
-                var v12 = document.getElementById("blank12").value.trim().toLowerCase();
+                var v10 = document.getElementById("blank10").value.trim().toLowerCase();
 
                 var msg = document.querySelector("#form5 .result-message");
 
-                if (v12 === "helena" || v12 === "efrem" || v12 === "helena efrem") {
+                if (v10 === "helena" || v10 === "efrem" || v10 === "helena efrem") {
                     msg.className = "result-message success";
                     msg.textContent = "Correct. Helena Efrem engineered the injection.";
                     document.querySelector("#form5 button[type='submit']").style.display = "none";
