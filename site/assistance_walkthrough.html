@@ -32,11 +32,13 @@
     </nav>
   <h1>Walkthrough</h1>
 
+  <p>Think something was too hard, confusing, or wrong? <a href="https://docs.google.com/forms/d/e/1FAIpQLSfTekbr4QkKZcJ_1_YR-b01hwhKJqM_INZwdrRS5_3buzXnRw/viewform?usp=header" target="_blank" rel="noopener noreferrer">Send feedback</a>.</p>
+
   <h2>How did the airlock door open?</h2>
 
   <p>The easiest way to start figuring this out is to first look at <a href="evidence/airlock_ctrl.log" download>airlock_ctrl.log</a>.</p>
 
-  <p>By examining the log you can start to understand the sequence of prints for the different sorts of events. Specifically that <code><-</code> indicates a recieved command and <code>-></code> is for a sent command.</p>
+  <p>By examining the log you can start to understand the sequence of prints for the different sorts of events. Specifically that <code><-</code> indicates a received command and <code>-></code> is for a sent command.</p>
 
   <p>The log ends with:</p>
   <pre><code>2216-05-25_08:04:04 DEBUG: <- SDN_MSG_TYPE_SET_SUIT_OCCUPANT           Len:  20, Dev: 0xae215e17, User: 0x488504f4, Preferences Len: 0
@@ -109,7 +111,7 @@ static int ProcessMessageData(SDNHandler *handlers, size_t num_handlers,
 }</code></pre>
   </div>
 
-  <p>Looking at the register message handlers, we can see that this should have called <code>HandleSetSuitOccupant</code> which would have logged <code>Handling SET_SUIT_OCCUPANT message.</code>. So it seems like this callback was corrupted somehow and ran some non-code data.</p>
+  <p>Looking at the registered message handlers, we can see that this should have called <code>HandleSetSuitOccupant</code> which would have logged <code>Handling SET_SUIT_OCCUPANT message.</code>. So it seems like this callback was corrupted somehow and ran some non-code data.</p>
 
   <p>We can see where the call was with:</p>
 
@@ -148,10 +150,151 @@ Dump of assembler code from 0x7fffffffe96c to 0x7fffffffe9b4:
 ControlDoor in section .text of /tmp/test/airlock_ctrl</code></pre>
   <p>to see that this code does indeed call <code>ControlDoor</code>.</p>
 
-  <p>So what is 0x7fffffffe96c? We can look at the stack pointer register with <code>print $rsp</code>, look at the addresses for the variables in "frame 2" with <code>info locals</code> and <code>print &ret</code>, or run <code>frame info</code> to see that 0x7fffffffeXXX is part of the stack memory. <code>pwndbg</code> makes this much easier then regular <code>gdb</code> since it color codes stack memory and has the <code>vmap</code> command which lists its range.</p>
+  <p>So what is 0x7fffffffe96c? We can look at the stack pointer register with <code>print $rsp</code>, look at the addresses for the variables in "frame 2" with <code>info locals</code> and <code>print &ret</code>, or run <code>frame info</code> to see that 0x7fffffffeXXX is part of the stack memory. <code>pwndbg</code> makes this much easier than regular <code>gdb</code> since it color codes stack memory and has the <code>vmap</code> command which lists its range.</p>
+
+  <h2>How did the process end up executing code on the stack?</h2>
+  <p>For the first question we found that the reason that the process was running on the stack was that the <code>handler->callback</code> value was a pointer to stack memory. To understand how this happened, it's easiest to start from the source code.</p>
+  <p>In airlock_ctrl.c, we can see how the handlers are allocated:</p>
+<div class="code-block">
+    <pre><code class="language-c">sdn_log(SDN_INFO, "Allocating RX message buffer of size %u.", state.config.rx_message_buffer_size);
+rx_message_buffer = malloc(state.config.rx_message_buffer_size);
+if (rx_message_buffer == NULL)
+{
+    exit_with_error(EXIT_CODE_MEMORY_ALLOC_FAILED);
+}
+
+sdn_log(SDN_INFO, "Registering message handlers.");
+size_t num_message_handlers = MIN_NUM_MESSAGE_HANDLERS;
+if (state.config.remote_fault_clear)
+{
+    num_message_handlers++;
+}
+#if APP_DEBUG_BUILD
+num_message_handlers++;
+#endif
+message_handlers = malloc(sizeof(SDNHandler) * num_message_handlers);</code></pre>
+  </div>
+
+  <p>We can see that the program uses malloc to allocate the memory for the handlers on the heap. We can also see that the only other place malloc is used in this file is right before to allocate the <code>rx_message_buffer</code>.</p>
+  <p>In GDB we can confirm that <code>rx_message_buffer</code> is in the memory right before <code>message_handlers</code>.</p>
+  <pre><code>(gdb) frame 3
+#3  0x000055555555702a in main () at src/airlock_ctrl.c:847
+847             if (ProcessMessageData(message_handlers, num_message_handlers, rx_message_buffer, state.config.rx_message_buffer_size, &state) < 0)
+(gdb) print rx_message_buffer
+$1 = (void *) 0x55555555c6b0
+(gdb) print message_handlers
+$2 = (SDNHandler *) 0x55555555c7c0
+(gdb) print (void*)message_handlers - (void*)rx_message_buffer
+$1 = 272</code></pre>
+
+  <p>From this, it's a safe assumption that message_handlers was corrupted by an overflow in rx_message_buffer that was larger than 272 bytes.</p>
+
+  <p>We can confirm this if we look at airlock_ctrl.log, we see that there was a SetSuitOccupant message that was 288 bytes.</p>
 
   <h2>Where did the code that opened the airlock come from?</h2>
-    <p>TBD</p>
+
+  <p>To figure this out, we need to find a stack variable whose value is set by external data.</p>
+
+  <p>If we look at <code>HandleSetSuitOccupant</code> in airlock_ctrl.c we can see:</p>
+<div class="code-block">
+    <pre><code class="language-c">SDNSetSuitOccupantMessage *send_ptr = (SDNSetSuitOccupantMessage *)state->message_serialization_buffer;
+memcpy(send_ptr, message_data, msg_len);</code></pre>
+  </div>
+
+  <p>We can then use GDB to check if that's where the attack code was stored.</p>
+
+  <pre><code>(gdb) frame 2
+#2  0x0000555555555936 in ProcessMessageData (handlers=0x55555555c7c0, num_handlers=6, msg_buffer=0x55555555c6b0, buffer_size_bytes=2048, state=0x7fffffffe7f0)
+    at src/airlock_ctrl.c:328
+328                         handler->callback(msg_buffer, ret, state);
+(gdb) print (void*)state.message_serialization_buffer
+$1 = (void *) 0x7fffffffe8c8
+(gdb) print sizeof(state.message_serialization_buffer)
+$2 = 1044
+(gdb) print handler->callback
+$3 = (sdn_msg_callback_t) 0x7fffffffe96c
+(gdb) print (void*)handler->callback - (void*)state.message_serialization_buffer
+$4 = 164
+</code></pre>
+
+  <p>We can see that the value in the callback is indeed in the <code>message_serialization_buffer</code>.</p>
+
+  <p>Since the function call address is 164 bytes into <code>message_serialization_buffer</code>, only SDNSetSuitOccupantMessage messages that are at least that long would affect the attack code.</p>
+
+  <h2>Why didn't the bounds check on rx_message_buffer work?</h2>
+
+  <p>Looking at airlock_ctrl.c, we can see that the <code>state.config.rx_message_buffer_size</code> is used to check the size of incoming messages. In GDB we can see:</p>
+
+  <pre><code>(gdb) frame 3
+#3  0x000055555555702a in main () at src/airlock_ctrl.c:847
+847             if (ProcessMessageData(message_handlers, num_message_handlers, rx_message_buffer, state.config.rx_message_buffer_size, &state) < 0)
+(gdb) print state.config.rx_message_buffer_size
+$1 = 2048</code></pre>
+
+  <p>so rx_message_buffer_size is 2048 bytes. In the second questions we already saw that <code>message_handlers - rx_message_buffer == 272</code>, so why are these inconsistent?</p>
+
+  <p>Looking at access_log.sql, the rx_message_buffer_size configuration value is 256. In airlock_ctrl.c we can see a SDNDebugWriteConfigInt message updated this value to 2048. This is handled in:</p>
+
+<div class="code-block">
+    <pre><code class="language-c">static void HandleDebugWriteConfigInt(const void *message_data, size_t msg_len, AirlockState *state)
+{
+    sdn_log(SDN_INFO, "Handling DEBUG_WRITE_CONFIG_INT message.");
+    if (msg_len >= sizeof(SDNDebugWriteConfigInt))
+    {
+        SDNResponseStatus cmd_response = SDN_RESPONSE_CMD_ERROR_3; // Default to error
+        SDNDebugWriteConfigInt *cf = (SDNDebugWriteConfigInt *)message_data;
+        cf->key[sizeof(cf->key) - 1] = 0;
+        state->fault_bits |= FAULT_DEBUGGER;
+        sdn_log(SDN_DEBUG, "Attempting to write config key '%s' with value %d", cf->key, cf->value);
+        if (WriteConfigU32(cf->key, (uint32_t)cf->value) || WriteConfigBool(cf->key, (bool)cf->value))
+        {
+            cmd_response = SDN_RESPONSE_GOOD;
+        }
+
+        if (state->config.apply_config_change && cmd_response == SDN_RESPONSE_GOOD && !LoadConfig(&state->config))
+        {
+            exit_with_error(EXIT_CODE_CONFIG_LOAD_FAILED);
+        }
+        SendCmdResponse(cmd_response);
+    }
+    else
+    {
+        sdn_log(SDN_WARN, "Received DEBUG_WRITE_CONFIG_INT with invalid length %d", (int)msg_len);
+        SendCmdResponse(SDN_RESPONSE_INVALID_MSG_LEN);
+    }
+}</code></pre>
+  </div>
+
+  <p>Since <code>apply_config_change</code> is true, <code>rx_message_buffer_size</code> gets updated right away. <code>rx_message_buffer</code> is only allocated on start up which explains the mismatch.</p>
+
+  <h2>Who engineered the shellcode injection into the airlock?</h2>
+  <p>For reference: <a href="https://en.wikipedia.org/wiki/Shellcode">https://en.wikipedia.org/wiki/Shellcode</a></p>
+
+  <p>This attack required the following steps:</p>
+
+  <ol>
+    <li>The airlock_ctrl needed to be deployed in debug mode to allow stack execution and ad-hoc config changes</li>
+    <li><code>state.config.rx_message_buffer_size</code> needed to be made small enough to overflow with a <code>HandleSetSuitOccupant</code> message</li>
+    <li>A <code>SDNDebugWriteConfigInt</code> message increases <code>rx_message_buffer_size</code> to allow the buffer overflow</li>
+    <li>A <code>SDNSetSuitOccupantMessage</code> message loads the shellcode into <code>message_serialization_buffer</code></li>
+    <li>A <code>SDNSetSuitOccupantMessage</code> message overflows <code>rx_message_buffer</code> pointing the message handler to the shellcode</li>
+    <li>No other SDNSetSuitOccupantMessage messages are large enough to overwrite the shellcode until Alex Mercer tried to use it</li>
+  </ol>
+
+  <p>Logic in the shellcode checks to see if Alex Mercer's user id is in the message and only triggers then.</p>
+
+  <p>No one person directly took all these actions.</p>
+
+  <ul>
+    <li>Marina Anjana deployed the debug mode</li>
+    <li>Helena Efrem decreased the rx_message_buffer_size</li>
+    <li>Yann Vancho sent the SDNDebugWriteConfigInt message</li>
+    <li>Rolf Ivo triggered the SDNSetSuitOccupantMessage messages that setup the shellcode</li>
+  </ul>
+
+  <p>Figuring out the perpetrator requires separating which of these actions were a result of people just doing their jobs, and which were intentional. Of these steps, the one that is the least justifiable is Helena Efrem decreasing the buffer size. In addition, there's the email where Rolf Ivo mentions that Helena helped him modify his user_preferences.</p>
+
+  <p>These together make Helena the prime suspect.</p>
 
   <!-- Prism JS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
@@ -159,7 +302,7 @@ ControlDoor in section .text of /tmp/test/airlock_ctrl</code></pre>
   <script
     src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
   <footer>
-      <p>&copy; 2026 Fatal Core Dump | @VERSION@ | <a href="https://www.robopenguins.com/" target="_blank" rel="noopener noreferrer">https://www.robopenguins.com/</a></p>
+      <p>&copy; 2026 Fatal Core Dump | @VERSION@ | <button style="background-color: aqua;" onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLSfTekbr4QkKZcJ_1_YR-b01hwhKJqM_INZwdrRS5_3buzXnRw/viewform?usp=header', '_blank', 'noopener,noreferrer')">Send Feedback</button> | <a href="https://www.robopenguins.com/" target="_blank" rel="noopener noreferrer">https://www.robopenguins.com/</a></p>
   </footer>
 </body>
 
