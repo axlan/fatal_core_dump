@@ -63,6 +63,7 @@
     <div class="container">
         <section class="explanation" id="section1">
             <h1 style="color: #ff6b6b; margin-bottom: 24px;">How did it happen?</h1>
+            <p>Start filling in the blanks and pick the best completion match.</p>
             <form id="form1">
                 <div class="form-group">
                     <h2>How did the airlock door open?</h2>
@@ -182,8 +183,8 @@
             <form id="form5">
                 <div class="form-group">
                     <h2>Who engineered the shellcode injection into the airlock?</h2>
-                    <div style="font-size: 1.2rem; line-height: 2.5;">
-                        <input id="blank10" type="text" placeholder="Name" required style="padding: 10px; width: 300px;">
+                    <div class="autocomplete" style="display: inline-block; width: 300px; vertical-align: middle;">
+                        <input id="blank10" type="text" placeholder="Name" required>
                     </div>
                 </div>
 
@@ -304,6 +305,13 @@
                 "AirlockConfig", "AirlockState", "SDNDebugWriteConfigInt"
             ];
 
+            var characters = [
+                "Alex Mercer",
+                "Helena Efrem",
+                "Rolf Ivo",
+                "Yann Vancho",
+                "Marina Anjana"];
+
             autocomplete(document.getElementById("blank1"), dictionary);
             autocomplete(document.getElementById("blank2"), dictionary);
             autocomplete(document.getElementById("blank3"), dictionary);
@@ -313,6 +321,7 @@
             autocomplete(document.getElementById("blank7"), dictionary);
             autocomplete(document.getElementById("blank8"), dictionary);
             autocomplete(document.getElementById("blank9"), dictionary);
+            autocomplete(document.getElementById("blank10"), characters);
 
             function saveProgress(level) {
                 localStorage.setItem('solution_progress', level);
@@ -470,7 +479,11 @@
                     saveProgress(5);
                 } else {
                     msg.className = "result-message error";
-                    msg.textContent = "Incorrect. Please review the personnel records and access logs.";
+                    msg.textContent = "Incorrect.";
+                    if (v10 === "rolf" || v10 === "ivo" || v10 === "rolf ivo") {
+                        msg.textContent += " The memory was corrupted when Rolf went through the airlock, but he did not write the payload. Find out who did."
+                    }
+                    msg.textContent += " Please review the personnel records, access logs, and especially email correspondence.";
                 }
             });
         </script>

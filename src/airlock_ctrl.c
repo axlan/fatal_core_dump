@@ -696,6 +696,7 @@ static void HandleSetSuitOccupant(const void *message_data, size_t msg_len, Airl
     sdn_log(SDN_INFO, "Handling SET_SUIT_OCCUPANT message.");
     if (msg_len >= sizeof(SDNSetSuitOccupantMessage) && msg_len < MAX_SEND_MESSAGE_SIZE)
     {
+        // Send user_preferences loaded from the user's badge key to suit.
         SDNSetSuitOccupantMessage *send_ptr = (SDNSetSuitOccupantMessage *)state->message_serialization_buffer;
         memcpy(send_ptr, message_data, msg_len);
         send_ptr->msg_header.device_id = state->config.device_id;

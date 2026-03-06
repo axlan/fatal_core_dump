@@ -71,7 +71,7 @@
 
   <p>E.g.:</p>
   <pre><code class="language-bash">URL=https://www.robopenguins.com/fatal_core_dump/evidence
-curl -O $URL/src/airlock_ctrl.c -O $URL/airlock_ctrl -O $URL/core.dump
+curl -O $URL/airlock_ctrl.c -O $URL/airlock_ctrl -O $URL/core.dump
 </code></pre>
 
   <h2 id="setting-up-the-debugger">Setting Up the Debugger</h2>
@@ -138,7 +138,7 @@ pwndbg --core=core.dump airlock_ctrl
 
   <h4 id="native-vscode"><a href="https://code.visualstudio.com/" target="_blank" rel="noopener noreferrer">Visual Studio Code</a></h4>
 
-  <p>Open the evidence directory in VS Code. Create the file:</p>
+  <p>First you'll need VSCode installed along with the Microsoft C++ extension. Open the evidence directory in VS Code. Create the file:</p>
   <div class="code-block">
     <div class="code-header">
       <span class="filename">.vscode/launch.json</span>
@@ -307,7 +307,7 @@ docker run --rm -p 5000:5000 core_dump_debug
 
   <p>Build the core_dump_debug image with just the basic GDB package.</p>
 
-  <p>Open the evidence directory in VS Code. Create the file:</p>
+  <p>You'll need VSCode installed along with the Microsoft C++ extension. Open the evidence directory in VS Code. Create the file:</p>
 
   <div class="code-block">
     <div class="code-header">
